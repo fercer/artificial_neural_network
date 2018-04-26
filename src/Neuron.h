@@ -16,8 +16,7 @@
 #include "identityActivationFunction_class.h"
 
 class Neuron :
-	public Input_node,
-	public Weight_node
+	public Input_node
 {
 public:
 	typedef enum ACTIVATION_FUNCTION_TYPE {
@@ -26,7 +25,7 @@ public:
 		ACT_IDENTITY = 2
 	} ACTIVATION_FUNCTION_TYPE;
 
-	Neuron(const unsigned int src_neuron_position, const unsigned int src_outputs_count = 1);
+	Neuron(const unsigned int src_neuron_position, const unsigned int src_outputs_count = 1, double **** src_weight_values_master_pointer = NULL, double ***** src_weight_derivatives_values_master_pointer = NULL);
 	~Neuron();
 
 	double getInput(const unsigned long long current_time);
@@ -46,8 +45,11 @@ public:
 	void resetNodeCurrentTime();
 
 private:
+	Weight_node * neuron_weights;
+
 	unsigned int neuron_position;
 	unsigned int node_current_time;
+
 	double response_to_input;
 	double derivative_response_to_input;
 	double * neuron_error_contribution;

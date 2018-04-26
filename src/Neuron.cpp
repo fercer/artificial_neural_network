@@ -1,16 +1,15 @@
 #include "Neuron.h"
 
-Neuron::Neuron(const unsigned int src_neuron_position, const unsigned int src_outputs_count)
+Neuron::Neuron(const unsigned int src_neuron_position, const unsigned int src_outputs_count, double **** src_weight_values_master_pointer = NULL, double ***** src_weight_derivatives_values_master_pointer = NULL)
 {
 	neuron_activation_function = NULL;
 	node_current_time = 0;
 	
+	neuron_position = src_neuron_position;
 	neuron_outputs_count = src_outputs_count;
 	neuron_error_contribution = (double*) malloc(neuron_outputs_count * sizeof(double));
-
-	this->assignOutputsCount(neuron_outputs_count);
-
-	neuron_position = src_neuron_position;
+	
+	neuron_weights = new Weight_node(neuron_outputs_count, neuron_position, src_weight_values_master_pointer, src_weight_derivatives_values_master_pointer);
 }
 
 
@@ -26,6 +25,8 @@ Neuron::~Neuron()
 	{
 		free(neuron_error_contribution);
 	}
+
+	delete neuron_weights;
 }
 
 
@@ -34,9 +35,9 @@ double Neuron::getInput(const unsigned long long current_time)
 {
 	if (current_time > node_current_time)
 	{
-		this->getWeightedSum(current_time);
-		response_to_input = neuron_activation_function->evaluateFunction(weighted_sum);
-		derivative_response_to_input = neuron_activation_function->evaluateDerivative(weighted_sum);
+		const double neuron_weighted_sum = neuron_weights->getWeightedSum(current_time);
+		response_to_input = neuron_activation_function->evaluateFunction(neuron_weighted_sum);
+		derivative_response_to_input = neuron_activation_function->evaluateDerivative(neuron_weighted_sum);
 
 		memset(neuron_error_contribution, 0, neuron_outputs_count * sizeof(double));
 		node_current_time = current_time;
@@ -58,7 +59,7 @@ void Neuron::backpropagateNodeError()
 {
 	for (unsigned int output_index = 0; output_index < neuron_outputs_count; output_index++)
 	{
-		this->setWeightsErrorContribution(*(neuron_error_contribution + output_index), output_index);
+		neuron_weights->setWeightsErrorContribution(*(neuron_error_contribution + output_index), output_index);
 	}
 }
 
@@ -66,7 +67,7 @@ void Neuron::backpropagateNodeError()
 
 void Neuron::backpropagateNodeError(const unsigned int src_output_index)
 {
-	this->setWeightsErrorContribution(*(neuron_error_contribution + src_output_index), src_output_index);
+	neuron_weights->setWeightsErrorContribution(*(neuron_error_contribution + src_output_index), src_output_index);
 }
 
 
@@ -109,10 +110,14 @@ double Neuron::getActivationFunctionParameterValue(const unsigned int src_parame
 	return neuron_activation_function->getParameterValue(src_parameter_index);
 }
 
+
+
 unsigned int Neuron::getNeuronPosition()
 {
 	return neuron_position;
 }
+
+
 
 void Neuron::resetNodeCurrentTime()
 {

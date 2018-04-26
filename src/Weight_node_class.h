@@ -62,7 +62,6 @@ private:
 
 	unsigned long long current_weight_time;
 
-
 	double getWeightedSumNode(WEIGHT_LIST_NODE * src_current_weight_node, const unsigned long long current_time);
 
 	void setWeightsErrorContributionNode(WEIGHT_LIST_NODE * src_current_weight_node, const double src_node_error_contribution, const unsigned int src_output_index);
