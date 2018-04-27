@@ -7,28 +7,33 @@
 class ActivationFunctionBase
 {
 public:
+	ActivationFunctionBase()
+	{
+		function_was_reevaluated = true;
+		current_activation_function_time = 0;
+	}
+
 	virtual ~ActivationFunctionBase() 
 	{
 	}
-
+	
 	// Evaluates the input value using the sigmoid function
-	virtual double evaluateFunction(double input_value) = 0;
+	virtual double evaluateFunction(double input_value, const unsigned long long src_current_network_time) = 0;
+
 	virtual double evaluateDerivative(double input_value) = 0;
 	
-	unsigned int getParametersCount()
+	void resetActivationFunctionCurrentTime()
 	{
-		return parameters_count;
-	}
-
-
-	virtual double getParameterValue(unsigned int src_parameter_index)
-	{
-		return *(parameters + src_parameter_index);
+		current_activation_function_time = 0;
 	}
 
 protected:
 	unsigned int parameters_count;
+	unsigned long long current_activation_function_time;
+	bool function_was_reevaluated;
 	double * parameters;
+	double current_evaluation;
+	double current_evaluation_derivative;
 };
 
 #endif //ACTIVATIONFUNCTIONBASE_CLASS_H_INCLUDED

@@ -10,6 +10,7 @@ ArtificialNeuralNetwork::ArtificialNeuralNetwork()
 	inputs_count = 0;
 	outputs_count = 0;
 	neurons_count = 0;
+	weights_in_each_neuron = NULL;
 	weights_count = 0;
 
 	network_current_time = 1;
@@ -17,15 +18,18 @@ ArtificialNeuralNetwork::ArtificialNeuralNetwork()
 	network_input_nodes = NULL;
 	network_neurons = NULL;
 	network_output_nodes = NULL;
-
-	network_weights_allocated = false;
-	network_weights_derivatives_allocated = false;
-
-	network_weights_derivative_values = NULL;
-	network_weights_values = NULL;
+	
+	self_network_weight_values = NULL;
+	self_network_weight_derivatives_values = NULL;
+	self_network_weight_values_pointer = &self_network_weight_values;
+	self_network_weight_derivatives_values_pointer = &self_network_weight_derivatives_values;
+	
+	network_weight_values_master_pointer = &self_network_weight_values_pointer;
+	network_weight_derivatives_values_master_pointer = &self_network_weight_derivatives_values_pointer;
 
 	sprintf(ann_log_filename, "NULL");
 }
+
 
 
 ArtificialNeuralNetwork::~ArtificialNeuralNetwork()
@@ -41,7 +45,6 @@ ArtificialNeuralNetwork::~ArtificialNeuralNetwork()
 
 	if (neurons_count > 0)
 	{
-
 		unsigned int weight_and_bias_position = 0;
 		for (unsigned int neuron_index = 0; neuron_index < neurons_count; neuron_index++)
 		{
@@ -55,27 +58,13 @@ ArtificialNeuralNetwork::~ArtificialNeuralNetwork()
 		free(network_output_nodes);
 	}
 
-	if (network_weights_allocated)
+	deallocateNetworkMemory();
+
+	if (weights_in_each_neuron)
 	{
-		free(network_weights_values);
+		free(weights_in_each_neuron);
 	}
 
-	if (network_weights_derivatives_allocated)
-	{
-		for (unsigned int weights_and_bias_index = 0; weights_and_bias_index < (weights_count + neurons_count); weights_and_bias_index++)
-		{
-			free(*(network_weights_derivative_values + weights_and_bias_index));
-		}
-		free(network_weights_derivative_values);
-	}
-}
-
-
-
-// Checks if the network is readyto be run
-bool ArtificialNeuralNetwork::checkNetworkState()
-{
-	return true;
 }
 
 
@@ -89,47 +78,46 @@ void ArtificialNeuralNetwork::printSolution()
 
 void ArtificialNeuralNetwork::allocateNetworkMemory()
 {
-	if (neurons_count == 0 || weights_count == 0)
+	if (!self_network_weight_derivatives_values)
 	{
-		return;
-	}
-	
-	if (!network_weights_allocated)
-	{
-		network_weights_values = (double*)malloc((neurons_count + weights_count) * sizeof(double));
-		network_weights_allocated = true;
-	}
+		self_network_weight_values = (double**)malloc(neurons_count * sizeof(double*));
+		self_network_weight_derivatives_values = (double***)malloc(neurons_count * sizeof(double**));
 
-	if (!network_weights_derivatives_allocated)
-	{
-		// Allocate memory for the weights error contribution array:
-		network_weights_derivative_values = (double**)malloc((neurons_count + weights_count) * sizeof(double*));
-		for (unsigned int weight_and_bias_index = 0; weight_and_bias_index < (neurons_count + weights_count); weight_and_bias_index++)
+		for (unsigned int neuron_index = 0; neuron_index < neurons_count; neuron_index++)
 		{
-			*(network_weights_derivative_values + weight_and_bias_index) = (double*)malloc(outputs_count * sizeof(double));
-		}
+			*(self_network_weight_values + neuron_index) = (double*)malloc(*(weights_in_each_neuron + neuron_index) * sizeof(double));
+			*(self_network_weight_derivatives_values + neuron_index) = (double**)malloc(*(weights_in_each_neuron + neuron_index) * sizeof(double*));
 
-		// Memory successfully allocated
-		network_weights_derivatives_allocated = true;
+			for (unsigned int input_index = 0; input_index < *(weights_in_each_neuron + neuron_index); input_index++)
+			{
+				*(*(self_network_weight_derivatives_values + neuron_index) + input_index) = (double*)malloc(outputs_count * sizeof(double));
+			}
+		}
 	}
 }
 
 
 
-void ArtificialNeuralNetwork::dumpWeightsToNetwork()
+void ArtificialNeuralNetwork::deallocateNetworkMemory()
 {
-	unsigned int weight_and_bias_position = 0;
-	for (unsigned int neuron_index = 0; neuron_index < neurons_count; neuron_index++)
+	if (self_network_weight_derivatives_values)
 	{
-		const unsigned int current_neuron_inputs_count = (*(network_neurons + neuron_index))->getInputsCount();
-		for (unsigned int intput_index = 0; intput_index <= current_neuron_inputs_count; intput_index++)
+		for (unsigned int neuron_index = 0; neuron_index < neurons_count; neuron_index++)
 		{
-			*(network_weights_values + weight_and_bias_position + intput_index) = (*(network_neurons + neuron_index))->getWeightValue(intput_index);
+			for (unsigned int input_index = 0; input_index < *(weights_in_each_neuron + neuron_index); input_index++)
+			{
+				free(*(*(self_network_weight_derivatives_values + neuron_index) + input_index));
+			}
+			free(*(self_network_weight_derivatives_values + neuron_index));
+
+			free(*(self_network_weight_values + neuron_index));
 		}
 
-		(*(network_neurons + neuron_index))->assignExternalWeightErrorContributionPointer(network_weights_derivative_values + weight_and_bias_position);
-		(*(network_neurons + neuron_index))->assignExternalWeightPointer(network_weights_values + weight_and_bias_position);
-		weight_and_bias_position += current_neuron_inputs_count + 1;
+		free(self_network_weight_derivatives_values);
+		free(self_network_weight_values);
+
+		self_network_weight_derivatives_values = NULL;
+		self_network_weight_values = NULL;
 	}
 }
 
@@ -170,10 +158,7 @@ void ArtificialNeuralNetwork::addNeuron()
 		network_neurons = (Neuron **)malloc(sizeof(Neuron*));
 	}
 
-	*(network_neurons + neurons_count) = new Neuron(neurons_count, outputs_count);
-
-	// Preevent the neuron to allocate memory for the error contribution array, and use the defined by this network:
-	(*(network_neurons + neurons_count))->assignExternalWeightErrorContributionPointer(NULL);
+	*(network_neurons + neurons_count) = new Neuron(neurons_count, outputs_count, network_weight_values_master_pointer, network_weight_derivatives_values_master_pointer);
 
 	neurons_count++;
 }
@@ -202,41 +187,14 @@ void ArtificialNeuralNetwork::addOutputNode(const unsigned int src_neuron_positi
 
 void ArtificialNeuralNetwork::setNetworkWeights(double * src_weights_and_bias, const bool deep_copy)
 {
-	if (!deep_copy)
-	{
-		if (network_weights_allocated)
-		{
-			free(network_weights_values);
-			network_weights_allocated = false;
-		}
-		network_weights_values = src_weights_and_bias;
-		return;
-	}
 
-	allocateNetworkMemory();
-	memcpy(network_weights_values, src_weights_and_bias, (weights_count + neurons_count) * sizeof(double));
 }
 
 
 
 void ArtificialNeuralNetwork::setNetworkWeightsDerivatives(double ** src_weights_and_bias_derivatives, const bool deep_copy)
 {
-	if (!deep_copy)
-	{
-		if (network_weights_derivatives_allocated)
-		{
-			free(network_weights_derivative_values);
-			network_weights_derivatives_allocated = false;
-		}
-		network_weights_derivative_values = src_weights_and_bias_derivatives;
-		return;
-	}
 
-	allocateNetworkMemory();
-	for (unsigned int weighs_and_bias_index = 0; weighs_and_bias_index < (weights_count + neurons_count); weighs_and_bias_index++)
-	{
-		memcpy(*(network_weights_derivative_values + weighs_and_bias_index), *(src_weights_and_bias_derivatives + weighs_and_bias_index), outputs_count * sizeof(double));
-	}
 }
 
 
@@ -266,7 +224,7 @@ void ArtificialNeuralNetwork::loadNetworkData(const char * src_filename)
 	// Find our root node
 	root_node = doc.first_node("NeuralNetwork");
 
-	// Iterate over the Output
+	// Iterate over the Outputs to know how many output nodes exists in the network
 	for (xml_node<> * output_node = root_node->first_node("Output"); output_node; output_node = output_node->next_sibling())
 	{
 		if (strcmp(output_node->name(), "Output") != 0)
@@ -275,6 +233,40 @@ void ArtificialNeuralNetwork::loadNetworkData(const char * src_filename)
 		}
 		outputs_count++;
 	}
+
+	// Iterate over the Neurons to know how many connections has each neuron.
+	for (xml_node<> * neuron_node = root_node->first_node("Neuron"); neuron_node; neuron_node = neuron_node->next_sibling())
+	{
+		if (strcmp(neuron_node->name(), "Neuron") != 0)
+		{
+			continue;
+		}
+
+		if (neurons_count == 0) {
+			weights_in_each_neuron = (unsigned int *)malloc(sizeof(unsigned int));
+		}
+		else
+		{
+			unsigned int * weights_in_each_neuron_swap = weights_in_each_neuron;
+			weights_in_each_neuron = (unsigned int *)malloc((neurons_count + 1) * sizeof(unsigned int));
+			memcpy(weights_in_each_neuron, weights_in_each_neuron_swap, neurons_count * sizeof(unsigned int));
+			free(weights_in_each_neuron_swap);
+		}
+
+		for (xml_node<> * weight_node = neuron_node->first_node("Weight"); weight_node; weight_node = weight_node->next_sibling())
+		{
+			if (strcmp(weight_node->name(), "Weight") != 0)
+			{
+				continue;
+			}
+
+			*(weights_in_each_neuron + neurons_count) = *(weights_in_each_neuron + neurons_count) + 1;
+		}
+		weights_count += *(weights_in_each_neuron + neurons_count);
+		neurons_count++;
+	}
+
+	allocateNetworkMemory();
 
 	// Iterate over the Inputs
 	for (xml_node<> * input_node = root_node->first_node("Input"); input_node; input_node = input_node->next_sibling())
@@ -339,8 +331,7 @@ void ArtificialNeuralNetwork::loadNetworkData(const char * src_filename)
 		free(function_parameters);
 		
 		xml_node<> * bias_node = neuron_node->first_node("Bias");
-		const double bias_value_temp = atof(bias_node->first_attribute("value")->value());
-		(*(network_neurons + neuron_position))->updateWeightValue(bias_value_temp, 0);
+		*(*(**network_weight_values_master_pointer + neuron_position)) = atof(bias_node->first_attribute("value")->value());
 
 		for (xml_node<> * weight_node = neuron_node->first_node("Weight"); weight_node; weight_node = weight_node->next_sibling())
 		{
@@ -359,11 +350,11 @@ void ArtificialNeuralNetwork::loadNetworkData(const char * src_filename)
 
 			if (strcmp(input_connection_temp, "Pattern") == 0)
 			{
-				(*(network_neurons + neuron_position))->addInputNode(*(network_input_nodes + input_position_temp), weight_value_temp, Weight_node::WIT_PATTERN, input_position_temp);
+				(*(network_neurons + neuron_position))->addInputNode(*(network_input_nodes + input_position_temp), weight_value_temp, Weight_node::WIT_PATTERN);
 			}
 			else // Neuron
 			{
-				(*(network_neurons + neuron_position))->addInputNode(*(network_neurons + input_position_temp), weight_value_temp, Weight_node::WIT_NEURON, input_position_temp);
+				(*(network_neurons + neuron_position))->addInputNode(*(network_neurons + input_position_temp), weight_value_temp, Weight_node::WIT_NEURON);
 			}
 		}
 	}
@@ -380,10 +371,65 @@ void ArtificialNeuralNetwork::loadNetworkData(const char * src_filename)
 		const int neuron_position_temp = atoi(output_node->first_attribute("input_position")->value());
 		this->addOutputNode(neuron_position_temp);
 	}
+}
 
+
+
+void ArtificialNeuralNetwork::loadNetworkData(const ArtificialNeuralNetwork &src_ann)
+{
+	this->inputs_count = src_ann.inputs_count;
+	this->outputs_count = src_ann.outputs_count;
+	this->neurons_count = src_ann.neurons_count;
+	this->weights_in_each_neuron = (unsigned int *)malloc(this->neurons_count * sizeof(unsigned int));
+	memcpy(this->weights_in_each_neuron, src_ann.weights_in_each_neuron, this->neurons_count * sizeof(unsigned int));
+	this->weights_count = src_ann.weights_count;
+
+	Input_pattern ** network_input_nodes;
+	Neuron ** network_neurons;
+	Neuron ** network_output_nodes;
+	
 	allocateNetworkMemory();
 
-	dumpWeightsToNetwork();
+	for (unsigned int input_index = 0; input_index < this->inputs_count; input_index++)
+	{
+		this->addInputNode((*(src_ann.network_input_nodes + input_index))->getInputPointerPosition());
+	}
+
+	double * activation_function_parameter_temp;
+	unsigned int current_neuron_activation_function_parameter_count;
+	for (unsigned int neuron_index = 0; neuron_index < this->neurons_count; neuron_index++)
+	{
+		this->addNeuron();
+
+		// Copy the activation function employed in the original neural network:
+		current_neuron_activation_function_parameter_count = (*(src_ann.network_neurons + neuron_index))->getActivationFunctionParametersCount();
+		if (current_neuron_activation_function_parameter_count > 0)
+		{
+			activation_function_parameter_temp = (double*)malloc(current_neuron_activation_function_parameter_count * sizeof(double));
+			for (unsigned int parameter_index = 0; parameter_index < current_neuron_activation_function_parameter_count; parameter_index++)
+			{
+				*(activation_function_parameter_temp + parameter_index) = (*(src_ann.network_neurons + neuron_index))->getActivationFunctionParameterValue(parameter_index);
+			}
+
+			(*(this->network_neurons + neuron_index))->setActivationFunction((*(src_ann.network_neurons + neuron_index))->getActivationFunctionType(), activation_function_parameter_temp);
+
+			free(activation_function_parameter_temp);
+		}
+		else
+		{
+			(*(this->network_neurons + neuron_index))->setActivationFunction((*(src_ann.network_neurons + neuron_index))->getActivationFunctionType(), NULL);
+		}
+
+		// Copy the weighted inputs configuration: 
+		for (unsigned int weight_index = 0; weight_index < *(this->weights_in_each_neuron + neuron_index); weight_index++)
+		{
+			(*(this->network_neurons + neuron_index))->addInputNode(
+				(*(src_ann.network_neurons + neuron_index))->get
+			)
+		}
+	}
+
+	void addOutputNode(const unsigned int src_neuron_position);
 }
 
 

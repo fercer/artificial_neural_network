@@ -49,9 +49,6 @@ public:
 	
 	~ArtificialNeuralNetwork();
 
-	// Checks if the network is readyto be run
-	bool checkNetworkState();
-
 	// Prints the current solution (a 2D image with the hyperplanes that separates the data is intended)
 	void printSolution();
 
@@ -66,6 +63,9 @@ public:
 
 	// Loads the architecture of the network, and the value of all the bias and weights
 	void loadNetworkData(const char * src_filename);
+
+	// Loads the architecture of the network form other neural network
+	void loadNetworkData(const ArtificialNeuralNetwork &src_ann);
 
 	// Saves the current state of the network to a file
 	void saveNetworkState();
@@ -84,25 +84,29 @@ protected:
 	unsigned int inputs_count;
 	unsigned int outputs_count;
 	unsigned int neurons_count;
+	unsigned int * weights_in_each_neuron;
 	unsigned int weights_count;
 	
 	Input_pattern ** network_input_nodes;
 	Neuron ** network_neurons;
 	Neuron ** network_output_nodes;
 
-	double ** network_weights_derivative_values;
-	double * network_weights_values;
+	double **** network_weight_values_master_pointer;
+	double ***** network_weight_derivatives_values_master_pointer;
+
 	unsigned long long network_current_time;
 
 private:
 	char ann_log_filename[512];
 
-	bool network_weights_derivatives_allocated;
-	bool network_weights_allocated;
+	double *** self_network_weight_values_pointer;
+	double **** self_network_weight_derivatives_values_pointer;
 
-	// Allocates the memory for the weights and biases arrays
+	double ** self_network_weight_values;
+	double *** self_network_weight_derivatives_values;
+	
 	void allocateNetworkMemory();
-	void dumpWeightsToNetwork();
+	void deallocateNetworkMemory();
 
 	void addInputNode(const unsigned int src_input_position);
 	void addNeuron();

@@ -14,60 +14,83 @@ public:
 		WIT_NEURON = 2
 	}WEIGHT_INPUT_TYPE;
 
-	Weight_node(const unsigned int src_outputs_count, const unsigned int src_neuron_index = 0, double **** src_weight_values_master_pointer = NULL, double ***** src_weight_derivatives_values_master_pointer = NULL);
+	Weight_node(const unsigned int src_outputs_count, const WEIGHT_INPUT_TYPE src_input_type, Input_node * src_input_node, const double src_weight_value, const unsigned int src_neuron_index = 0, const unsigned int src_input_index = 0, double **** src_weight_values_master_pointer = NULL, double **** src_weight_derivatives_values_master_pointer = NULL);
+
+	Weight_node(const Weight_node & src_weight_node);
+	Weight_node & operator= (const Weight_node & src_weight_node);
+
 	~Weight_node();
-
-	// Adds an input node to this weights manager
-	void addInputNode(Input_node * src_input_node_pointer, const double src_weight_value, const WEIGHT_INPUT_TYPE src_input_type);
-
-	unsigned int getInputsCount();
+	
+	// Changes the current pointer to the passed as argument:
+	void assignInputNodePointer(Input_node * src_input_node_pointer);
 
 	// Computes the weighted sum of the inputs and their corresponding weights
-	double getWeightedSum(const unsigned long long current_time);
+	double getWeightedInput(const unsigned long long src_current_network_time);
 
-	// Set the bias/weight value
-	void setWeightValue(const unsigned int src_input_index, const double src_weight_value);
+	// Set/Get the weight value
+	void setWeightValue(const double src_weight_value);
+	double getWeightValue();
 
-	// Get the bias/weight value
-	double getWeightValue(const unsigned int src_input_index);
-
+	// Assign the error reflected into the specified output corresponding to all the weights in the list.
 	void setWeightsErrorContribution(const double src_node_error_contribution, const unsigned int src_output_index);
 
+	void makeExternalWeigthValue(double **** src_weight_values_master_pointer = NULL, double **** src_weight_derivatives_values_master_pointer = NULL);
+
+	void makeInternalWeightValue(const bool make_weight_values_internal = true, const bool make_weight_derivatives_values_internal = true);
+
+	void resetWeightCurrentTime();
+
 private:
-	typedef struct WEIGHT_LIST_NODE {
-		WEIGHT_INPUT_TYPE weight_node_type;
-		unsigned int input_index;
-		Input_node * input_node;
-		WEIGHT_LIST_NODE * next_weight_node;
-	} WEIGHT_LIST_NODE;
+	
+	/* These arrays contain the actual weight, and derivatives values */
+	double * self_weight_value;
+	double * self_weight_derivatives_values;
 
-	WEIGHT_LIST_NODE * weights_list_head;
-	WEIGHT_LIST_NODE * weights_list_tail;
+	/* These pointers represent the neuron's weights, and derivative values 
+	If the memory is self allocated, these pointers point directly to the arrays 'self_weight_value' and 'self_weight_derivatives_values' respectively,
+	and should be accessed exclusively in their position [0]:
+	*/
+	double ** self_neuron_weight_values;
+	double ** self_neuron_weight_derivatives_values;
 
-	void(Weight_node::*assign_weight_value_method) (const double src_weigth_value);
+	/* These pointers represent the network's neurons
+	If the memory is self allocated, these pointers point directly to the pointers 'self_neuron_weight_values' and 'self_neuron_weight_derivatives_values' respectively,
+	and should be accessed exclusively in their position [0]:
+	*/
+	double *** self_network_weight_values;
+	double *** self_network_weight_derivatives_values;
+
+	/* These pointers contain the weights and derivatives values of the entire network,
+	If the memory is self allocated, these pointers point directly to the pointers 'self_network_weight_values' and 'self_network_weight_derivatives_values' respectively,
+	and should be accessed exclusively in their position [0]:
+	*/
+	double **** weight_values_master_pointer;
+	double **** weight_derivatives_values_master_pointer;
 
 	unsigned int neuron_index;
+	unsigned int input_index;
 
-	double *** self_weight_values_pointer;
-	double **** self_weight_derivatives_values_pointer;
+	/* [e]xternal [w]eight [v]alue neuron and input indices: */
+	unsigned int ewv_neuron_index;
+	unsigned int ewv_input_index;
 
-	double ** self_weight_values;
-	double *** self_weight_derivatives_values;
+	/* [e]xternal [w]eight [d]erivatives [v]alues neuron and input indices: */
+	unsigned int ewdv_neuron_index;
+	unsigned int ewdv_input_index;
 
-	double **** weight_values_master_pointer;
-	double ***** weight_derivatives_values_master_pointer;
-
-	unsigned int inputs_count;
 	unsigned int outputs_count;
-
+	WEIGHT_INPUT_TYPE input_type;
+	Input_node * input_node_pointer;
 	unsigned long long current_weight_time;
 
-	double getWeightedSumNode(WEIGHT_LIST_NODE * src_current_weight_node, const unsigned long long current_time);
 
-	void setWeightsErrorContributionNode(WEIGHT_LIST_NODE * src_current_weight_node, const double src_node_error_contribution, const unsigned int src_output_index);
+	double(Weight_node::*get_input_response) ();
+	double getWeightedInput();
+	double getBias();
 
-	void assignWeightValueSelf(const double src_weigth_value);
-	void assignWeightValueExternal(const double src_weigth_value);
+	void(Weight_node::*set_weight_error_cotribution) (const double src_node_error_contribution, const unsigned int src_output_index);
+	void setWeightErrorContribution(const double src_node_error_contribution, const unsigned int src_output_index);
+	void setBiasErrorContribution(const double src_node_error_contribution, const unsigned int src_output_index);
 };
 
 #endif // WEIGHT_NODE_CLASS_INLCUDED

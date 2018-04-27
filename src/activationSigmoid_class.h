@@ -15,10 +15,12 @@ class activationSigmoid:
 public:
 	activationSigmoid();
 	activationSigmoid(double * src_function_parameters);
+	activationSigmoid(const activationSigmoid &src_activation_function);
+	activationSigmoid & operator= (const activationSigmoid &src_activation_function);
 	~activationSigmoid();
 
 	// Evaluates the input value using the sigmoid function
-	double evaluateFunction(double input_value);
+	double evaluateFunction(double input_value, const unsigned long long src_current_network_time);
 	double evaluateDerivative(double input_value);
 };
 
