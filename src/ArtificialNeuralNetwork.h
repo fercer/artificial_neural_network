@@ -46,17 +46,14 @@ class ArtificialNeuralNetwork
 {
 public:
 	ArtificialNeuralNetwork();
+	ArtificialNeuralNetwork(const bool src_compute_network_derivatives = true);
+	ArtificialNeuralNetwork(const ArtificialNeuralNetwork & src_ann);
+	ArtificialNeuralNetwork & operator=(const ArtificialNeuralNetwork & src_ann);
 	
 	~ArtificialNeuralNetwork();
 
 	// Prints the current solution (a 2D image with the hyperplanes that separates the data is intended)
 	void printSolution();
-
-	// Set the weights of the network
-	void setNetworkWeights(double * src_weights_and_bias, const bool deep_copy = false);
-
-	// Set the bias of the network
-	void setNetworkWeightsDerivatives(double ** src_weights_and_bias_derivatives, const bool deep_copy = false);
 
 	// Sets the filename where the states are saved
 	void setNetworkLogFilename(const char * src_filename);
@@ -64,19 +61,11 @@ public:
 	// Loads the architecture of the network, and the value of all the bias and weights
 	void loadNetworkData(const char * src_filename);
 
-	// Loads the architecture of the network form other neural network
-	void loadNetworkData(const ArtificialNeuralNetwork &src_ann);
-
 	// Saves the current state of the network to a file
 	void saveNetworkState();
 
 	// Predicts the output using the passed data:
-	void predict(double * test_input, double * dst_prediction);//, const double threshold);
-	
-	Input_node * getOutputNode(const unsigned int src_output_index);
-
-	double ** getNetworkWeightsDerivatives();
-	double * getNetworkWeights();
+	void predict(double * src_input_pattern_pointer, double * dst_prediction);//, const double threshold);
 
 	void resetNetworkTime();
 
@@ -84,29 +73,30 @@ protected:
 	unsigned int inputs_count;
 	unsigned int outputs_count;
 	unsigned int neurons_count;
-	unsigned int * weights_in_each_neuron;
-	unsigned int weights_count;
-	
-	Input_pattern ** network_input_nodes;
-	Neuron ** network_neurons;
-	Neuron ** network_output_nodes;
+	unsigned int weights_count;	
 
-	double **** network_weight_values_master_pointer;
-	double ***** network_weight_derivatives_values_master_pointer;
+	void setInputPatternPointer(double * src_input_pattern_pointer);
 
-	unsigned long long network_current_time;
+	Input_node * getOutputNode(const unsigned int src_output_index);
+
+	// Set the weights of the network
+	void setNetworkWeights(double **** src_weights_and_bias);
+
+	// Set the bias of the network
+	void setNetworkWeightsDerivatives(double **** src_weights_and_bias_derivatives);
 
 private:
 	char ann_log_filename[512];
 
-	double *** self_network_weight_values_pointer;
-	double **** self_network_weight_derivatives_values_pointer;
+	bool compute_network_derivatives;
 
-	double ** self_network_weight_values;
-	double *** self_network_weight_derivatives_values;
-	
-	void allocateNetworkMemory();
-	void deallocateNetworkMemory();
+	Input_pattern ** network_input_nodes;
+	Neuron ** network_neurons;
+	Neuron ** network_output_nodes;
+
+	double * input_pattern_master_pointer;
+
+	unsigned long long network_current_time;
 
 	void addInputNode(const unsigned int src_input_position);
 	void addNeuron();

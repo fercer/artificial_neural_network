@@ -97,7 +97,7 @@ Weight_node::Weight_node(const Weight_node & src_weight_node)
 	this->input_type = src_weight_node.input_type;
 
 	/* This might cause some problems due to the copied pointer is pointing to the node of another network.
-	A reassignement of the input node must be done using the assignInputNodePointer method.
+	A reassignement of the input node must be done using the setInputNodePointer method.
 	*/
 	this->input_node_pointer = src_weight_node.input_node_pointer;
 
@@ -157,7 +157,7 @@ Weight_node & Weight_node::operator= (const Weight_node & src_weight_node)
 		this->input_type = src_weight_node.input_type;
 
 		/* This might cause some problems due to the copied pointer is pointing to the node of another network.
-		A reassignement of the input node must be done using the assignInputNodePointer method.
+		A reassignement of the input node must be done using the setInputNodePointer method.
 		*/
 		this->input_node_pointer = src_weight_node.input_node_pointer;
 
@@ -226,9 +226,16 @@ Weight_node::~Weight_node()
 
 
 
-void Weight_node::assignInputNodePointer(Input_node * src_input_node_pointer)
+void Weight_node::setInputNodePointer(Input_node * src_input_node_pointer)
 {
 	input_node_pointer = src_input_node_pointer;
+}
+
+
+
+Input_node * Weight_node::getInputNodePointer()
+{
+	return input_node_pointer;
 }
 
 
@@ -379,7 +386,7 @@ void Weight_node::dumpWeightDataNeuron(FILE * fp_network_data)
 	/* Print weight value into the file: */
 	fprintf(fp_network_data, "\t\t<Weight value = \"%.63f\" input_connection = \"Neuron\" input_position = \"%i\"></Weight>\n",
 		*(*(**weight_values_master_pointer + ewv_neuron_index) + ewv_input_index),
-		input_node_pointer->getGlobalInputIndex());
+		input_node_pointer->getGlobalNodeIndex());
 }
 
 
@@ -389,5 +396,5 @@ void Weight_node::dumpWeightDataPattern(FILE * fp_network_data)
 	/* Print weight value into the file: */
 	fprintf(fp_network_data, "\t\t<Weight value = \"%.63f\" input_connection = \"Pattern\" input_position = \"%i\"></Weight>\n",
 		*(*(**weight_values_master_pointer + ewv_neuron_index) + ewv_input_index),
-		input_node_pointer->getGlobalInputIndex());
+		input_node_pointer->getGlobalNodeIndex());
 }

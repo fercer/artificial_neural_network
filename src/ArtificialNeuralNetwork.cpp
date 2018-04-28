@@ -7,10 +7,11 @@
 
 ArtificialNeuralNetwork::ArtificialNeuralNetwork()
 {
+	compute_network_derivatives = true;
+
 	inputs_count = 0;
 	outputs_count = 0;
 	neurons_count = 0;
-	weights_in_each_neuron = NULL;
 	weights_count = 0;
 
 	network_current_time = 1;
@@ -19,15 +20,151 @@ ArtificialNeuralNetwork::ArtificialNeuralNetwork()
 	network_neurons = NULL;
 	network_output_nodes = NULL;
 	
-	self_network_weight_values = NULL;
-	self_network_weight_derivatives_values = NULL;
-	self_network_weight_values_pointer = &self_network_weight_values;
-	self_network_weight_derivatives_values_pointer = &self_network_weight_derivatives_values;
-	
-	network_weight_values_master_pointer = &self_network_weight_values_pointer;
-	network_weight_derivatives_values_master_pointer = &self_network_weight_derivatives_values_pointer;
+	input_pattern_master_pointer = NULL;
 
 	sprintf(ann_log_filename, "NULL");
+}
+
+
+
+ArtificialNeuralNetwork::ArtificialNeuralNetwork(const bool src_compute_network_derivatives)
+{
+	compute_network_derivatives = src_compute_network_derivatives;
+
+	inputs_count = 0;
+	outputs_count = 0;
+	neurons_count = 0;
+	weights_count = 0;
+
+	network_current_time = 1;
+
+	network_input_nodes = NULL;
+	network_neurons = NULL;
+	network_output_nodes = NULL;
+
+	input_pattern_master_pointer = NULL;
+
+	sprintf(ann_log_filename, "NULL");
+}
+
+
+
+ArtificialNeuralNetwork::ArtificialNeuralNetwork(const ArtificialNeuralNetwork & src_ann)
+{
+	this->inputs_count = src_ann.inputs_count;
+	this->outputs_count = src_ann.outputs_count;
+	this->neurons_count = src_ann.neurons_count;
+	this->weights_count = src_ann.weights_count;
+
+	this->compute_network_derivatives = src_ann.compute_network_derivatives;
+
+	this->network_input_nodes = (Input_pattern**) malloc(this->inputs_count * sizeof(Input_pattern*));
+	this->network_neurons = (Neuron**) malloc(this->neurons_count * sizeof(Neuron*));
+	this->network_output_nodes = (Neuron**) malloc(this->outputs_count * sizeof(Neuron*));
+
+	for (unsigned int input_index = 0; input_index < this->inputs_count; input_index++)
+	{
+		*(this->network_input_nodes + input_index) = new Input_pattern(input_index);
+		(*(this->network_input_nodes + input_index))->setInputPointer(&input_pattern_master_pointer);
+	}
+
+	for (unsigned int neuron_index = 0; neuron_index < this->inputs_count; neuron_index++)
+	{
+		*(this->network_neurons + neuron_index) = new Neuron(*(*(src_ann.network_neurons + neuron_index)));
+	}
+
+	/* Redirect the pointers to the current network's neurons */
+	for (unsigned int neuron_index = 0; neuron_index < this->neurons_count; neuron_index++)
+	{
+		const unsigned int current_inputs_count = (*(this->network_neurons + neuron_index))->getInputsCount();
+
+		for (unsigned int weighted_input_index = 0; weighted_input_index < current_inputs_count; weighted_input_index++)
+		{
+			/* Get the current's global input index in the source's network */
+			Input_node * current_input_pointer = (*(this->network_neurons + neuron_index))->getInputNodePointer(weighted_input_index);
+
+			/* The bias will have a NULL pointer, for the other weighted inputs, it is changed */
+			if (current_input_pointer)
+			{
+				const unsigned int current_input_global_index = current_input_pointer->getGlobalNodeIndex();
+				/* Change the pointer to this network's neuron */
+				(*(this->network_neurons + neuron_index))->setInputNodePointer(*(this->network_neurons + current_input_global_index), weighted_input_index);
+			}
+		}
+	}
+
+	for (unsigned int output_index = 0; output_index < this->outputs_count; output_index++)
+	{
+		const unsigned int current_neuron_position = (*(src_ann.network_output_nodes + output_index))->getGlobalNodeIndex();
+		*(this->network_output_nodes + output_index) = *(this->network_neurons + current_neuron_position);
+	}
+
+
+	this->input_pattern_master_pointer = src_ann.input_pattern_master_pointer;
+
+	this->network_current_time = 0;
+}
+
+
+
+ArtificialNeuralNetwork & ArtificialNeuralNetwork::operator=(const ArtificialNeuralNetwork & src_ann)
+{
+	if (this != &src_ann)
+	{
+		this->inputs_count = src_ann.inputs_count;
+		this->outputs_count = src_ann.outputs_count;
+		this->neurons_count = src_ann.neurons_count;
+		this->weights_count = src_ann.weights_count;
+
+		this->compute_network_derivatives = src_ann.compute_network_derivatives;
+
+		this->network_input_nodes = (Input_pattern**)malloc(this->inputs_count * sizeof(Input_pattern*));
+		this->network_neurons = (Neuron**)malloc(this->neurons_count * sizeof(Neuron*));
+		this->network_output_nodes = (Neuron**)malloc(this->outputs_count * sizeof(Neuron*));
+
+		for (unsigned int input_index = 0; input_index < this->inputs_count; input_index++)
+		{
+			*(this->network_input_nodes + input_index) = new Input_pattern(input_index);
+			(*(this->network_input_nodes + input_index))->setInputPointer(&input_pattern_master_pointer);
+		}
+
+		for (unsigned int neuron_index = 0; neuron_index < this->neurons_count; neuron_index++)
+		{
+			*(this->network_neurons + neuron_index) = new Neuron(*(*(src_ann.network_neurons + neuron_index)));
+		}
+
+		/* Redirect the pointers to the current network's neurons */
+		for (unsigned int neuron_index = 0; neuron_index < this->neurons_count; neuron_index++)
+		{
+			const unsigned int current_inputs_count = (*(this->network_neurons + neuron_index))->getInputsCount();
+
+			for (unsigned int weighted_input_index = 0; weighted_input_index < current_inputs_count; weighted_input_index++)
+			{
+				/* Get the current's global input index in the source's network */
+				Input_node * current_input_pointer = (*(this->network_neurons + neuron_index))->getInputNodePointer(weighted_input_index);
+
+				/* The bias will have a NULL pointer, for the other weighted inputs, it is changed */
+				if (current_input_pointer)
+				{
+					const unsigned int current_input_global_index = current_input_pointer->getGlobalNodeIndex();
+					/* Change the pointer to this network's neuron */
+					(*(this->network_neurons + neuron_index))->setInputNodePointer(*(this->network_neurons + current_input_global_index), weighted_input_index);
+				}
+			}
+		}
+
+		for (unsigned int output_index = 0; output_index < this->outputs_count; output_index++)
+		{
+			const unsigned int current_neuron_position = (*(src_ann.network_output_nodes + output_index))->getGlobalNodeIndex();
+			*(this->network_output_nodes + output_index) = *(this->network_neurons + current_neuron_position);
+		}
+
+		this->input_pattern_master_pointer = src_ann.input_pattern_master_pointer;
+
+		this->network_current_time = 0;
+	}
+
+	return *this;
 }
 
 
@@ -57,14 +194,6 @@ ArtificialNeuralNetwork::~ArtificialNeuralNetwork()
 	{
 		free(network_output_nodes);
 	}
-
-	deallocateNetworkMemory();
-
-	if (weights_in_each_neuron)
-	{
-		free(weights_in_each_neuron);
-	}
-
 }
 
 
@@ -72,53 +201,6 @@ ArtificialNeuralNetwork::~ArtificialNeuralNetwork()
 // Prints the current solution (a 2D image with the hyperplanes that separates the data is intended)
 void ArtificialNeuralNetwork::printSolution()
 {
-}
-
-
-
-void ArtificialNeuralNetwork::allocateNetworkMemory()
-{
-	if (!self_network_weight_derivatives_values)
-	{
-		self_network_weight_values = (double**)malloc(neurons_count * sizeof(double*));
-		self_network_weight_derivatives_values = (double***)malloc(neurons_count * sizeof(double**));
-
-		for (unsigned int neuron_index = 0; neuron_index < neurons_count; neuron_index++)
-		{
-			*(self_network_weight_values + neuron_index) = (double*)malloc(*(weights_in_each_neuron + neuron_index) * sizeof(double));
-			*(self_network_weight_derivatives_values + neuron_index) = (double**)malloc(*(weights_in_each_neuron + neuron_index) * sizeof(double*));
-
-			for (unsigned int input_index = 0; input_index < *(weights_in_each_neuron + neuron_index); input_index++)
-			{
-				*(*(self_network_weight_derivatives_values + neuron_index) + input_index) = (double*)malloc(outputs_count * sizeof(double));
-			}
-		}
-	}
-}
-
-
-
-void ArtificialNeuralNetwork::deallocateNetworkMemory()
-{
-	if (self_network_weight_derivatives_values)
-	{
-		for (unsigned int neuron_index = 0; neuron_index < neurons_count; neuron_index++)
-		{
-			for (unsigned int input_index = 0; input_index < *(weights_in_each_neuron + neuron_index); input_index++)
-			{
-				free(*(*(self_network_weight_derivatives_values + neuron_index) + input_index));
-			}
-			free(*(self_network_weight_derivatives_values + neuron_index));
-
-			free(*(self_network_weight_values + neuron_index));
-		}
-
-		free(self_network_weight_derivatives_values);
-		free(self_network_weight_values);
-
-		self_network_weight_derivatives_values = NULL;
-		self_network_weight_values = NULL;
-	}
 }
 
 
@@ -136,8 +218,8 @@ void ArtificialNeuralNetwork::addInputNode(const unsigned int src_input_position
 	{
 		network_input_nodes = (Input_pattern **)malloc(sizeof(Input_pattern*));
 	}
-	*(network_input_nodes + inputs_count) = new Input_pattern;
-	(*(network_input_nodes + inputs_count))->setInputPointerPosition(src_input_position);
+	*(network_input_nodes + inputs_count) = new Input_pattern(src_input_position);
+	(*(network_input_nodes + inputs_count))->setInputPointer(&input_pattern_master_pointer);
 
 	inputs_count++;
 }
@@ -158,7 +240,7 @@ void ArtificialNeuralNetwork::addNeuron()
 		network_neurons = (Neuron **)malloc(sizeof(Neuron*));
 	}
 
-	*(network_neurons + neurons_count) = new Neuron(neurons_count, outputs_count, network_weight_values_master_pointer, network_weight_derivatives_values_master_pointer);
+	*(network_neurons + neurons_count) = new Neuron(neurons_count, outputs_count, compute_network_derivatives);
 
 	neurons_count++;
 }
@@ -185,16 +267,22 @@ void ArtificialNeuralNetwork::addOutputNode(const unsigned int src_neuron_positi
 
 
 
-void ArtificialNeuralNetwork::setNetworkWeights(double * src_weights_and_bias, const bool deep_copy)
+void ArtificialNeuralNetwork::setNetworkWeights(double **** src_weights_and_bias)
 {
-
+	for (unsigned int neuron_index = 0; neuron_index < neurons_count; neuron_index++)
+	{
+		(*(network_neurons + neuron_index))->makeExternalWeightValues(src_weights_and_bias, NULL);
+	}
 }
 
 
 
-void ArtificialNeuralNetwork::setNetworkWeightsDerivatives(double ** src_weights_and_bias_derivatives, const bool deep_copy)
+void ArtificialNeuralNetwork::setNetworkWeightsDerivatives(double **** src_weights_and_bias_derivatives)
 {
-
+	for (unsigned int neuron_index = 0; neuron_index < neurons_count; neuron_index++)
+	{
+		(*(network_neurons + neuron_index))->makeExternalWeightValues(NULL, src_weights_and_bias_derivatives);
+	}
 }
 
 
@@ -233,40 +321,6 @@ void ArtificialNeuralNetwork::loadNetworkData(const char * src_filename)
 		}
 		outputs_count++;
 	}
-
-	// Iterate over the Neurons to know how many connections has each neuron.
-	for (xml_node<> * neuron_node = root_node->first_node("Neuron"); neuron_node; neuron_node = neuron_node->next_sibling())
-	{
-		if (strcmp(neuron_node->name(), "Neuron") != 0)
-		{
-			continue;
-		}
-
-		if (neurons_count == 0) {
-			weights_in_each_neuron = (unsigned int *)malloc(sizeof(unsigned int));
-		}
-		else
-		{
-			unsigned int * weights_in_each_neuron_swap = weights_in_each_neuron;
-			weights_in_each_neuron = (unsigned int *)malloc((neurons_count + 1) * sizeof(unsigned int));
-			memcpy(weights_in_each_neuron, weights_in_each_neuron_swap, neurons_count * sizeof(unsigned int));
-			free(weights_in_each_neuron_swap);
-		}
-
-		for (xml_node<> * weight_node = neuron_node->first_node("Weight"); weight_node; weight_node = weight_node->next_sibling())
-		{
-			if (strcmp(weight_node->name(), "Weight") != 0)
-			{
-				continue;
-			}
-
-			*(weights_in_each_neuron + neurons_count) = *(weights_in_each_neuron + neurons_count) + 1;
-		}
-		weights_count += *(weights_in_each_neuron + neurons_count);
-		neurons_count++;
-	}
-
-	allocateNetworkMemory();
 
 	// Iterate over the Inputs
 	for (xml_node<> * input_node = root_node->first_node("Input"); input_node; input_node = input_node->next_sibling())
@@ -331,7 +385,7 @@ void ArtificialNeuralNetwork::loadNetworkData(const char * src_filename)
 		free(function_parameters);
 		
 		xml_node<> * bias_node = neuron_node->first_node("Bias");
-		*(*(**network_weight_values_master_pointer + neuron_position)) = atof(bias_node->first_attribute("value")->value());
+		(*(network_neurons + neuron_position))->addWeightedInput(Weight_node::WIT_BIAS, NULL, atof(bias_node->first_attribute("value")->value()));
 
 		for (xml_node<> * weight_node = neuron_node->first_node("Weight"); weight_node; weight_node = weight_node->next_sibling())
 		{
@@ -345,17 +399,23 @@ void ArtificialNeuralNetwork::loadNetworkData(const char * src_filename)
 			const int input_position_temp = atoi(weight_node->first_attribute("input_position")->value());
 
 			char * input_connection_temp = weight_node->first_attribute("input_connection")->value();
-
-			weights_count++;
-
+			
 			if (strcmp(input_connection_temp, "Pattern") == 0)
 			{
-				(*(network_neurons + neuron_position))->addInputNode(*(network_input_nodes + input_position_temp), weight_value_temp, Weight_node::WIT_PATTERN);
+				(*(network_neurons + neuron_position))->addWeightedInput(
+					Weight_node::WIT_PATTERN,
+					*(network_input_nodes + input_position_temp),
+					weight_value_temp);
 			}
 			else // Neuron
 			{
-				(*(network_neurons + neuron_position))->addInputNode(*(network_neurons + input_position_temp), weight_value_temp, Weight_node::WIT_NEURON);
+				(*(network_neurons + neuron_position))->addWeightedInput(
+					Weight_node::WIT_NEURON,
+					*(network_neurons + input_position_temp),
+					weight_value_temp);
 			}
+
+			weights_count++;
 		}
 	}
 
@@ -375,65 +435,6 @@ void ArtificialNeuralNetwork::loadNetworkData(const char * src_filename)
 
 
 
-void ArtificialNeuralNetwork::loadNetworkData(const ArtificialNeuralNetwork &src_ann)
-{
-	this->inputs_count = src_ann.inputs_count;
-	this->outputs_count = src_ann.outputs_count;
-	this->neurons_count = src_ann.neurons_count;
-	this->weights_in_each_neuron = (unsigned int *)malloc(this->neurons_count * sizeof(unsigned int));
-	memcpy(this->weights_in_each_neuron, src_ann.weights_in_each_neuron, this->neurons_count * sizeof(unsigned int));
-	this->weights_count = src_ann.weights_count;
-
-	Input_pattern ** network_input_nodes;
-	Neuron ** network_neurons;
-	Neuron ** network_output_nodes;
-	
-	allocateNetworkMemory();
-
-	for (unsigned int input_index = 0; input_index < this->inputs_count; input_index++)
-	{
-		this->addInputNode((*(src_ann.network_input_nodes + input_index))->getInputPointerPosition());
-	}
-
-	double * activation_function_parameter_temp;
-	unsigned int current_neuron_activation_function_parameter_count;
-	for (unsigned int neuron_index = 0; neuron_index < this->neurons_count; neuron_index++)
-	{
-		this->addNeuron();
-
-		// Copy the activation function employed in the original neural network:
-		current_neuron_activation_function_parameter_count = (*(src_ann.network_neurons + neuron_index))->getActivationFunctionParametersCount();
-		if (current_neuron_activation_function_parameter_count > 0)
-		{
-			activation_function_parameter_temp = (double*)malloc(current_neuron_activation_function_parameter_count * sizeof(double));
-			for (unsigned int parameter_index = 0; parameter_index < current_neuron_activation_function_parameter_count; parameter_index++)
-			{
-				*(activation_function_parameter_temp + parameter_index) = (*(src_ann.network_neurons + neuron_index))->getActivationFunctionParameterValue(parameter_index);
-			}
-
-			(*(this->network_neurons + neuron_index))->setActivationFunction((*(src_ann.network_neurons + neuron_index))->getActivationFunctionType(), activation_function_parameter_temp);
-
-			free(activation_function_parameter_temp);
-		}
-		else
-		{
-			(*(this->network_neurons + neuron_index))->setActivationFunction((*(src_ann.network_neurons + neuron_index))->getActivationFunctionType(), NULL);
-		}
-
-		// Copy the weighted inputs configuration: 
-		for (unsigned int weight_index = 0; weight_index < *(this->weights_in_each_neuron + neuron_index); weight_index++)
-		{
-			(*(this->network_neurons + neuron_index))->addInputNode(
-				(*(src_ann.network_neurons + neuron_index))->get
-			)
-		}
-	}
-
-	void addOutputNode(const unsigned int src_neuron_position);
-}
-
-
-
 // Saves the current state of the network to a file
 void ArtificialNeuralNetwork::saveNetworkState()
 {
@@ -449,64 +450,19 @@ void ArtificialNeuralNetwork::saveNetworkState()
 	// Print the inputs of the network:
 	for (unsigned int input_index = 0; input_index < inputs_count; input_index++)
 	{
-		fprintf(fp_log, "\t<Input position = \"%i\"></Input>\n",(*(network_input_nodes + input_index))->getInputPointerPosition());
+		(*(network_input_nodes + input_index))->dumpNodeData(fp_log);
 	}
 
 	// Print the neurons with their respective weights and activation functions:
 	for (unsigned int neuron_index = 0; neuron_index < neurons_count; neuron_index++)
 	{
-		fprintf(fp_log, "\t<Neuron position = \"%i\">\n", neuron_index);
-		fprintf(fp_log, "\t\t<Bias value = \"%.63f\"></Bias>\n", (*(network_neurons + neuron_index))->getWeightValue(0));
-		for (unsigned int neuron_input_index = 1; neuron_input_index <= (*(network_neurons + neuron_index))->getInputsCount(); neuron_input_index++)
-		{
-			fprintf(fp_log, "\t\t<Weight value = \"%.63f\" input_connection = ",
-			(*(network_neurons + neuron_index))->getWeightValue(neuron_input_index));
-
-			switch ((*(network_neurons + neuron_index))->getInputType(neuron_input_index))
-			{
-			case Weight_node::WIT_NEURON:
-				fprintf(fp_log, "\"Neuron\"");
-				break;
-			case Weight_node::WIT_PATTERN:
-				fprintf(fp_log, "\"Pattern\"");
-				break;
-			}
-
-			fprintf(fp_log, " input_position = \"%i\"></Weight>\n",
-				(*(network_neurons + neuron_index))->getInputPosition(neuron_input_index));
-		}
-
-		// Print the activation function type:
-		fprintf(fp_log, "\t\t<ActivationFunction type = ");
-		switch ((*(network_neurons + neuron_index))->getActivationFunctionType())
-		{
-		case Neuron::ACT_SIGMOID:
-			fprintf(fp_log, "\"ACT_SIGMOID\">\n");
-			break;
-
-		case Neuron::ACT_IDENTITY:
-			fprintf(fp_log, "\"ACT_IDENTITY\">\n");
-			break;
-
-		case Neuron::ACT_HYPERBOLIC_TANGENT:
-			fprintf(fp_log, "\"ACT_HYPERBOLIC_TANGENT\">\n");
-			break;
-		}
-
-		// Print the activation function's parameters:
-		for (unsigned int parameter_index = 0; parameter_index < (*(network_neurons + neuron_index))->getActivationFunctionParametersCount(); parameter_index++)
-		{
-			fprintf(fp_log, "\t\t\t<Parameter value = \"%.63f\"></Parameter>\n", 
-				(*(network_neurons + neuron_index))->getActivationFunctionParameterValue(parameter_index));
-		}
-		fprintf(fp_log, "\t\t</ActivationFunction>\n");
-		fprintf(fp_log, "\t</Neuron>\n");
+		(*(network_neurons + neuron_index))->dumpNodeData(fp_log);
 	}
 
 	// Print the inputs of the network:
 	for (unsigned int output_index = 0; output_index < outputs_count; output_index++)
 	{
-		fprintf(fp_log, "\t<Output input_position=\"%i\"></Output>\n", (*(network_output_nodes + output_index))->getNeuronPosition());
+		fprintf(fp_log, "\t<Output input_position=\"%i\"></Output>\n", (*(network_output_nodes + output_index))->getGlobalNodeIndex());
 	}
 
 	fprintf(fp_log, "</NeuralNetwork>");
@@ -515,13 +471,17 @@ void ArtificialNeuralNetwork::saveNetworkState()
 
 
 
-void ArtificialNeuralNetwork::predict(double * test_input, double * dst_prediction)//, const double threshold)
+void ArtificialNeuralNetwork::setInputPatternPointer(double * src_input_pattern_pointer)
 {
-	// Assign the inputs to the testing array pointer
-	for (unsigned int i = 0; i < inputs_count; i++)
-	{
-		(*(network_input_nodes + i))->setInputPointer(test_input);
-	}
+	input_pattern_master_pointer = src_input_pattern_pointer;
+}
+
+
+
+void ArtificialNeuralNetwork::predict(double * src_input_pattern_pointer, double * dst_prediction)//, const double threshold)
+{
+	// Assign the input pattern master pointer to the testing array pointer
+	input_pattern_master_pointer = test_input;
 
 	// Save the output to the destination prediction array
 	for (unsigned int i = 0; i < outputs_count; i++)
@@ -539,15 +499,7 @@ Input_node * ArtificialNeuralNetwork::getOutputNode(const unsigned int src_outpu
 	return *(network_output_nodes + src_output_index);
 }
 
-double ** ArtificialNeuralNetwork::getNetworkWeightsDerivatives()
-{
-	return network_weights_derivative_values;
-}
 
-double * ArtificialNeuralNetwork::getNetworkWeights()
-{
-	return network_weights_values;
-}
 
 void ArtificialNeuralNetwork::resetNetworkTime()
 {

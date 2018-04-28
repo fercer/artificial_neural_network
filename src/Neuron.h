@@ -42,23 +42,19 @@ public:
 	void backpropagateNodeError(const unsigned int src_output_index);
 
 	void setActivationFunction(ACTIVATION_FUNCTION_TYPE src_activation_function, double * src_function_parameters);
-
-	ACTIVATION_FUNCTION_TYPE getActivationFunctionType();
-	ActivationFunctionBase * getActivationFunctionPointer();
-
+	
 	// Changes the current pointer to the passed as argument:
-	void assignInputNodePointer(Input_node * src_input_node_pointer, const unsigned int src_input_index);
-	Weight_node * getWeightedConnection(const unsigned int src_input_index);
-
+	void setInputNodePointer(Input_node * src_input_node_pointer, const unsigned int src_input_index);
+	Input_node *getInputNodePointer(const unsigned int src_input_index);
+	
 	void makeExternalWeightValues(double **** src_weight_values_master_pointer = NULL, double **** src_weight_derivatives_values_master_pointer = NULL);
 
 	void makeInternalWeightValues(const bool make_weights_values_internal = true, const bool make_weights_derivatives_values_internal = true);
 
-	unsigned int getNeuronPosition();
 	unsigned int getInputsCount();
 	void resetNodeCurrentTime();
 
-	void sumpNeuronData(FILE * fp_network_data);
+	void dumpNodeData(FILE * fp_network_data);
 
 private:
 	typedef struct WEIGHTS_LIST_NODE {
@@ -66,7 +62,9 @@ private:
 		WEIGHTS_LIST_NODE * next_weighted_input;
 	} WEIGHTS_LIST_NODE;
 	
-	unsigned int neuron_position;
+	Weight_node ** weights_array;
+	bool dump_weights_list_into_array_required;
+
 	unsigned int node_current_time;
 	unsigned int neuron_inputs_count;
 
@@ -82,7 +80,7 @@ private:
 	double **** weight_derivatives_values_master_pointer;
 
 	WEIGHTS_LIST_NODE * weights_list_tail;
-	WEIGHTS_LIST_NODE * weights_list_head;
+	WEIGHTS_LIST_NODE weights_list_head;
 
 	ACTIVATION_FUNCTION_TYPE neuron_activation_function_type;
 	ActivationFunctionBase * neuron_activation_function;
@@ -90,6 +88,8 @@ private:
 	double (Neuron::*get_input_method)(const unsigned long long src_current_network_time);
 	double getInputOnly(const unsigned long long src_current_network_time);
 	double getInputWithDerivative(const unsigned long long src_current_network_time);
+	
+	void dumpWeightsListIntoArray();
 };
 
 #endif //NEURON_H_INCLUDED

@@ -2,10 +2,12 @@
 
 Neuron::Neuron(const unsigned int src_neuron_position, const unsigned int src_outputs_count, const bool src_compute_derivatives, double **** src_weight_values_master_pointer = NULL, double **** src_weight_derivatives_values_master_pointer = NULL)
 {
+	weights_array = NULL;
+	dump_weights_list_into_array_required = false;
 	neuron_activation_function = NULL;
 	node_current_time = 0;
 
-	neuron_position = src_neuron_position;
+	global_node_index = src_neuron_position;
 	neuron_outputs_count = src_outputs_count;
 	compute_derivatives = src_compute_derivatives;
 	if (compute_derivatives)
@@ -23,28 +25,20 @@ Neuron::Neuron(const unsigned int src_neuron_position, const unsigned int src_ou
 	weight_derivatives_values_master_pointer = src_weight_derivatives_values_master_pointer;
 
 	/* Allocate the memory for the bias: */
-	weights_list_head = new WEIGHTS_LIST_NODE;
-	weights_list_head->weighted_input = new Weight_node(
-		neuron_outputs_count, /*Pass the number of outputs of the network */
-		Weight_node::WIT_BIAS, /* Define the first weight as the bias */
-		NULL, /* The bias does not have an input node to be connected */
-		0.0, /* The bias is intialized with 0 value */
-		neuron_position, /* Pass this neuron position in the network */
-		0, /* This is the first weight in the list */
-		weight_values_master_pointer, /* Use either, the external weight value, or the self allocated */ 
-		weight_derivatives_values_master_pointer/* Use either, the external weight derivatives values, or the self allocated */
-	);
-
-	weights_list_head->next_weighted_input = NULL;
-	weights_list_tail = weights_list_head;
-	neuron_inputs_count = 1;
+	weights_list_head.weighted_input = NULL;
+	weights_list_head.next_weighted_input = NULL;
+	weights_list_tail = NULL;
+	
+	neuron_inputs_count = 0;
 }
 
 
 
 Neuron::Neuron(const Neuron &src_neuron)
 {
-	this->neuron_position = src_neuron.neuron_position;
+	this->weights_array = NULL;
+	this->dump_weights_list_into_array_required = false;
+	this->global_node_index = src_neuron.global_node_index;
 	this->node_current_time = src_neuron.node_current_time;
 	this->neuron_outputs_count = src_neuron.neuron_outputs_count;
 	this->neuron_inputs_count = src_neuron.neuron_inputs_count;
@@ -65,14 +59,12 @@ Neuron::Neuron(const Neuron &src_neuron)
 	this->weight_derivatives_values_master_pointer = src_neuron.weight_derivatives_values_master_pointer;
 	
 	/* Allocate the memory for the bias: */
-	this->weights_list_head = new WEIGHTS_LIST_NODE;
-	this->weights_list_head->weighted_input = new Weight_node(*(src_neuron.weights_list_head->weighted_input));
-	this->weights_list_head->next_weighted_input = NULL;
-
-	this->weights_list_tail = this->weights_list_head;
+	this->weights_list_head.next_weighted_input = NULL;
+	this->weights_list_head.weighted_input = NULL;
+	this->weights_list_tail = &(this->weights_list_head);
 	
 	WEIGHTS_LIST_NODE * current_src_weight_node_pointer;
-	WEIGHTS_LIST_NODE * next_src_weight_node_pointer = src_neuron.weights_list_head->next_weighted_input;
+	WEIGHTS_LIST_NODE * next_src_weight_node_pointer = src_neuron.weights_list_head.next_weighted_input;
 
 	while(next_src_weight_node_pointer)
 	{
@@ -84,7 +76,10 @@ Neuron::Neuron(const Neuron &src_neuron)
 
 		this->weights_list_tail->weighted_input = new Weight_node(*(current_src_weight_node_pointer->weighted_input));
 		this->weights_list_tail->next_weighted_input = NULL;
+		dump_weights_list_into_array_required = true;
 	}
+
+	dumpWeightsListIntoArray();
 
 	this->neuron_activation_function_type = src_neuron.neuron_activation_function_type;
 	switch (this->neuron_activation_function_type)
@@ -107,8 +102,10 @@ Neuron & Neuron::operator= (const Neuron &src_neuron)
 {
 	if (this != &src_neuron)
 	{
+		this->weights_array = NULL;
+		this->dump_weights_list_into_array_required = false;
 
-		this->neuron_position = src_neuron.neuron_position;
+		this->global_node_index = src_neuron.global_node_index;
 		this->node_current_time = src_neuron.node_current_time;
 		this->neuron_outputs_count = src_neuron.neuron_outputs_count;
 		this->neuron_inputs_count = src_neuron.neuron_inputs_count;
@@ -129,14 +126,12 @@ Neuron & Neuron::operator= (const Neuron &src_neuron)
 		this->weight_derivatives_values_master_pointer = src_neuron.weight_derivatives_values_master_pointer;
 
 		/* Allocate the memory for the bias: */
-		this->weights_list_head = new WEIGHTS_LIST_NODE;
-		this->weights_list_head->weighted_input = new Weight_node(*(src_neuron.weights_list_head->weighted_input));
-		this->weights_list_head->next_weighted_input = NULL;
-
-		this->weights_list_tail = this->weights_list_head;
+		this->weights_list_head.weighted_input = NULL;
+		this->weights_list_head.next_weighted_input = NULL;
+		this->weights_list_tail = &(this->weights_list_head);
 
 		WEIGHTS_LIST_NODE * current_src_weight_node_pointer;
-		WEIGHTS_LIST_NODE * next_src_weight_node_pointer = src_neuron.weights_list_head->next_weighted_input;
+		WEIGHTS_LIST_NODE * next_src_weight_node_pointer = src_neuron.weights_list_head.next_weighted_input;
 
 		while (next_src_weight_node_pointer)
 		{
@@ -148,7 +143,10 @@ Neuron & Neuron::operator= (const Neuron &src_neuron)
 
 			this->weights_list_tail->weighted_input = new Weight_node(*(current_src_weight_node_pointer->weighted_input));
 			this->weights_list_tail->next_weighted_input = NULL;
+			dump_weights_list_into_array_required = true;
 		}
+
+		dumpWeightsListIntoArray();
 
 		this->neuron_activation_function_type = src_neuron.neuron_activation_function_type;
 		switch (this->neuron_activation_function_type)
@@ -183,13 +181,19 @@ Neuron::~Neuron()
 
 	/* Free the memory allocated for the weighted inputs */
 	WEIGHTS_LIST_NODE * current_weight_node_pointer;
-	WEIGHTS_LIST_NODE * next_weight_node_pointer = weights_list_head;
-	do
+	WEIGHTS_LIST_NODE * next_weight_node_pointer = weights_list_head.next_weighted_input;
+
+	while (next_weight_node_pointer)
 	{
 		current_weight_node_pointer = next_weight_node_pointer;
 		next_weight_node_pointer = current_weight_node_pointer->next_weighted_input;
 		delete current_weight_node_pointer;
-	} while (next_weight_node_pointer);
+	}
+
+	if (weights_array)
+	{
+		free(weights_array);
+	}
 }
 
 
@@ -205,7 +209,7 @@ void Neuron::addWeightedInput(Weight_node::WEIGHT_INPUT_TYPE src_input_type, Inp
 		src_input_type, /* Define the first weight as the bias */
 		src_input_node_pointer, /* The bias does not have an input node to be connected */
 		src_weight_value, /* The bias is intialized with 0 value */
-		neuron_position, /* Pass this neuron position in the network */
+		global_node_index, /* Pass this neuron position in the network */
 		neuron_inputs_count, /* This is the first weight in the list */
 		weight_values_master_pointer, /* Use either, the external weight value, or the self allocated */
 		weight_derivatives_values_master_pointer/* Use either, the external weight derivatives values, or the self allocated */
@@ -213,8 +217,38 @@ void Neuron::addWeightedInput(Weight_node::WEIGHT_INPUT_TYPE src_input_type, Inp
 
 	weights_list_tail->next_weighted_input = NULL;
 	neuron_inputs_count++;
+	dump_weights_list_into_array_required = true;
 }
 
+
+void Neuron::dumpWeightsListIntoArray()
+{
+	if (!dump_weights_list_into_array_required)
+	{
+		return;
+	}
+
+	if (weights_array)
+	{
+		free(weights_array);
+	}
+
+	weights_array = (Weight_node**)malloc(neuron_inputs_count * sizeof(Weight_node));
+
+	WEIGHTS_LIST_NODE * current_weight_node_pointer;
+	WEIGHTS_LIST_NODE * next_weight_node_pointer = weights_list_head.next_weighted_input;
+
+	unsigned int weighted_input_index = 0;
+	while (next_weight_node_pointer)
+	{
+		current_weight_node_pointer = next_weight_node_pointer;
+		next_weight_node_pointer = current_weight_node_pointer->next_weighted_input;
+
+		*(weights_array + weighted_input_index) = current_weight_node_pointer->weighted_input;
+	}
+
+	dump_weights_list_into_array_required = false;
+}
 
 
 unsigned int Neuron::getInputsCount()
@@ -241,9 +275,9 @@ void Neuron::addNodeErrorContribution(const double src_error_contribution, const
 void Neuron::backpropagateNodeError()
 {
 	WEIGHTS_LIST_NODE * current_weight_node_pointer;
-	WEIGHTS_LIST_NODE * next_weight_node_pointer = weights_list_head;
+	WEIGHTS_LIST_NODE * next_weight_node_pointer = weights_list_head.next_weighted_input;
 
-	do
+	while (next_weight_node_pointer)
 	{
 		current_weight_node_pointer = next_weight_node_pointer;
 		next_weight_node_pointer = current_weight_node_pointer->next_weighted_input;
@@ -252,7 +286,7 @@ void Neuron::backpropagateNodeError()
 		{
 			current_weight_node_pointer->weighted_input->setWeightsErrorContribution(*(neuron_error_contribution + output_index), output_index);
 		}
-	} while (next_weight_node_pointer);
+	}
 }
 
 
@@ -260,15 +294,15 @@ void Neuron::backpropagateNodeError()
 void Neuron::backpropagateNodeError(const unsigned int src_output_index)
 {
 	WEIGHTS_LIST_NODE * current_weight_node_pointer;
-	WEIGHTS_LIST_NODE * next_weight_node_pointer = weights_list_head;
+	WEIGHTS_LIST_NODE * next_weight_node_pointer = weights_list_head.next_weighted_input;
 
-	do
+	while (next_weight_node_pointer)
 	{
 		current_weight_node_pointer = next_weight_node_pointer;
 		next_weight_node_pointer = current_weight_node_pointer->next_weighted_input;
 
 		current_weight_node_pointer->weighted_input->setWeightsErrorContribution(*(neuron_error_contribution + src_output_index), src_output_index);
-	} while(next_weight_node_pointer);
+	}
 }
 
 
@@ -292,59 +326,20 @@ void Neuron::setActivationFunction(ACTIVATION_FUNCTION_TYPE src_activation_funct
 
 
 
-Neuron::ACTIVATION_FUNCTION_TYPE Neuron::getActivationFunctionType()
+void Neuron::setInputNodePointer(Input_node * src_input_node_pointer, const unsigned int src_input_index)
 {
-	return neuron_activation_function_type;
+	dumpWeightsListIntoArray();
+
+	(*(weights_array + src_input_index))->setInputNodePointer(src_input_node_pointer);
 }
 
 
 
-ActivationFunctionBase* Neuron::getActivationFunctionPointer()
+Input_node *  Neuron::getInputNodePointer(const unsigned int src_input_index)
 {
-	return neuron_activation_function;
-}
+	dumpWeightsListIntoArray();
 
-
-
-void Neuron::assignInputNodePointer(Input_node * src_input_node_pointer, const unsigned int src_input_index)
-{
-	WEIGHTS_LIST_NODE * current_weight_node_pointer;
-	WEIGHTS_LIST_NODE  * next_weight_node_pointer = weights_list_head;
-
-	unsigned int current_input_index = 0;
-	do
-	{
-		current_weight_node_pointer = next_weight_node_pointer;
-		next_weight_node_pointer = current_weight_node_pointer->next_weighted_input;
-		current_input_index++;
-	} while ((current_input_index < src_input_index) && next_weight_node_pointer);
-
-	current_weight_node_pointer->weighted_input->assignInputNodePointer(src_input_node_pointer);
-}
-
-
-
-Weight_node * Neuron::getWeightedConnection(const unsigned int src_input_index)
-{
-	WEIGHTS_LIST_NODE * current_weight_node_pointer;
-	WEIGHTS_LIST_NODE  * next_weight_node_pointer = weights_list_head;
-
-	unsigned int current_input_index = 0;
-	do 
-	{
-		current_weight_node_pointer = next_weight_node_pointer;
-		next_weight_node_pointer = current_weight_node_pointer->next_weighted_input;
-		current_input_index++;
-	} while ((current_input_index < src_input_index) && next_weight_node_pointer);
-
-	return current_weight_node_pointer->weighted_input;
-}
-
-
-
-unsigned int Neuron::getNeuronPosition()
-{
-	return neuron_position;
+	return (*(weights_array + src_input_index))->getInputNodePointer();
 }
 
 
@@ -355,14 +350,15 @@ void Neuron::resetNodeCurrentTime()
 	neuron_activation_function->resetActivationFunctionCurrentTime();
 
 	WEIGHTS_LIST_NODE * current_weight_node_pointer;
-	WEIGHTS_LIST_NODE * next_weight_node_pointer = weights_list_head;
-	do
+	WEIGHTS_LIST_NODE * next_weight_node_pointer = weights_list_head.next_weighted_input;
+
+	while (next_weight_node_pointer)
 	{
 		current_weight_node_pointer = next_weight_node_pointer;
 		next_weight_node_pointer = current_weight_node_pointer->next_weighted_input;
 
 		current_weight_node_pointer->weighted_input->resetWeightCurrentTime();
-	} while (next_weight_node_pointer);
+	}
 }
 
 
@@ -373,17 +369,17 @@ double Neuron::getInputOnly(const unsigned long long src_current_network_time)
 	{
 		double neuron_weighted_sum = 0.0;
 		WEIGHTS_LIST_NODE * current_weight_node_pointer;
-		WEIGHTS_LIST_NODE * next_weight_node_pointer;
-		do
+		WEIGHTS_LIST_NODE * next_weight_node_pointer = weights_list_head.next_weighted_input;
+
+		while (next_weight_node_pointer)
 		{
 			current_weight_node_pointer = next_weight_node_pointer;
 			next_weight_node_pointer = current_weight_node_pointer->next_weighted_input;
 
 			neuron_weighted_sum += current_weight_node_pointer->weighted_input->getWeightedInput(src_current_network_time);
-
-		} while (next_weight_node_pointer);
+		}
 		
-		response_to_input = neuron_activation_function->evaluateFunction(neuron_weighted_sum);
+		response_to_input = neuron_activation_function->evaluateFunction(neuron_weighted_sum, src_current_network_time);
 		node_current_time = src_current_network_time;
 	}
 
@@ -398,17 +394,17 @@ double Neuron::getInputWithDerivative(const unsigned long long src_current_netwo
 	{
 		double neuron_weighted_sum = 0.0;
 		WEIGHTS_LIST_NODE * current_weight_node_pointer;
-		WEIGHTS_LIST_NODE * next_weight_node_pointer;
-		do
+		WEIGHTS_LIST_NODE * next_weight_node_pointer = weights_list_head.next_weighted_input;
+
+		while (next_weight_node_pointer)
 		{
 			current_weight_node_pointer = next_weight_node_pointer;
 			next_weight_node_pointer = current_weight_node_pointer->next_weighted_input;
 
 			neuron_weighted_sum += current_weight_node_pointer->weighted_input->getWeightedInput(src_current_network_time);
-
-		} while (next_weight_node_pointer);
+		}
 		
-		response_to_input = neuron_activation_function->evaluateFunction(neuron_weighted_sum);
+		response_to_input = neuron_activation_function->evaluateFunction(neuron_weighted_sum, src_current_network_time);
 		derivative_response_to_input = neuron_activation_function->evaluateDerivative(neuron_weighted_sum);
 
 		memset(neuron_error_contribution, 0, neuron_outputs_count * sizeof(double));
@@ -423,15 +419,15 @@ double Neuron::getInputWithDerivative(const unsigned long long src_current_netwo
 void Neuron::makeExternalWeightValues(double **** src_weight_values_master_pointer = NULL, double **** src_weight_derivatives_values_master_pointer = NULL)
 {
 	WEIGHTS_LIST_NODE * current_weight_node_pointer;
-	WEIGHTS_LIST_NODE * next_weight_node_pointer = weights_list_head;
+	WEIGHTS_LIST_NODE * next_weight_node_pointer = weights_list_head.next_weighted_input;
 
-	do
+	while (next_weight_node_pointer)
 	{
 		current_weight_node_pointer = next_weight_node_pointer;
 		next_weight_node_pointer = current_weight_node_pointer->next_weighted_input;
 
 		current_weight_node_pointer->weighted_input->makeExternalWeigthValue(src_weight_values_master_pointer, src_weight_derivatives_values_master_pointer);
-	} while (next_weight_node_pointer);
+	}
 }
 
 
@@ -439,35 +435,35 @@ void Neuron::makeExternalWeightValues(double **** src_weight_values_master_point
 void Neuron::makeInternalWeightValues(const bool make_weights_values_internal = true, const bool make_weights_derivatives_values_internal = true)
 {
 	WEIGHTS_LIST_NODE * current_weight_node_pointer;
-	WEIGHTS_LIST_NODE * next_weight_node_pointer = weights_list_head;
+	WEIGHTS_LIST_NODE * next_weight_node_pointer = weights_list_head.next_weighted_input;
 
-	do
+	while (next_weight_node_pointer)
 	{
 		current_weight_node_pointer = next_weight_node_pointer;
 		next_weight_node_pointer = current_weight_node_pointer->next_weighted_input;
 
 		current_weight_node_pointer->weighted_input->makeInternalWeightValue(make_weights_values_internal, make_weights_derivatives_values_internal);
-	} while (next_weight_node_pointer);
+	}
 }
 
 
 
-void Neuron::sumpNeuronData(FILE * fp_network_data)
+void Neuron::dumpNodeData(FILE * fp_network_data)
 {
-	fprintf(fp_network_data, "\t<Neuron position = \"%i\">\n", neuron_position);
+	fprintf(fp_network_data, "\t<Neuron position = \"%i\">\n", global_node_index);
 
 	/* Dump the weighted connections data: */
 	WEIGHTS_LIST_NODE * current_weight_node_pointer;
-	WEIGHTS_LIST_NODE * next_weight_node_pointer = weights_list_head;
+	WEIGHTS_LIST_NODE * next_weight_node_pointer = weights_list_head.next_weighted_input;
 
-	do
+	while (next_weight_node_pointer)
 	{
 		current_weight_node_pointer = next_weight_node_pointer;
 		next_weight_node_pointer = current_weight_node_pointer->next_weighted_input;
 
 		current_weight_node_pointer->weighted_input->dumpWeightData(fp_network_data);
 
-	} while (next_weight_node_pointer);
+	}
 
 	/* Dump the activation function data: */
 	neuron_activation_function->dumpActivationFunctionData(fp_network_data);

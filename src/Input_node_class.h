@@ -1,22 +1,12 @@
 #ifndef INPUT_NODE_CLASS_H_INCLUDED
 #define INPUT_NODE_CLASS_H_INCLUDED
 
+#include <stdio.h>
 #include <stdlib.h>
 
 class Input_node
 {
 public:
-	Input_node()
-	{
-		global_input_index = 0;
-	}
-
-
-	Input_node(const unsigned int src_global_input_index)
-	{
-		global_input_index = src_global_input_index;
-	}
-
 	virtual ~Input_node() 
 	{
 	}
@@ -26,13 +16,15 @@ public:
 	virtual void addNodeErrorContribution(const double src_error_contribution, const unsigned int src_output_index) = 0;
 	virtual void backpropagateNodeError() = 0;
 
-	unsigned int getGlobalInputIndex()
+	unsigned int getGlobalNodeIndex()
 	{
-		return global_input_index;
+		return global_node_index;
 	}
+	
+	virtual void dumpNodeData(FILE * fp_network_data) = 0;
 
-private:
-	unsigned int global_input_index;
+protected:
+	unsigned int global_node_index;
 };
 
 #endif // INPUT_NODE_CLASS_H_INCLUDED

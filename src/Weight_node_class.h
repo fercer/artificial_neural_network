@@ -22,8 +22,9 @@ public:
 
 	~Weight_node();
 	
-	// Changes the current pointer to the passed as argument:
-	void assignInputNodePointer(Input_node * src_input_node_pointer);
+	// Sets/Gets the current input node pointer:
+	void setInputNodePointer(Input_node * src_input_node_pointer);
+	Input_node * getInputNodePointer();
 
 	// Computes the weighted sum of the inputs and their corresponding weights
 	double getWeightedInput(const unsigned long long src_current_network_time);
