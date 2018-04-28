@@ -6,12 +6,18 @@
 class Input_node
 {
 public:
+	Input_node()
+	{
+		global_input_index = 0;
+	}
+
+
 	Input_node(const unsigned int src_global_input_index)
 	{
 		global_input_index = src_global_input_index;
 	}
 
-	~Input_node() 
+	virtual ~Input_node() 
 	{
 	}
 

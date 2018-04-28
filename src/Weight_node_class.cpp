@@ -14,13 +14,19 @@ Weight_node::Weight_node(const unsigned int src_outputs_count, const WEIGHT_INPU
 	case WIT_BIAS:
 		set_weight_error_cotribution = &Weight_node::setBiasErrorContribution;
 		get_input_response = &Weight_node::getBias;
+		dump_weight_method = &Weight_node::dumpWeightDataBias;
 		break;
 
 	case WIT_PATTERN:
-		/* Same behaviour than the neuron input */
+		set_weight_error_cotribution = &Weight_node::setWeightErrorContribution;
+		get_input_response = &Weight_node::getWeightedInput;
+		dump_weight_method = &Weight_node::dumpWeightDataPattern;
+		break;
+
 	case WIT_NEURON:
 		set_weight_error_cotribution = &Weight_node::setWeightErrorContribution;
 		get_input_response = &Weight_node::getWeightedInput;
+		dump_weight_method = &Weight_node::dumpWeightDataNeuron;
 		break;
 	}
 	
@@ -122,13 +128,19 @@ Weight_node::Weight_node(const Weight_node & src_weight_node)
 	case WIT_BIAS:
 		this->set_weight_error_cotribution = &Weight_node::setBiasErrorContribution;
 		this->get_input_response = &Weight_node::getBias;
+		this->dump_weight_method = &Weight_node::dumpWeightDataBias;
 		break;
 
 	case WIT_PATTERN:
-		/* Same behaviour than the neuron input */
+		this->set_weight_error_cotribution = &Weight_node::setWeightErrorContribution;
+		this->get_input_response = &Weight_node::getWeightedInput;
+		this->dump_weight_method = &Weight_node::dumpWeightDataPattern;
+		break;
+
 	case WIT_NEURON:
 		this->set_weight_error_cotribution = &Weight_node::setWeightErrorContribution;
 		this->get_input_response = &Weight_node::getWeightedInput;
+		this->dump_weight_method = &Weight_node::dumpWeightDataNeuron;
 		break;
 	}
 }
@@ -176,13 +188,19 @@ Weight_node & Weight_node::operator= (const Weight_node & src_weight_node)
 		case WIT_BIAS:
 			this->set_weight_error_cotribution = &Weight_node::setBiasErrorContribution;
 			this->get_input_response = &Weight_node::getBias;
+			this->dump_weight_method = &Weight_node::dumpWeightDataBias;
 			break;
 
 		case WIT_PATTERN:
-			/* Same behaviour than the neuron input */
+			this->set_weight_error_cotribution = &Weight_node::setWeightErrorContribution;
+			this->get_input_response = &Weight_node::getWeightedInput;
+			this->dump_weight_method = &Weight_node::dumpWeightDataPattern;
+			break;
+
 		case WIT_NEURON:
 			this->set_weight_error_cotribution = &Weight_node::setWeightErrorContribution;
 			this->get_input_response = &Weight_node::getWeightedInput;
+			this->dump_weight_method = &Weight_node::dumpWeightDataNeuron;
 			break;
 		}
 	}
@@ -337,4 +355,39 @@ void Weight_node::makeInternalWeightValue(const bool make_weight_values_internal
 void Weight_node::resetWeightCurrentTime()
 {
 	current_weight_time = 0;
+}
+
+
+
+void Weight_node::dumpWeightData(FILE * fp_network_data)
+{
+	(this->*dump_weight_method)(fp_network_data);
+}
+
+
+
+void Weight_node::dumpWeightDataBias(FILE * fp_network_data)
+{
+	/* As bias, only its value is printed: */
+	fprintf(fp_network_data, "\t\t<Bias value = \"%.63f\"></Bias>\n", *(*(**weight_values_master_pointer + ewv_neuron_index) + ewv_input_index));
+}
+
+
+
+void Weight_node::dumpWeightDataNeuron(FILE * fp_network_data)
+{
+	/* Print weight value into the file: */
+	fprintf(fp_network_data, "\t\t<Weight value = \"%.63f\" input_connection = \"Neuron\" input_position = \"%i\"></Weight>\n",
+		*(*(**weight_values_master_pointer + ewv_neuron_index) + ewv_input_index),
+		input_node_pointer->getGlobalInputIndex());
+}
+
+
+
+void Weight_node::dumpWeightDataPattern(FILE * fp_network_data)
+{
+	/* Print weight value into the file: */
+	fprintf(fp_network_data, "\t\t<Weight value = \"%.63f\" input_connection = \"Pattern\" input_position = \"%i\"></Weight>\n",
+		*(*(**weight_values_master_pointer + ewv_neuron_index) + ewv_input_index),
+		input_node_pointer->getGlobalInputIndex());
 }

@@ -204,13 +204,13 @@ int backpropagationBasedANN::allocateMethodMemory()
 					*(groundtruth_data + training_data_index + thread_id * training_data_size_per_thread),
 					outputs_count * sizeof(int));
 
-				*(*(training_data_parallel + thread_id) + training_data_index) = (double*)malloc(inputs_count * sizeof(double));
+				*(*(training_data_parallel + thread_id) + training_data_index) = (double*)malloc(neuron_inputs_count * sizeof(double));
 				memcpy(*(*(training_data_parallel + thread_id) + training_data_index),
 					*(training_data + training_data_index + thread_id * training_data_size_per_thread),
-					inputs_count * sizeof(double));
+					neuron_inputs_count * sizeof(double));
 			}
 
-			*(network_input_nodes_parallel + thread_id) = (Input_pattern**)malloc(inputs_count * sizeof(Input_pattern*));
+			*(network_input_nodes_parallel + thread_id) = (Input_pattern**)malloc(neuron_inputs_count * sizeof(Input_pattern*));
 			*(network_neurons_parallel + thread_id) = (Neuron**)malloc(neurons_count * sizeof(Neuron*));
 			*(network_outputs_parallel + thread_id) = (Neuron**)malloc(outputs_count * sizeof(Neuron*));
 			*(loss_functions_parallel + thread_id) = (LossFunction**)malloc(outputs_count * sizeof(LossFunction*));
@@ -220,7 +220,7 @@ int backpropagationBasedANN::allocateMethodMemory()
 			*(network_weights_values_parallel + thread_id) = (double*)malloc((weights_count + neurons_count) * sizeof(double));
 			memcpy(*(network_weights_values_parallel + thread_id), network_weights_values, (weights_count + neurons_count) * sizeof(double));
 
-			for (unsigned int input_index = 0; input_index < inputs_count; input_index++)
+			for (unsigned int input_index = 0; input_index < neuron_inputs_count; input_index++)
 			{
 				*(*(network_input_nodes_parallel + thread_id) + input_index) = new Input_pattern;
 				(*(*(network_input_nodes_parallel + thread_id) + input_index))->setInputPointerPosition((*(network_input_nodes + input_index))->getInputPointerPosition());
@@ -470,7 +470,7 @@ bool backpropagationBasedANN::computeEpoch_levenberg_marquardt()
 #else	// _OPENMP
 	const unsigned int training_data_size_parallel_temp = training_data_size;
 	const unsigned int training_data_size_per_thread_parallel_temp = training_data_size_per_thread;
-	const unsigned int inputs_count_parallel_temp = inputs_count;
+	const unsigned int inputs_count_parallel_temp = neuron_inputs_count;
 	const unsigned int outputs_count_parallel_temp = outputs_count;
 	const unsigned int neurons_count_parallel_temp = neurons_count;
 	const unsigned int weights_count_parallel_temp = weights_count;
@@ -705,7 +705,7 @@ bool backpropagationBasedANN::computeEpoch_levenberg_marquardt()
 
 		const unsigned int training_data_size_parallel_temp = training_data_size;
 		const unsigned int training_data_size_per_thread_parallel_temp = training_data_size_per_thread;
-		const unsigned int inputs_count_parallel_temp = inputs_count;
+		const unsigned int inputs_count_parallel_temp = neuron_inputs_count;
 		const unsigned int outputs_count_parallel_temp = outputs_count;
 		const unsigned int neurons_count_parallel_temp = neurons_count;
 		const unsigned int weights_count_parallel_temp = weights_count;

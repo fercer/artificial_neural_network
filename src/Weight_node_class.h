@@ -1,6 +1,7 @@
 #ifndef WEIGHT_NODE_CLASS_INLCUDED
 #define WEIGHT_NODE_CLASS_INLCUDED
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "Input_node_class.h"
@@ -40,6 +41,7 @@ public:
 
 	void resetWeightCurrentTime();
 
+	void dumpWeightData(FILE * fp_network_data);
 private:
 	
 	/* These arrays contain the actual weight, and derivatives values */
@@ -91,6 +93,11 @@ private:
 	void(Weight_node::*set_weight_error_cotribution) (const double src_node_error_contribution, const unsigned int src_output_index);
 	void setWeightErrorContribution(const double src_node_error_contribution, const unsigned int src_output_index);
 	void setBiasErrorContribution(const double src_node_error_contribution, const unsigned int src_output_index);
+
+	void(Weight_node::*dump_weight_method) (FILE * fp_network_data);
+	void dumpWeightDataBias(FILE * fp_network_data);
+	void dumpWeightDataNeuron(FILE * fp_network_data);
+	void dumpWeightDataPattern(FILE * fp_network_data);
 };
 
 #endif // WEIGHT_NODE_CLASS_INLCUDED

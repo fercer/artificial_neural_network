@@ -22,6 +22,8 @@ public:
 
 	virtual double evaluateDerivative(double input_value) = 0;
 	
+	virtual void dumpActivationFunctionData(FILE * fp_network_data) = 0;
+
 	void resetActivationFunctionCurrentTime()
 	{
 		current_activation_function_time = 0;

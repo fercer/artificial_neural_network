@@ -22,6 +22,8 @@ public:
 	// Evaluates the input value using the sigmoid function
 	double evaluateFunction(double input_value, const unsigned long long src_current_network_time);
 	double evaluateDerivative(double input_value);
+
+	void dumpActivationFunctionData(FILE * fp_network_data);
 };
 
 #endif //ACTIVATIONSIGMOID_CLASS_H_INCLUDED

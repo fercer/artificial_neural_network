@@ -44,3 +44,11 @@ double identityActivationFunction::evaluateDerivative(double input_value)
 {
 	return 1.0;
 }
+
+
+
+void identityActivationFunction::dumpActivationFunctionData(FILE * fp_network_data)
+{
+	fprintf(fp_network_data, "\t\t<ActivationFunction type = \"ACT_IDENTITY\"");
+	fprintf(fp_network_data, "\t\t</ActivationFunction>\n");
+}

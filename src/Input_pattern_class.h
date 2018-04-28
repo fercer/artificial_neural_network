@@ -7,7 +7,6 @@ class Input_pattern :
 	public Input_node
 {
 public:
-	Input_pattern();
 	~Input_pattern();
 
 	void setInputPointer(double * src_input_pointer);

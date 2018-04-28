@@ -25,6 +25,7 @@ public:
 	// Evaluates the derivative of the activation function in the input value
 	double evaluateDerivative(double input_value);
 
+	void dumpActivationFunctionData(FILE * fp_network_data);
 };
 
 #endif //ACTIVATIONHYPERBOLICTANGENT_CLASS_H_INCLUDED
