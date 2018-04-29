@@ -10,7 +10,7 @@ public:
 	identityActivationFunction();
 	identityActivationFunction(const identityActivationFunction & src_activation_function);
 	identityActivationFunction & operator= (const identityActivationFunction & src_activation_function);
-	identityActivationFunction();
+
 	~identityActivationFunction();
 
 	// Evaluates the activation function in the input value

@@ -65,7 +65,7 @@ private:
 	Weight_node ** weights_array;
 	bool dump_weights_list_into_array_required;
 
-	unsigned int node_current_time;
+	unsigned long long node_current_time;
 	unsigned int neuron_inputs_count;
 
 	bool compute_derivatives;

@@ -86,6 +86,11 @@ Weight_node::Weight_node(const unsigned int src_outputs_count, const WEIGHT_INPU
 
 	// Assign the weight value:
 	setWeightValue(src_weight_value);
+
+	// Assign the input value:
+	input_node_pointer = src_input_node;
+
+	current_weight_time = 0;
 }
 
 
@@ -302,7 +307,7 @@ double Weight_node::getBias()
 
 
 
-void Weight_node::makeExternalWeigthValue(double **** src_weight_values_master_pointer = NULL, double **** src_weight_derivatives_values_master_pointer = NULL)
+void Weight_node::makeExternalWeigthValue(double **** src_weight_values_master_pointer, double **** src_weight_derivatives_values_master_pointer)
 {
 	if (src_weight_values_master_pointer)
 	{
@@ -330,7 +335,7 @@ void Weight_node::makeExternalWeigthValue(double **** src_weight_values_master_p
 
 
 
-void Weight_node::makeInternalWeightValue(const bool make_weight_values_internal = true, const bool make_weight_derivatives_values_internal = true)
+void Weight_node::makeInternalWeightValue(const bool make_weight_values_internal, const bool make_weight_derivatives_values_internal)
 {
 	if (make_weight_values_internal)
 	{

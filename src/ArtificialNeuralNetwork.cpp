@@ -102,7 +102,7 @@ ArtificialNeuralNetwork::ArtificialNeuralNetwork(const ArtificialNeuralNetwork &
 
 	this->input_pattern_master_pointer = src_ann.input_pattern_master_pointer;
 
-	this->network_current_time = 0;
+	this->network_current_time = 1;
 }
 
 
@@ -161,7 +161,7 @@ ArtificialNeuralNetwork & ArtificialNeuralNetwork::operator=(const ArtificialNeu
 
 		this->input_pattern_master_pointer = src_ann.input_pattern_master_pointer;
 
-		this->network_current_time = 0;
+		this->network_current_time = 1;
 	}
 
 	return *this;
@@ -481,7 +481,7 @@ void ArtificialNeuralNetwork::setInputPatternPointer(double * src_input_pattern_
 void ArtificialNeuralNetwork::predict(double * src_input_pattern_pointer, double * dst_prediction)//, const double threshold)
 {
 	// Assign the input pattern master pointer to the testing array pointer
-	input_pattern_master_pointer = test_input;
+	input_pattern_master_pointer = src_input_pattern_pointer;
 
 	// Save the output to the destination prediction array
 	for (unsigned int i = 0; i < outputs_count; i++)

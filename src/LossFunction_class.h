@@ -15,14 +15,6 @@
 
 class LossFunction
 {
-protected:
-	int * groundtruth_pointer;
-	Input_node * network_output_pointer;
-	double difference;
-	double error;
-	double error_derivative;
-	unsigned long long error_current_time;
-
 public:
 	LossFunction()
 	{
@@ -69,6 +61,14 @@ public:
 	{
 		error_current_time = 0;
 	}
+
+protected:
+	int * groundtruth_pointer;
+	Input_node * network_output_pointer;
+	double difference;
+	double error;
+	double error_derivative;
+	unsigned long long error_current_time;
 };
 
 #endif //LOSSFUNCTION_CLASS_H_INCLUDED

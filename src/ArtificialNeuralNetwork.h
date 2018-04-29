@@ -46,7 +46,7 @@ class ArtificialNeuralNetwork
 {
 public:
 	ArtificialNeuralNetwork();
-	ArtificialNeuralNetwork(const bool src_compute_network_derivatives = true);
+	ArtificialNeuralNetwork(const bool src_compute_network_derivatives);
 	ArtificialNeuralNetwork(const ArtificialNeuralNetwork & src_ann);
 	ArtificialNeuralNetwork & operator=(const ArtificialNeuralNetwork & src_ann);
 	
