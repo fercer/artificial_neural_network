@@ -12,6 +12,10 @@ class crossEntropyLossFunction :
 	public LossFunction
 {
 public:
+	crossEntropyLossFunction();
+	crossEntropyLossFunction(const crossEntropyLossFunction & src_loss_function);
+	crossEntropyLossFunction & operator=(const crossEntropyLossFunction & src_loss_function);
+	~crossEntropyLossFunction();
 
 	// Computes the error using the L1 loss function
 	double computeLoss(const unsigned long long current_time);

@@ -67,17 +67,22 @@ public:
 	// Predicts the output using the passed data:
 	void predict(double * src_input_pattern_pointer, double * dst_prediction);//, const double threshold);
 
+	Input_node * getOutputNode(const unsigned int src_output_index);
+
 	void resetNetworkTime();
 
 protected:
 	unsigned int inputs_count;
 	unsigned int outputs_count;
 	unsigned int neurons_count;
-	unsigned int weights_count;	
+	
+	unsigned long long network_current_time;
+
+	Input_pattern ** network_input_nodes;
+	Neuron ** network_neurons;
+	Neuron ** network_output_nodes;
 
 	void setInputPatternPointer(double * src_input_pattern_pointer);
-
-	Input_node * getOutputNode(const unsigned int src_output_index);
 
 	// Set the weights of the network
 	void setNetworkWeights(double **** src_weights_and_bias);
@@ -90,13 +95,8 @@ private:
 
 	bool compute_network_derivatives;
 
-	Input_pattern ** network_input_nodes;
-	Neuron ** network_neurons;
-	Neuron ** network_output_nodes;
 
 	double * input_pattern_master_pointer;
-
-	unsigned long long network_current_time;
 
 	void addInputNode(const unsigned int src_input_position);
 	void addNeuron();

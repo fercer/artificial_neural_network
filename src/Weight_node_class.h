@@ -28,6 +28,7 @@ public:
 
 	// Computes the weighted sum of the inputs and their corresponding weights
 	double getWeightedInput(const unsigned long long src_current_network_time);
+	double getWeightErrorContribution(const unsigned int src_output_index, const unsigned long long src_current_network_time);
 
 	// Set/Get the weight value
 	void setWeightValue(const double src_weight_value);
@@ -43,6 +44,7 @@ public:
 	void resetWeightCurrentTime();
 
 	void dumpWeightData(FILE * fp_network_data);
+
 private:
 	
 	/* These arrays contain the actual weight, and derivatives values */

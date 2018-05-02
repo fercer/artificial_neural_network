@@ -7,6 +7,12 @@ class L2LossFunction :
 	public LossFunction
 {
 public:
+
+	L2LossFunction();
+	L2LossFunction(const L2LossFunction & src_loss_function);
+	L2LossFunction & operator=(const L2LossFunction & src_loss_function);
+	~L2LossFunction();
+
 	double computeLoss(const unsigned long long current_time);
 };
 

@@ -253,6 +253,13 @@ double Weight_node::getWeightedInput(const unsigned long long src_current_networ
 
 
 
+double Weight_node::getWeightErrorContribution(const unsigned int src_output_index, const unsigned long long src_current_network_time)
+{
+	return *(*(**weight_derivatives_values_master_pointer + ewdv_neuron_index) + outputs_count * ewdv_input_index + src_output_index);
+}
+
+
+
 void Weight_node::setWeightValue(const double src_weight_value)
 {
 	*(*(**weight_values_master_pointer + ewv_neuron_index) + ewv_input_index) = src_weight_value;

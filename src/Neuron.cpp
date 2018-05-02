@@ -187,6 +187,7 @@ Neuron::~Neuron()
 	{
 		current_weight_node_pointer = next_weight_node_pointer;
 		next_weight_node_pointer = current_weight_node_pointer->next_weighted_input;
+		delete current_weight_node_pointer->weighted_input;
 		delete current_weight_node_pointer;
 	}
 

@@ -12,7 +12,6 @@ ArtificialNeuralNetwork::ArtificialNeuralNetwork()
 	inputs_count = 0;
 	outputs_count = 0;
 	neurons_count = 0;
-	weights_count = 0;
 
 	network_current_time = 1;
 
@@ -34,7 +33,6 @@ ArtificialNeuralNetwork::ArtificialNeuralNetwork(const bool src_compute_network_
 	inputs_count = 0;
 	outputs_count = 0;
 	neurons_count = 0;
-	weights_count = 0;
 
 	network_current_time = 1;
 
@@ -54,7 +52,6 @@ ArtificialNeuralNetwork::ArtificialNeuralNetwork(const ArtificialNeuralNetwork &
 	this->inputs_count = src_ann.inputs_count;
 	this->outputs_count = src_ann.outputs_count;
 	this->neurons_count = src_ann.neurons_count;
-	this->weights_count = src_ann.weights_count;
 
 	this->compute_network_derivatives = src_ann.compute_network_derivatives;
 
@@ -114,7 +111,6 @@ ArtificialNeuralNetwork & ArtificialNeuralNetwork::operator=(const ArtificialNeu
 		this->inputs_count = src_ann.inputs_count;
 		this->outputs_count = src_ann.outputs_count;
 		this->neurons_count = src_ann.neurons_count;
-		this->weights_count = src_ann.weights_count;
 
 		this->compute_network_derivatives = src_ann.compute_network_derivatives;
 
@@ -415,7 +411,6 @@ void ArtificialNeuralNetwork::loadNetworkData(const char * src_filename)
 					weight_value_temp);
 			}
 
-			weights_count++;
 		}
 	}
 

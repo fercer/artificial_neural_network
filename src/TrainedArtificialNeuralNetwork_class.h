@@ -33,7 +33,8 @@ public:
 		learning_rates = 0.0;
 		momentums = 0.0;
 
-		loss_functions = NULL;
+		loss_functions_head_node.next_loss_function_node = NULL;
+		loss_functions_tail_node = &loss_functions_head_node;
 		loss_functions_count = 0;
 
 		log_filename[0] = '\0';
@@ -43,14 +44,16 @@ public:
 	}
 
 	~TrainedArtificialNeuralNetwork() {
-		if (loss_functions_count)
+		LOSS_FUNCTION_LIST_NODE * current_loss_function_node;
+		LOSS_FUNCTION_LIST_NODE * next_loss_function_node = loss_functions_head_node.next_loss_function_node;
+
+		while (next_loss_function_node)
 		{
-			for (unsigned int loss_function_index = 0; loss_function_index < loss_functions_count; loss_function_index++)
-			{
-				delete *(loss_functions + loss_function_index);
-			}
-			free(loss_functions);
-			free(loss_functions_types);
+			current_loss_function_node = next_loss_function_node;
+			next_loss_function_node = current_loss_function_node->next_loss_function_node;
+
+			delete current_loss_function_node->loss_function_pointer;
+			delete current_loss_function_node;
 		}
 	}
 
@@ -97,40 +100,28 @@ public:
 
 	void assignLossFunction(const LOSS_FUNCTION_TYPE src_loss_function_type)
 	{
-		if (loss_functions_count > 0)
-		{
-			LossFunction ** swap_loss_functions = loss_functions;
-			loss_functions = (LossFunction**)malloc((loss_functions_count + 1) * sizeof(LossFunction*));
-			memmove(loss_functions, swap_loss_functions, loss_functions_count * sizeof(LossFunction*));
-			free(swap_loss_functions);
+		loss_functions_tail_node->next_loss_function_node = new LOSS_FUNCTION_LIST_NODE;
+		loss_functions_tail_node = loss_functions_tail_node->next_loss_function_node;
+		loss_functions_tail_node->next_loss_function_node = NULL;
 
-			LOSS_FUNCTION_TYPE * swap_loss_functions_types = loss_functions_types;
-			loss_functions_types = (LOSS_FUNCTION_TYPE *)malloc((loss_functions_count + 1) * sizeof(LOSS_FUNCTION_TYPE));
-			memmove(loss_functions_types, swap_loss_functions_types, loss_functions_count * sizeof(LOSS_FUNCTION_TYPE));
-			free(swap_loss_functions_types);
-		}
-		else
-		{
-			loss_functions = (LossFunction**)malloc(sizeof(LossFunction*));
-			loss_functions_types = (LOSS_FUNCTION_TYPE *)malloc(sizeof(LOSS_FUNCTION_TYPE));
-		}
-
-		*(loss_functions_types + loss_functions_count) = src_loss_function_type;
+		loss_functions_tail_node->loss_function_node_type = src_loss_function_type;
 		switch (src_loss_function_type)
 		{
 		case LF_L1_NORM:
-			*(loss_functions + loss_functions_count) = new L1LossFunction;
+			loss_functions_tail_node->loss_function_pointer = new L1LossFunction;
 			break;
 
 		case LF_L2_NORM:
-			*(loss_functions + loss_functions_count) = new L2LossFunction;
+			loss_functions_tail_node->loss_function_pointer = new L2LossFunction;
 			break;
 
 		case LF_CROSS_ENTROPY:
-			*(loss_functions + loss_functions_count) = new crossEntropyLossFunction;
+			loss_functions_tail_node->loss_function_pointer = new crossEntropyLossFunction;
 			break;
 		}
-		(*(loss_functions + loss_functions_count))->setOutputNode(*(network_output_nodes + loss_functions_count));
+		loss_functions_tail_node->loss_function_pointer->setOutputNode(*(network_output_nodes + loss_functions_count));
+		loss_functions_tail_node->loss_function_pointer->setGlobalOutputIndex(loss_functions_count);
+		loss_functions_tail_node->loss_function_pointer->setGroundtruth(&groundtruth_master_pointer);
 		loss_functions_count++;
 	}
 
@@ -140,6 +131,13 @@ public:
 	}
 
 protected:
+	typedef struct LOSS_FUNCTION_LIST_NODE
+	{
+		LossFunction * loss_function_pointer;
+		LOSS_FUNCTION_TYPE loss_function_node_type;
+		LOSS_FUNCTION_LIST_NODE * next_loss_function_node;
+	} LOSS_FUNCTION_LIST_NODE;
+
 	char log_filename[512];
 	bool first_log_method_entry;
 
@@ -156,9 +154,12 @@ protected:
 	double ** training_data;
 	int ** groundtruth_data;
 
-	LOSS_FUNCTION_TYPE * loss_functions_types;
-	LossFunction ** loss_functions;
+	LOSS_FUNCTION_LIST_NODE loss_functions_head_node;
+	LOSS_FUNCTION_LIST_NODE * loss_functions_tail_node;
+
 	unsigned int loss_functions_count;
+
+	int * groundtruth_master_pointer;
 };
 
 #endif // TRAINEDARTIFICIALNEURALNETWORK_CLASS_H_INCLUDED

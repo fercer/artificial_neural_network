@@ -21,6 +21,7 @@ public:
 		error_derivative = 0.0;
 		error = 0.0;
 		error_current_time = 0;
+		global_output_index = 0;
 	}
 
 	~LossFunction()
@@ -31,9 +32,15 @@ public:
 	virtual double computeLoss(const unsigned long long current_time) = 0;
 
 	// Designates the pointer from where the groundtruth data will be accessed
-	void setGroundtruth(int * src_groundtruth_pointer)
+	void setGroundtruth(int ** src_groundtruth_pointer)
 	{
 		groundtruth_pointer = src_groundtruth_pointer;
+	}
+	
+	// Designates the position in the pointer from where the groundtruth data will be accessed
+	void setGlobalOutputIndex(const unsigned int src_global_output_index)
+	{
+		global_output_index = src_global_output_index;
 	}
 
 	// Designates the pointer from where the output values will be accessed
@@ -42,9 +49,9 @@ public:
 		network_output_pointer = src_output_pointer;
 	}
 
-	void backpropagateErrorDerivative(const unsigned int src_output_index)
+	void backpropagateErrorDerivative()
 	{
-		network_output_pointer->addNodeErrorContribution(error_derivative, src_output_index);
+		network_output_pointer->addNodeErrorContribution(error_derivative, global_output_index);
 	}
 
 	double getErrorDerivative()
@@ -63,11 +70,12 @@ public:
 	}
 
 protected:
-	int * groundtruth_pointer;
+	int ** groundtruth_pointer;
 	Input_node * network_output_pointer;
 	double difference;
 	double error;
 	double error_derivative;
+	unsigned int global_output_index;
 	unsigned long long error_current_time;
 };
 
