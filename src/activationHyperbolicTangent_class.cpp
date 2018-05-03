@@ -75,7 +75,7 @@ double activationHyperbolicTangent::evaluateDerivative(double input_value)
 
 void activationHyperbolicTangent::dumpActivationFunctionData(FILE * fp_network_data)
 {
-	fprintf(fp_network_data, "\t\t<ActivationFunction type = \"ACT_HYPERBOLIC_TANGENT\"");
+	fprintf(fp_network_data, "\t\t<ActivationFunction type = \"ACT_HYPERBOLIC_TANGENT\">");
 	fprintf(fp_network_data, "\t\t\t<Parameter value = \"%.63f\"></Parameter>\n", *parameters);
 	fprintf(fp_network_data, "\t\t</ActivationFunction>\n");
 }

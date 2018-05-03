@@ -14,6 +14,7 @@ public:
 	~L2LossFunction();
 
 	double computeLoss(const unsigned long long current_time);
+	double computeLossWithDerivatives(const unsigned long long current_time);
 };
 
 #endif // L2LOSSFUNCTION_CLASS_H_INCLUDED

@@ -68,3 +68,18 @@ double L2LossFunction::computeLoss(const unsigned long long current_time)
 
 	return error;
 }
+
+
+double L2LossFunction::computeLossWithDerivatives(const unsigned long long current_time)
+{
+	if (current_time > error_current_time)
+	{
+		const double network_output_value = network_output_pointer->getInputWithDerivatives(current_time);
+		difference = *(*groundtruth_pointer + global_output_index) - network_output_value;
+		error_derivative = -difference;
+		error = difference * difference / 2.0;
+		error_current_time = current_time;
+	}
+
+	return error;
+}

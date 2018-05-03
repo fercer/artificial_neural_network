@@ -8,7 +8,8 @@
 int main(int argc, char * argv[])
 {
 	backpropagationBasedANN bpt_ann_test;
-	bpt_ann_test.loadNetworkData("XOR_trained_network.xml");
+	//bpt_ann_test.loadNetworkData("XOR_trained_network.xml");
+	bpt_ann_test.loadNetworkData("Trained_network_test.xml");
 
 	data_handler testing_data;
 	testing_data.setFilename("trainingDataXOR_slim.txt");
@@ -21,11 +22,11 @@ int main(int argc, char * argv[])
 	double **testing_patterns_database = testing_data.getInputData();
 	int **testing_outputs_database = testing_data.getOutputData();
 	
-	bpt_ann_test.setBackpropagationMethod(backpropagationBasedANN::BPM_GRADIENT_DESCENT);
-	bpt_ann_test.setEpochs(100);
+	bpt_ann_test.setBackpropagationMethod(backpropagationBasedANN::BPM_LEVENBERG_MARQUARDT);
+	bpt_ann_test.setEpochs(1000);
 	bpt_ann_test.setLearningRates(0.05);
 	bpt_ann_test.setMomentums(0.9);
-	bpt_ann_test.setTargetLoss(0.0001);
+	bpt_ann_test.setTargetLoss(0.01);
 	bpt_ann_test.setTrainingDataSize(testing_size);
 	bpt_ann_test.setTrainingData(testing_patterns_database);
 	bpt_ann_test.setGroundtruthData(testing_outputs_database);
@@ -33,11 +34,11 @@ int main(int argc, char * argv[])
 
 	for (unsigned int output_index = 0; output_index < outputs_count; output_index++)
 	{
-		bpt_ann_test.assignLossFunction(TrainedArtificialNeuralNetwork::LF_CROSS_ENTROPY);
+		bpt_ann_test.assignLossFunction(TrainedArtificialNeuralNetwork::LF_L2_NORM);
 	}
 
-	bpt_ann_test.trainNetwork();
-	bpt_ann_test.saveNetworkState();
+	//bpt_ann_test.trainNetwork();
+	//bpt_ann_test.saveNetworkState();
 
 	double * prediction = (double*)malloc(outputs_count * sizeof(double));
 	

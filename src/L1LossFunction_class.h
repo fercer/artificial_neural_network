@@ -18,6 +18,8 @@ public:
 
 	// Computes the error using the L1 loss function
 	double computeLoss(const unsigned long long data_idx);
+	double computeLossWithDerivatives(const unsigned long long data_idx);
+	
 };
 
 #endif //L1LOSSFUNCTION_CLASS_H_INCLUDED-

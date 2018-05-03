@@ -17,6 +17,7 @@ public:
 	void setInputPointer(double ** src_input_pointer);
 	void setInputPointerPosition(const unsigned int src_global_node_index);
 
+	double getInputWithDerivatives(const unsigned long long current_time);
 	double getInput(const unsigned long long current_time);
 
 	void addNodeErrorContribution(const double src_error_contribution, const unsigned int src_output_index);

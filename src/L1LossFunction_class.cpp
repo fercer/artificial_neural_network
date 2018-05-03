@@ -74,3 +74,18 @@ double L1LossFunction::computeLoss(const unsigned long long current_time)
 
 	return error;
 }
+
+// Computes the error using the L1 loss function
+double L1LossFunction::computeLossWithDerivatives(const unsigned long long current_time)
+{
+	if (current_time > error_current_time)
+	{
+		const double network_output_value = network_output_pointer->getInputWithDerivatives(current_time);
+		difference = *(*groundtruth_pointer + global_output_index) - network_output_value;
+		error = fabs(difference);
+		error_derivative = -1.0;
+		error_current_time = current_time;
+	}
+
+	return error;
+}

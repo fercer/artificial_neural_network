@@ -25,7 +25,7 @@ public:
 	~backpropagationBasedANN();
 
 	// Finds the network weights throught the optimization method
-	double trainNetwork(int save_each_n_epochs = -1);
+	double trainNetwork(const int save_each_n_epochs = -1, const int restart_time_each_n_epochs = -1);
 
 	void saveState();
 
@@ -37,21 +37,21 @@ private:
 
 	bool memory_already_allocated;
 	bool hessian_matrix_was_required;
-
-	double ** network_weights_values;
+	
+	double * network_weights_values;
 	double ** network_weights_derivatives_values;
 
-	double *** network_weights_values_pointer;
-	double *** network_weights_derivatives_values_pointer;
+	double ** network_weights_pointers_manager;
+	double *** network_weights_derivatives_pointers_manager;
 
-	double ** weights_deltas;
+	double * weights_deltas;
 	
-	double ** jacobian_error_derivative_product;
-	double ** hessian_matrix;
-	double ** previous_weights_values;
-	double ** previous_jacobian_error_derivative_product;
-	double ** previous_hessian_matrix;
-	
+	double * jacobian_error_derivative_product;
+	double * hessian_matrix;
+	double * previous_weights_values;
+	double * previous_jacobian_error_derivative_product;
+	double * previous_hessian_matrix;
+
 	double mu_value;
 	double max_mu_value;
 	double mu_increasing_factor;
@@ -65,10 +65,6 @@ private:
 
 	bool computeEpoch_gradient_descent();
 	bool computeEpoch_levenberg_marquardt();
-
-	double productOutputErrorContribution(const unsigned int src_neuron_index_a, const unsigned int src_weighted_input_index_a, const unsigned int src_neuron_index_b, const unsigned int src_weighted_input_index_b, double *** src_network_weights_derivatives_values_master_pointer);
-
-	double computeCholeskyRowValue(const unsigned int src_neuron_index, const unsigned int src_weighted_input_index, double ** src_hessian_matrix);
 };
 
 #endif //BACKPROPAGATIONBASEDANN_CLASS_H_INCLUDED

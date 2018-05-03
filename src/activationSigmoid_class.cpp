@@ -80,7 +80,7 @@ double activationSigmoid::evaluateDerivative(double input_value)
 
 void activationSigmoid::dumpActivationFunctionData(FILE * fp_network_data)
 {
-	fprintf(fp_network_data, "\t\t<ActivationFunction type = \"ACT_SIGMOID\"");
+	fprintf(fp_network_data, "\t\t<ActivationFunction type = \"ACT_SIGMOID\">");
 	fprintf(fp_network_data, "\t\t\t<Parameter value = \"%.63f\"></Parameter>\n", *parameters);
 	fprintf(fp_network_data, "\t\t</ActivationFunction>\n");
 }

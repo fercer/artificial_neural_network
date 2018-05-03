@@ -93,7 +93,7 @@ public:
 	}
 
 	// Finds the network weights throught the optimization method
-	virtual double trainNetwork(int save_each_n_epochs = -1) = 0;
+	virtual double trainNetwork(const int save_each_n_epochs = -1, const int restart_time_each_n_epochs = 1) = 0;
 
 	// Saves the current state of the update method
 	virtual void saveState() = 0;

@@ -25,16 +25,17 @@ public:
 		ACT_IDENTITY = 2
 	} ACTIVATION_FUNCTION_TYPE;
 
-	Neuron(const unsigned int src_neuron_position, const unsigned int src_outputs_count = 1, const bool src_compute_derivatives = true, double **** src_weight_values_master_pointer = NULL, double **** src_weight_derivatives_values_master_pointer = NULL);
+	Neuron(const unsigned int src_neuron_position, const unsigned int src_outputs_count = 1, double *** src_weight_values_master_pointer = NULL, double **** src_weight_derivatives_values_master_pointer = NULL);
 
 	Neuron(const Neuron &src_neuron);
 	Neuron & operator= (const Neuron &src_neuron);
 
 	~Neuron();
 	
-	void addWeightedInput(Weight_node::WEIGHT_INPUT_TYPE src_input_type, Input_node * src_input_node_pointer, const double src_weight_value);
-
 	double getInput(const unsigned long long src_current_network_time);
+	double getInputWithDerivatives(const unsigned long long src_current_network_time);
+
+	void addWeightedInput(Weight_node::WEIGHT_INPUT_TYPE src_input_type, Input_node * src_input_node_pointer, const double src_weight_value);
 
 	void addNodeErrorContribution(const double src_error_contribution, const unsigned int src_output_index);
 
@@ -47,7 +48,7 @@ public:
 	void setInputNodePointer(Input_node * src_input_node_pointer, const unsigned int src_input_index);
 	Input_node *getInputNodePointer(const unsigned int src_input_index);
 	
-	void makeExternalWeightValues(double **** src_weight_values_master_pointer = NULL, double **** src_weight_derivatives_values_master_pointer = NULL);
+	void makeExternalWeightValues(double *** src_weight_values_master_pointer = NULL, double **** src_weight_derivatives_values_master_pointer = NULL);
 
 	void makeInternalWeightValues(const bool make_weights_values_internal = true, const bool make_weights_derivatives_values_internal = true);
 
@@ -76,7 +77,7 @@ private:
 
 	unsigned int neuron_outputs_count;
 
-	double **** weight_values_master_pointer;
+	double *** weight_values_master_pointer;
 	double **** weight_derivatives_values_master_pointer;
 
 	WEIGHTS_LIST_NODE * weights_list_tail;
@@ -86,8 +87,6 @@ private:
 	ActivationFunctionBase * neuron_activation_function;
 
 	double (Neuron::*get_input_method)(const unsigned long long src_current_network_time);
-	double getInputOnly(const unsigned long long src_current_network_time);
-	double getInputWithDerivative(const unsigned long long src_current_network_time);
 	
 	void dumpWeightsListIntoArray();
 };

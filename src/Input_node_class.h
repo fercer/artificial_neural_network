@@ -12,7 +12,9 @@ public:
 	}
 
 	// Returns the value assigned to this input
+	virtual double getInputWithDerivatives(const unsigned long long current_time) = 0;
 	virtual double getInput(const unsigned long long current_time) = 0;
+
 	virtual void addNodeErrorContribution(const double src_error_contribution, const unsigned int src_output_index) = 0;
 	virtual void backpropagateNodeError() = 0;
 

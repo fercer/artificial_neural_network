@@ -7,11 +7,10 @@
 
 ArtificialNeuralNetwork::ArtificialNeuralNetwork()
 {
-	compute_network_derivatives = true;
-
 	inputs_count = 0;
 	outputs_count = 0;
 	neurons_count = 0;
+	weights_count = 0;
 
 	network_current_time = 1;
 
@@ -26,35 +25,13 @@ ArtificialNeuralNetwork::ArtificialNeuralNetwork()
 
 
 
-ArtificialNeuralNetwork::ArtificialNeuralNetwork(const bool src_compute_network_derivatives)
-{
-	compute_network_derivatives = src_compute_network_derivatives;
-
-	inputs_count = 0;
-	outputs_count = 0;
-	neurons_count = 0;
-
-	network_current_time = 1;
-
-	network_input_nodes = NULL;
-	network_neurons = NULL;
-	network_output_nodes = NULL;
-
-	input_pattern_master_pointer = NULL;
-
-	sprintf(ann_log_filename, "NULL");
-}
-
-
-
 ArtificialNeuralNetwork::ArtificialNeuralNetwork(const ArtificialNeuralNetwork & src_ann)
 {
 	this->inputs_count = src_ann.inputs_count;
 	this->outputs_count = src_ann.outputs_count;
 	this->neurons_count = src_ann.neurons_count;
-
-	this->compute_network_derivatives = src_ann.compute_network_derivatives;
-
+	this->weights_count = src_ann.weights_count;
+	
 	this->network_input_nodes = (Input_pattern**) malloc(this->inputs_count * sizeof(Input_pattern*));
 	this->network_neurons = (Neuron**) malloc(this->neurons_count * sizeof(Neuron*));
 	this->network_output_nodes = (Neuron**) malloc(this->outputs_count * sizeof(Neuron*));
@@ -111,9 +88,8 @@ ArtificialNeuralNetwork & ArtificialNeuralNetwork::operator=(const ArtificialNeu
 		this->inputs_count = src_ann.inputs_count;
 		this->outputs_count = src_ann.outputs_count;
 		this->neurons_count = src_ann.neurons_count;
-
-		this->compute_network_derivatives = src_ann.compute_network_derivatives;
-
+		this->weights_count = src_ann.weights_count;
+		
 		this->network_input_nodes = (Input_pattern**)malloc(this->inputs_count * sizeof(Input_pattern*));
 		this->network_neurons = (Neuron**)malloc(this->neurons_count * sizeof(Neuron*));
 		this->network_output_nodes = (Neuron**)malloc(this->outputs_count * sizeof(Neuron*));
@@ -236,7 +212,7 @@ void ArtificialNeuralNetwork::addNeuron()
 		network_neurons = (Neuron **)malloc(sizeof(Neuron*));
 	}
 
-	*(network_neurons + neurons_count) = new Neuron(neurons_count, outputs_count, compute_network_derivatives);
+	*(network_neurons + neurons_count) = new Neuron(neurons_count, outputs_count);
 
 	neurons_count++;
 }
@@ -263,7 +239,7 @@ void ArtificialNeuralNetwork::addOutputNode(const unsigned int src_neuron_positi
 
 
 
-void ArtificialNeuralNetwork::setNetworkWeights(double **** src_weights_and_bias)
+void ArtificialNeuralNetwork::setNetworkWeights(double *** src_weights_and_bias)
 {
 	for (unsigned int neuron_index = 0; neuron_index < neurons_count; neuron_index++)
 	{
@@ -382,6 +358,7 @@ void ArtificialNeuralNetwork::loadNetworkData(const char * src_filename)
 		
 		xml_node<> * bias_node = neuron_node->first_node("Bias");
 		(*(network_neurons + neuron_position))->addWeightedInput(Weight_node::WIT_BIAS, NULL, atof(bias_node->first_attribute("value")->value()));
+		weights_count++;
 
 		for (xml_node<> * weight_node = neuron_node->first_node("Weight"); weight_node; weight_node = weight_node->next_sibling())
 		{
@@ -410,7 +387,7 @@ void ArtificialNeuralNetwork::loadNetworkData(const char * src_filename)
 					*(network_neurons + input_position_temp),
 					weight_value_temp);
 			}
-
+			weights_count++;
 		}
 	}
 
@@ -487,6 +464,21 @@ void ArtificialNeuralNetwork::predict(double * src_input_pattern_pointer, double
 	network_current_time++;
 }
 
+
+
+void ArtificialNeuralNetwork::predictWithDerivatives(double * src_input_pattern_pointer, double * dst_prediction)
+{
+	// Assign the input pattern master pointer to the testing array pointer
+	input_pattern_master_pointer = src_input_pattern_pointer;
+
+	// Save the output to the destination prediction array
+	for (unsigned int i = 0; i < outputs_count; i++)
+	{
+		*(dst_prediction + i) = (*(network_output_nodes + i))->getInputWithDerivatives(network_current_time);
+	}
+
+	network_current_time++;
+}
 
 
 Input_node * ArtificialNeuralNetwork::getOutputNode(const unsigned int src_output_index)

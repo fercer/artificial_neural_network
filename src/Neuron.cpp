@@ -1,6 +1,6 @@
 #include "Neuron.h"
 
-Neuron::Neuron(const unsigned int src_neuron_position, const unsigned int src_outputs_count, const bool src_compute_derivatives, double **** src_weight_values_master_pointer, double **** src_weight_derivatives_values_master_pointer)
+Neuron::Neuron(const unsigned int src_neuron_position, const unsigned int src_outputs_count, double *** src_weight_values_master_pointer, double **** src_weight_derivatives_values_master_pointer)
 {
 	weights_array = NULL;
 	dump_weights_list_into_array_required = false;
@@ -9,17 +9,7 @@ Neuron::Neuron(const unsigned int src_neuron_position, const unsigned int src_ou
 
 	global_node_index = src_neuron_position;
 	neuron_outputs_count = src_outputs_count;
-	compute_derivatives = src_compute_derivatives;
-	if (compute_derivatives)
-	{
-		neuron_error_contribution = (double*)malloc(neuron_outputs_count * sizeof(double));
-		get_input_method = &Neuron::getInputWithDerivative;
-	}
-	else
-	{
-		neuron_error_contribution = NULL;
-		get_input_method = &Neuron::getInputOnly;
-	}
+	neuron_error_contribution = (double*)malloc(neuron_outputs_count * sizeof(double));
 
 	weight_values_master_pointer = src_weight_values_master_pointer;
 	weight_derivatives_values_master_pointer = src_weight_derivatives_values_master_pointer;
@@ -43,17 +33,7 @@ Neuron::Neuron(const Neuron &src_neuron)
 	this->neuron_outputs_count = src_neuron.neuron_outputs_count;
 	this->neuron_inputs_count = src_neuron.neuron_inputs_count;
 
-	this->compute_derivatives = src_neuron.compute_derivatives;
-	if (this->compute_derivatives)
-	{
-		this->neuron_error_contribution = (double*)malloc(this->neuron_outputs_count * sizeof(double));
-		this->get_input_method = &Neuron::getInputWithDerivative;
-	}
-	else
-	{
-		this->neuron_error_contribution = NULL;
-		this->get_input_method = &Neuron::getInputOnly;
-	}
+	this->neuron_error_contribution = (double*)malloc(this->neuron_outputs_count * sizeof(double));
 
 	this->weight_values_master_pointer = src_neuron.weight_values_master_pointer;
 	this->weight_derivatives_values_master_pointer = src_neuron.weight_derivatives_values_master_pointer;
@@ -110,17 +90,7 @@ Neuron & Neuron::operator= (const Neuron &src_neuron)
 		this->neuron_outputs_count = src_neuron.neuron_outputs_count;
 		this->neuron_inputs_count = src_neuron.neuron_inputs_count;
 
-		this->compute_derivatives = src_neuron.compute_derivatives;
-		if (this->compute_derivatives)
-		{
-			this->neuron_error_contribution = (double*)malloc(this->neuron_outputs_count * sizeof(double));
-			this->get_input_method = &Neuron::getInputWithDerivative;
-		}
-		else
-		{
-			this->neuron_error_contribution = NULL;
-			this->get_input_method = &Neuron::getInputOnly;
-		}
+		this->neuron_error_contribution = (double*)malloc(this->neuron_outputs_count * sizeof(double));
 
 		this->weight_values_master_pointer = src_neuron.weight_values_master_pointer;
 		this->weight_derivatives_values_master_pointer = src_neuron.weight_derivatives_values_master_pointer;
@@ -174,10 +144,7 @@ Neuron::~Neuron()
 		delete neuron_activation_function;
 	}
 
-	if (neuron_error_contribution)
-	{
-		free(neuron_error_contribution);
-	}
+	free(neuron_error_contribution);
 
 	/* Free the memory allocated for the weighted inputs */
 	WEIGHTS_LIST_NODE * current_weight_node_pointer;
@@ -255,13 +222,6 @@ void Neuron::dumpWeightsListIntoArray()
 unsigned int Neuron::getInputsCount()
 {
 	return neuron_inputs_count;
-}
-
-
-
-double Neuron::getInput(const unsigned long long src_current_network_time)
-{
-	return (this->*get_input_method)(src_current_network_time);
 }
 
 
@@ -364,7 +324,7 @@ void Neuron::resetNodeCurrentTime()
 
 
 
-double Neuron::getInputOnly(const unsigned long long src_current_network_time)
+double Neuron::getInput(const unsigned long long src_current_network_time)
 {
 	if (src_current_network_time > node_current_time)
 	{
@@ -389,7 +349,7 @@ double Neuron::getInputOnly(const unsigned long long src_current_network_time)
 
 
 
-double Neuron::getInputWithDerivative(const unsigned long long src_current_network_time)
+double Neuron::getInputWithDerivatives(const unsigned long long src_current_network_time)
 {
 	if (src_current_network_time > node_current_time)
 	{
@@ -402,7 +362,7 @@ double Neuron::getInputWithDerivative(const unsigned long long src_current_netwo
 			current_weight_node_pointer = next_weight_node_pointer;
 			next_weight_node_pointer = current_weight_node_pointer->next_weighted_input;
 
-			neuron_weighted_sum += current_weight_node_pointer->weighted_input->getWeightedInput(src_current_network_time);
+			neuron_weighted_sum += current_weight_node_pointer->weighted_input->getWeightedInputWithDerivatives(src_current_network_time);
 		}
 		response_to_input = neuron_activation_function->evaluateFunction(neuron_weighted_sum, src_current_network_time);
 		derivative_response_to_input = neuron_activation_function->evaluateDerivative(neuron_weighted_sum);
@@ -416,7 +376,7 @@ double Neuron::getInputWithDerivative(const unsigned long long src_current_netwo
 
 
 
-void Neuron::makeExternalWeightValues(double **** src_weight_values_master_pointer, double **** src_weight_derivatives_values_master_pointer)
+void Neuron::makeExternalWeightValues(double *** src_weight_values_master_pointer, double **** src_weight_derivatives_values_master_pointer)
 {
 	WEIGHTS_LIST_NODE * current_weight_node_pointer;
 	WEIGHTS_LIST_NODE * next_weight_node_pointer = weights_list_head.next_weighted_input;

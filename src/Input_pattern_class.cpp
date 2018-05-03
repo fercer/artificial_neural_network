@@ -57,6 +57,12 @@ void Input_pattern::setInputPointerPosition(const unsigned int src_global_node_i
 }
 
 
+double Input_pattern::getInputWithDerivatives(const unsigned long long current_time)
+{
+	return *(*input_pointer + global_node_index);
+}
+
+
 double Input_pattern::getInput(const unsigned long long current_time)
 {
 	return *(*input_pointer + global_node_index);

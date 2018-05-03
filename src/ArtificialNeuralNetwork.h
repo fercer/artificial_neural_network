@@ -46,7 +46,6 @@ class ArtificialNeuralNetwork
 {
 public:
 	ArtificialNeuralNetwork();
-	ArtificialNeuralNetwork(const bool src_compute_network_derivatives);
 	ArtificialNeuralNetwork(const ArtificialNeuralNetwork & src_ann);
 	ArtificialNeuralNetwork & operator=(const ArtificialNeuralNetwork & src_ann);
 	
@@ -75,6 +74,7 @@ protected:
 	unsigned int inputs_count;
 	unsigned int outputs_count;
 	unsigned int neurons_count;
+	unsigned int weights_count;
 	
 	unsigned long long network_current_time;
 
@@ -85,16 +85,15 @@ protected:
 	void setInputPatternPointer(double * src_input_pattern_pointer);
 
 	// Set the weights of the network
-	void setNetworkWeights(double **** src_weights_and_bias);
+	void setNetworkWeights(double *** src_weights_and_bias);
 
 	// Set the bias of the network
 	void setNetworkWeightsDerivatives(double **** src_weights_and_bias_derivatives);
 
+	void predictWithDerivatives(double * src_input_pattern_pointer, double * dst_prediction);//, const double threshold);
+
 private:
 	char ann_log_filename[512];
-
-	bool compute_network_derivatives;
-
 
 	double * input_pattern_master_pointer;
 

@@ -31,6 +31,11 @@ public:
 	// Computes the loss according to the network output and the groundtruth
 	virtual double computeLoss(const unsigned long long current_time) = 0;
 
+	/* Computes the loss according to the network output and the groundtruth,
+	and computes the derivatives for each neuron
+	*/
+	virtual double computeLossWithDerivatives(const unsigned long long current_time) = 0;
+
 	// Designates the pointer from where the groundtruth data will be accessed
 	void setGroundtruth(int ** src_groundtruth_pointer)
 	{
