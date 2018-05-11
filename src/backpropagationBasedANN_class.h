@@ -31,7 +31,6 @@ public:
 
 	void setBackpropagationMethod(BACKPROPAGATION_METHOD src_weights_update_method);
 
-
 private:
 	typedef bool (backpropagationBasedANN::*COMPUTE_EPOCH_METHOD) ();
 
@@ -43,6 +42,39 @@ private:
 
 	double ** network_weights_pointers_manager;
 	double *** network_weights_derivatives_pointers_manager;
+
+#ifdef _OPENMP
+	unsigned int available_threads;
+	unsigned int batch_size_per_thread;
+
+	double ** network_weights_values_threads;
+	double *** network_weights_derivatives_values_threads;
+
+	double *** network_weights_pointers_manager_threads;
+	double **** network_weights_derivatives_pointers_manager_threads;
+
+	double ** jacobian_error_derivative_product_threads;
+	double ** hessian_matrix_threads;
+	double ** previous_weights_values_threads;
+	double ** previous_jacobian_error_derivative_product_threads;
+	double ** previous_hessian_matrix_threads;
+
+	// Network architecture:
+	Input_pattern *** network_input_nodes_threads;
+	Neuron *** network_neurons_threads;
+	Neuron *** network_output_nodes_threads;
+
+	// Trained network data:
+	double *** training_data_threads;
+	double ** input_pattern_master_pointer_threads;
+
+	int ** groundtruth_master_pointer_threads;
+	int *** groundtruth_data_threads;
+
+	LOSS_FUNCTION_LIST_NODE * loss_functions_head_node_threads;
+	LOSS_FUNCTION_LIST_NODE ** loss_functions_tail_node_threads;
+
+#endif
 
 	double * weights_deltas;
 	
@@ -60,6 +92,13 @@ private:
 	STAUS * random_number_generator_seed;
 
 	COMPUTE_EPOCH_METHOD computeEpoch;
+
+#ifdef _OPENMP
+	int allocateLossFunctionsParallel();
+	int allocateNetworkArchitectureParallel();
+	int allocateTrainingDataParallel();
+	int allocateLevenbergMarquardtParallel();
+#endif //_OPENMP
 
 	int allocateMethodMemory();
 

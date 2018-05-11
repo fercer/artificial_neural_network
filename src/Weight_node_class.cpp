@@ -249,9 +249,9 @@ void Weight_node::setInputNodePointer(Input_node * src_input_node_pointer)
 
 
 
-Input_node * Weight_node::getInputNodePointer()
+int  Weight_node::getInputNodeGlobalIndex()
 {
-	return input_node_pointer;
+	return (this->*get_input_node_global_index)();
 }
 
 
@@ -296,6 +296,11 @@ double Weight_node::getWeightValue()
 void Weight_node::setWeightsErrorContribution(const double src_node_error_contribution, const unsigned int src_output_index)
 {
 	(this->*set_weight_error_cotribution)(src_node_error_contribution, src_output_index);
+}
+
+Weight_node::WEIGHT_INPUT_TYPE Weight_node::getWeigthedInputType()
+{
+	return input_type;
 }
 
 
@@ -433,4 +438,14 @@ void Weight_node::dumpWeightDataPattern(FILE * fp_network_data)
 	fprintf(fp_network_data, "\t\t<Weight value = \"%.63f\" input_connection = \"Pattern\" input_position = \"%i\"></Weight>\n",
 		*(*(*weight_values_master_pointer + ewv_neuron_index) + ewv_input_index),
 		input_node_pointer->getGlobalNodeIndex());
+}
+
+int Weight_node::getWeightedInputNodeGlobalIndex()
+{
+	return input_node_pointer->getGlobalNodeIndex();
+}
+
+int Weight_node::getBiasGlobalIndex()
+{
+	return -1;
 }

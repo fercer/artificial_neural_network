@@ -2,12 +2,16 @@
 
 identityActivationFunction::identityActivationFunction()
 {
+	my_activation_function_type = ACT_IDENTITY;
+
 	parameters_count = 0;
 	parameters = NULL;
 }
 
 identityActivationFunction::identityActivationFunction(const identityActivationFunction & src_activation_function)
 {
+	this->my_activation_function_type = ACT_IDENTITY;
+
 	this->parameters_count = 0;
 	this->parameters = NULL;
 }
@@ -15,11 +19,14 @@ identityActivationFunction::identityActivationFunction(const identityActivationF
 
 identityActivationFunction & identityActivationFunction::operator= (const identityActivationFunction & src_activation_function)
 {
+
 	/* This copy assignement operator will copy the parameters used by the source
 	The state of the function is not modified
 	*/
 	if (this != &src_activation_function)
 	{
+		this->my_activation_function_type = ACT_IDENTITY;
+
 		this->parameters_count = 0;
 		this->parameters = NULL;
 	}

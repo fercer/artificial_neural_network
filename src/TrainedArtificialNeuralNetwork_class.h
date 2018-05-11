@@ -18,13 +18,6 @@ class TrainedArtificialNeuralNetwork:
 {
 
 public:
-	typedef enum LOSS_FUNCTION_TYPE {
-		LF_L1_NORM = 0,
-		LF_L2_NORM = 1,
-		LF_CROSS_ENTROPY = 2
-		// > Add other functions here <
-	}LOSS_FUNCTION_TYPE;
-
 	TrainedArtificialNeuralNetwork()
 	{
 		current_loss = std::numeric_limits<double>::max();
@@ -98,24 +91,23 @@ public:
 	// Saves the current state of the update method
 	virtual void saveState() = 0;
 
-	void assignLossFunction(const LOSS_FUNCTION_TYPE src_loss_function_type)
+	void assignLossFunction(const LossFunction::LOSS_FUNCTION_TYPE src_loss_function_type)
 	{
 		loss_functions_tail_node->next_loss_function_node = new LOSS_FUNCTION_LIST_NODE;
 		loss_functions_tail_node = loss_functions_tail_node->next_loss_function_node;
 		loss_functions_tail_node->next_loss_function_node = NULL;
 
-		loss_functions_tail_node->loss_function_node_type = src_loss_function_type;
 		switch (src_loss_function_type)
 		{
-		case LF_L1_NORM:
+		case LossFunction::LF_L1_NORM:
 			loss_functions_tail_node->loss_function_pointer = new L1LossFunction;
 			break;
 
-		case LF_L2_NORM:
+		case LossFunction::LF_L2_NORM:
 			loss_functions_tail_node->loss_function_pointer = new L2LossFunction;
 			break;
 
-		case LF_CROSS_ENTROPY:
+		case LossFunction::LF_CROSS_ENTROPY:
 			loss_functions_tail_node->loss_function_pointer = new crossEntropyLossFunction;
 			break;
 		}
@@ -134,7 +126,6 @@ protected:
 	typedef struct LOSS_FUNCTION_LIST_NODE
 	{
 		LossFunction * loss_function_pointer;
-		LOSS_FUNCTION_TYPE loss_function_node_type;
 		LOSS_FUNCTION_LIST_NODE * next_loss_function_node;
 	} LOSS_FUNCTION_LIST_NODE;
 

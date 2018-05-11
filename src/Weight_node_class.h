@@ -24,7 +24,7 @@ public:
 	
 	// Sets/Gets the current input node pointer:
 	void setInputNodePointer(Input_node * src_input_node_pointer);
-	Input_node * getInputNodePointer();
+	int getInputNodeGlobalIndex();
 
 	// Computes the weighted sum of the inputs and their corresponding weights
 	double getWeightedInput(const unsigned long long src_current_network_time);
@@ -39,6 +39,8 @@ public:
 
 	// Assign the error reflected into the specified output corresponding to all the weights in the list.
 	void setWeightsErrorContribution(const double src_node_error_contribution, const unsigned int src_output_index);
+
+	WEIGHT_INPUT_TYPE getWeigthedInputType();
 
 	void makeExternalWeigthValue(double *** src_weight_values_master_pointer = NULL, double **** src_weight_derivatives_values_master_pointer = NULL);
 
@@ -106,6 +108,10 @@ private:
 	void dumpWeightDataBias(FILE * fp_network_data);
 	void dumpWeightDataNeuron(FILE * fp_network_data);
 	void dumpWeightDataPattern(FILE * fp_network_data);
+
+	int(Weight_node::*get_input_node_global_index) ();
+	int getWeightedInputNodeGlobalIndex();
+	int getBiasGlobalIndex();
 };
 
 #endif // WEIGHT_NODE_CLASS_INLCUDED

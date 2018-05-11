@@ -2,12 +2,14 @@
 
 L2LossFunction::L2LossFunction()
 {
-	/* Nothing to define */
+	my_loss_function_type = LF_L2_NORM;
 }
 
 
 L2LossFunction::L2LossFunction(const L2LossFunction & src_loss_function)
 {
+	this->my_loss_function_type = LF_L2_NORM;
+
 	/* This copy operator copies the pointers form the source object,
 	the output nodes pointers must be changed later using the "setOutputNode" method.
 	The pointer to the groundtruth must be changed as well using the method "setGroundtruth".
@@ -29,6 +31,8 @@ L2LossFunction & L2LossFunction::operator=(const L2LossFunction & src_loss_funct
 {
 	if (this != &src_loss_function)
 	{
+		this->my_loss_function_type = LF_L2_NORM;
+
 		/* This copy operator copies the pointers form the source object,
 		the output nodes pointers must be changed later using the "setOutputNode" method.
 		The pointer to the groundtruth must be changed as well using the method "setGroundtruth".

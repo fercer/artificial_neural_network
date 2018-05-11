@@ -7,12 +7,14 @@
 
 L1LossFunction::L1LossFunction()
 {
-	/* Nothing to define */
+	my_loss_function_type = LF_L1_NORM;
 }
 
 
 L1LossFunction:: L1LossFunction(const L1LossFunction & src_loss_function)
 {
+	this->my_loss_function_type = LF_L1_NORM;
+
 	/* This copy contructor copies the pointers form the source object,
 	the output nodes pointers must be changed later using the "setOutputNode" method.
 	The pointer to the groundtruth must be changed as well using the method "setGroundtruth".
@@ -35,6 +37,7 @@ L1LossFunction & L1LossFunction::operator= (const L1LossFunction & src_loss_func
 {
 	if (this != &src_loss_function)
 	{
+		this->my_loss_function_type = LF_L1_NORM;
 		/* This copy operator copies the pointers form the source object,
 		the output nodes pointers must be changed later using the "setOutputNode" method.
 		The pointer to the groundtruth must be changed as well using the method "setGroundtruth".

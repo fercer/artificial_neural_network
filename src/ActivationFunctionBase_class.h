@@ -7,6 +7,12 @@
 class ActivationFunctionBase
 {
 public:
+	typedef enum ACTIVATION_FUNCTION_TYPE {
+		ACT_SIGMOID = 0,
+		ACT_HYPERBOLIC_TANGENT = 1,
+		ACT_IDENTITY = 2
+	} ACTIVATION_FUNCTION_TYPE;
+
 	ActivationFunctionBase()
 	{
 		function_was_reevaluated = true;
@@ -29,6 +35,11 @@ public:
 		current_activation_function_time = 0;
 	}
 
+	ACTIVATION_FUNCTION_TYPE getActivationFunctionType()
+	{
+		return my_activation_function_type;
+	}
+
 protected:
 	unsigned int parameters_count;
 	unsigned long long current_activation_function_time;
@@ -36,6 +47,8 @@ protected:
 	double * parameters;
 	double current_evaluation;
 	double current_evaluation_derivative;
+
+	ACTIVATION_FUNCTION_TYPE my_activation_function_type;
 };
 
 #endif //ACTIVATIONFUNCTIONBASE_CLASS_H_INCLUDED

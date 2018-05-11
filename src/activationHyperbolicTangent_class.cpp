@@ -6,6 +6,8 @@
 
 activationHyperbolicTangent::activationHyperbolicTangent()
 {
+	my_activation_function_type = ACT_HYPERBOLIC_TANGENT;
+
 	parameters_count = 1;
 	parameters = (double*)malloc(sizeof(double));
 	*parameters = 1.0;
@@ -13,6 +15,8 @@ activationHyperbolicTangent::activationHyperbolicTangent()
 
 activationHyperbolicTangent::activationHyperbolicTangent(double * src_function_parameters)
 {
+	my_activation_function_type = ACT_HYPERBOLIC_TANGENT;
+
 	parameters_count = 1;
 	parameters = (double*)malloc(sizeof(double));
 	*parameters = *(src_function_parameters);
@@ -21,6 +25,8 @@ activationHyperbolicTangent::activationHyperbolicTangent(double * src_function_p
 
 activationHyperbolicTangent::activationHyperbolicTangent(const activationHyperbolicTangent &src_activation_function)
 {
+	this->my_activation_function_type = ACT_HYPERBOLIC_TANGENT;
+
 	this->parameters_count = 1;
 	this->parameters = (double*)malloc(sizeof(double));
 	*(this->parameters) = *(src_activation_function.parameters);
@@ -35,6 +41,8 @@ activationHyperbolicTangent & activationHyperbolicTangent::operator= (const acti
 	*/
 	if (this != &src_activation_function)
 	{
+		this->my_activation_function_type = ACT_HYPERBOLIC_TANGENT;
+
 		parameters_count = 1;
 		parameters = (double*)malloc(sizeof(double));
 		*(this->parameters) = *(src_activation_function.parameters);

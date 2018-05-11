@@ -19,12 +19,6 @@ class Neuron :
 	public Input_node
 {
 public:
-	typedef enum ACTIVATION_FUNCTION_TYPE {
-		ACT_SIGMOID = 0,
-		ACT_HYPERBOLIC_TANGENT = 1,
-		ACT_IDENTITY = 2
-	} ACTIVATION_FUNCTION_TYPE;
-
 	Neuron(const unsigned int src_neuron_position, const unsigned int src_outputs_count = 1, double *** src_weight_values_master_pointer = NULL, double **** src_weight_derivatives_values_master_pointer = NULL);
 
 	Neuron(const Neuron &src_neuron);
@@ -42,11 +36,12 @@ public:
 	void backpropagateNodeError();
 	void backpropagateNodeError(const unsigned int src_output_index);
 
-	void setActivationFunction(ACTIVATION_FUNCTION_TYPE src_activation_function, double * src_function_parameters);
+	void setActivationFunction(ActivationFunctionBase::ACTIVATION_FUNCTION_TYPE src_activation_function, double * src_function_parameters);
 	
 	// Changes the current pointer to the passed as argument:
 	void setInputNodePointer(Input_node * src_input_node_pointer, const unsigned int src_input_index);
-	Input_node *getInputNodePointer(const unsigned int src_input_index);
+	int getInputNodeGlobalIndex(const unsigned int src_input_index);
+	Weight_node::WEIGHT_INPUT_TYPE getInputType(const unsigned int src_input_index);
 	
 	void makeExternalWeightValues(double *** src_weight_values_master_pointer = NULL, double **** src_weight_derivatives_values_master_pointer = NULL);
 
@@ -83,7 +78,6 @@ private:
 	WEIGHTS_LIST_NODE * weights_list_tail;
 	WEIGHTS_LIST_NODE weights_list_head;
 
-	ACTIVATION_FUNCTION_TYPE neuron_activation_function_type;
 	ActivationFunctionBase * neuron_activation_function;
 
 	double (Neuron::*get_input_method)(const unsigned long long src_current_network_time);

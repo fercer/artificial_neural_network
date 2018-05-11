@@ -16,6 +16,13 @@
 class LossFunction
 {
 public:
+	typedef enum LOSS_FUNCTION_TYPE {
+		LF_L1_NORM = 0,
+		LF_L2_NORM = 1,
+		LF_CROSS_ENTROPY = 2
+		// > Add other functions here <
+	}LOSS_FUNCTION_TYPE;
+
 	LossFunction()
 	{
 		error_derivative = 0.0;
@@ -82,6 +89,8 @@ protected:
 	double error_derivative;
 	unsigned int global_output_index;
 	unsigned long long error_current_time;
+
+	LOSS_FUNCTION_TYPE my_loss_function_type;
 };
 
 #endif //LOSSFUNCTION_CLASS_H_INCLUDED

@@ -6,11 +6,13 @@
 
 crossEntropyLossFunction::crossEntropyLossFunction()
 {
-	/* Nothing to define */
+	my_loss_function_type = LF_CROSS_ENTROPY;
 }
 
 crossEntropyLossFunction::crossEntropyLossFunction(const crossEntropyLossFunction & src_loss_function)
 {
+	this->my_loss_function_type = LF_CROSS_ENTROPY;
+
 	/* This copy operator copies the pointers form the source object,
 	the output nodes pointers must be changed later using the "setOutputNode" method.
 	The pointer to the groundtruth must be changed as well using the method "setGroundtruth".
@@ -33,6 +35,7 @@ crossEntropyLossFunction & crossEntropyLossFunction::operator=(const crossEntrop
 {
 	if (this != &src_loss_function)
 	{
+		this->my_loss_function_type = LF_CROSS_ENTROPY;
 		/* This copy operator copies the pointers form the source object,
 		the output nodes pointers must be changed later using the "setOutputNode" method.
 		The pointer to the groundtruth must be changed as well using the method "setGroundtruth".

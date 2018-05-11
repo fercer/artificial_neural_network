@@ -61,16 +61,15 @@ Neuron::Neuron(const Neuron &src_neuron)
 
 	dumpWeightsListIntoArray();
 
-	this->neuron_activation_function_type = src_neuron.neuron_activation_function_type;
-	switch (this->neuron_activation_function_type)
+	switch (src_neuron.neuron_activation_function->getActivationFunctionType())
 	{
-	case ACT_HYPERBOLIC_TANGENT:
+	case ActivationFunctionBase::ACT_HYPERBOLIC_TANGENT:
 		this->neuron_activation_function = new activationHyperbolicTangent(*(activationHyperbolicTangent*)(src_neuron.neuron_activation_function));
 		break;
-	case ACT_SIGMOID:
+	case ActivationFunctionBase::ACT_SIGMOID:
 		this->neuron_activation_function = new activationSigmoid(*(activationSigmoid*)(src_neuron.neuron_activation_function));
 		break;
-	case ACT_IDENTITY:
+	case ActivationFunctionBase::ACT_IDENTITY:
 		this->neuron_activation_function = new identityActivationFunction(*(identityActivationFunction*)(src_neuron.neuron_activation_function));
 		break;
 	}
@@ -118,16 +117,15 @@ Neuron & Neuron::operator= (const Neuron &src_neuron)
 
 		dumpWeightsListIntoArray();
 
-		this->neuron_activation_function_type = src_neuron.neuron_activation_function_type;
-		switch (this->neuron_activation_function_type)
+		switch (src_neuron.neuron_activation_function->getActivationFunctionType())
 		{
-		case ACT_HYPERBOLIC_TANGENT:
+		case ActivationFunctionBase::ACT_HYPERBOLIC_TANGENT:
 			this->neuron_activation_function = new activationHyperbolicTangent(*(activationHyperbolicTangent*)(src_neuron.neuron_activation_function));
 			break;
-		case ACT_SIGMOID:
+		case ActivationFunctionBase::ACT_SIGMOID:
 			this->neuron_activation_function = new activationSigmoid(*(activationSigmoid*)(src_neuron.neuron_activation_function));
 			break;
-		case ACT_IDENTITY:
+		case ActivationFunctionBase::ACT_IDENTITY:
 			this->neuron_activation_function = new identityActivationFunction(*(identityActivationFunction*)(src_neuron.neuron_activation_function));
 			break;
 		}
@@ -296,11 +294,19 @@ void Neuron::setInputNodePointer(Input_node * src_input_node_pointer, const unsi
 
 
 
-Input_node *  Neuron::getInputNodePointer(const unsigned int src_input_index)
+int  Neuron::getInputNodeGlobalIndex(const unsigned int src_input_index)
 {
 	dumpWeightsListIntoArray();
 
-	return (*(weights_array + src_input_index))->getInputNodePointer();
+	return (*(weights_array + src_input_index))->getInputNodeGlobalIndex();
+}
+
+
+
+
+Weight_node::WEIGHT_INPUT_TYPE Neuron::getInputType(const unsigned int src_input_index)
+{
+	return (*(weights_array + src_input_index))->getWeigthedInputType();
 }
 
 

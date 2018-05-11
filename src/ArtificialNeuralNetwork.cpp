@@ -55,12 +55,11 @@ ArtificialNeuralNetwork::ArtificialNeuralNetwork(const ArtificialNeuralNetwork &
 		for (unsigned int weighted_input_index = 0; weighted_input_index < current_inputs_count; weighted_input_index++)
 		{
 			/* Get the current's global input index in the source's network */
-			Input_node * current_input_pointer = (*(this->network_neurons + neuron_index))->getInputNodePointer(weighted_input_index);
+			const int current_input_global_index = (*(this->network_neurons + neuron_index))->getInputNodeGlobalIndex(weighted_input_index);
 
 			/* The bias will have a NULL pointer, for the other weighted inputs, it is changed */
-			if (current_input_pointer)
+			if (current_input_global_index >= 0)
 			{
-				const unsigned int current_input_global_index = current_input_pointer->getGlobalNodeIndex();
 				/* Change the pointer to this network's neuron */
 				(*(this->network_neurons + neuron_index))->setInputNodePointer(*(this->network_neurons + current_input_global_index), weighted_input_index);
 			}
@@ -113,12 +112,11 @@ ArtificialNeuralNetwork & ArtificialNeuralNetwork::operator=(const ArtificialNeu
 			for (unsigned int weighted_input_index = 0; weighted_input_index < current_inputs_count; weighted_input_index++)
 			{
 				/* Get the current's global input index in the source's network */
-				Input_node * current_input_pointer = (*(this->network_neurons + neuron_index))->getInputNodePointer(weighted_input_index);
+				const int current_input_global_index = (*(this->network_neurons + neuron_index))->getInputNodeGlobalIndex(weighted_input_index);
 
-				/* The bias will have a NULL pointer, for the other weighted inputs, it is changed */
-				if (current_input_pointer)
+				/* The bias will have a negative global index, for the other weighted inputs, it is changed */
+				if (current_input_global_index >= 0)
 				{
-					const unsigned int current_input_global_index = current_input_pointer->getGlobalNodeIndex();
 					/* Change the pointer to this network's neuron */
 					(*(this->network_neurons + neuron_index))->setInputNodePointer(*(this->network_neurons + current_input_global_index), weighted_input_index);
 				}

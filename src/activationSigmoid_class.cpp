@@ -6,6 +6,8 @@
 
 activationSigmoid::activationSigmoid()
 {
+	my_activation_function_type = ACT_SIGMOID;
+
 	parameters_count = 1;
 	parameters = (double*)malloc(sizeof(double));
 	*parameters = 1.0;
@@ -13,6 +15,8 @@ activationSigmoid::activationSigmoid()
 
 activationSigmoid::activationSigmoid(double * src_function_parameters)
 {
+	my_activation_function_type = ACT_SIGMOID;
+
 	parameters_count = 1;
 	parameters = (double*)malloc(sizeof(double));
 	*parameters = *(src_function_parameters);
@@ -21,6 +25,8 @@ activationSigmoid::activationSigmoid(double * src_function_parameters)
 
 activationSigmoid::activationSigmoid(const activationSigmoid &src_activation_function)
 {
+	this->my_activation_function_type = ACT_SIGMOID;
+
 	this->parameters_count = 1;
 	this->parameters = (double*)malloc(sizeof(double));
 	*(this->parameters) = *(src_activation_function.parameters);
@@ -35,6 +41,8 @@ activationSigmoid & activationSigmoid::operator= (const activationSigmoid &src_a
 	*/
 	if (this != &src_activation_function)
 	{
+		this->my_activation_function_type = ACT_SIGMOID;
+
 		this->parameters_count = 1;
 		this->parameters = (double*)malloc(sizeof(double));
 		*(this->parameters) = *(src_activation_function.parameters);
