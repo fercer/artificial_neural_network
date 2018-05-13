@@ -27,7 +27,7 @@ Neuron::Neuron(const unsigned int src_neuron_position, const unsigned int src_ou
 Neuron::Neuron(const Neuron &src_neuron)
 {
 	this->weights_array = NULL;
-	this->dump_weights_list_into_array_required = false;
+	this->dump_weights_list_into_array_required = true;
 	this->global_node_index = src_neuron.global_node_index;
 	this->node_current_time = 0;
 	this->neuron_outputs_count = src_neuron.neuron_outputs_count;
@@ -82,7 +82,7 @@ Neuron & Neuron::operator= (const Neuron &src_neuron)
 	if (this != &src_neuron)
 	{
 		this->weights_array = NULL;
-		this->dump_weights_list_into_array_required = false;
+		this->dump_weights_list_into_array_required = true;
 
 		this->global_node_index = src_neuron.global_node_index;
 		this->node_current_time = 0;
@@ -211,6 +211,7 @@ void Neuron::dumpWeightsListIntoArray()
 		next_weight_node_pointer = current_weight_node_pointer->next_weighted_input;
 
 		*(weights_array + weighted_input_index) = current_weight_node_pointer->weighted_input;
+		weighted_input_index++;
 	}
 
 	dump_weights_list_into_array_required = false;
@@ -266,18 +267,17 @@ void Neuron::backpropagateNodeError(const unsigned int src_output_index)
 
 
 
-void Neuron::setActivationFunction(ACTIVATION_FUNCTION_TYPE src_activation_function, double * src_function_parameters)
+void Neuron::setActivationFunction(ActivationFunctionBase::ACTIVATION_FUNCTION_TYPE src_activation_function, double * src_function_parameters)
 {
-	neuron_activation_function_type = src_activation_function;
 	switch (src_activation_function)
 	{
-	case ACT_HYPERBOLIC_TANGENT:
+	case ActivationFunctionBase::ACT_HYPERBOLIC_TANGENT:
 		neuron_activation_function = new activationHyperbolicTangent(src_function_parameters);
 		break;
-	case ACT_SIGMOID:
+	case ActivationFunctionBase::ACT_SIGMOID:
 		neuron_activation_function = new activationSigmoid(src_function_parameters);
 		break;
-	case ACT_IDENTITY:
+	case ActivationFunctionBase::ACT_IDENTITY:
 		neuron_activation_function = new identityActivationFunction;
 		break;
 	}

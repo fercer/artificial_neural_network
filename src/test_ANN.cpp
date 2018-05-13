@@ -34,11 +34,11 @@ int main(int argc, char * argv[])
 
 	for (unsigned int output_index = 0; output_index < outputs_count; output_index++)
 	{
-		bpt_ann_test.assignLossFunction(TrainedArtificialNeuralNetwork::LF_L2_NORM);
+		bpt_ann_test.assignLossFunction(LossFunction::LF_L2_NORM);
 	}
 
-	//bpt_ann_test.trainNetwork();
-	//bpt_ann_test.saveNetworkState();
+	bpt_ann_test.trainNetwork();
+	bpt_ann_test.saveNetworkState();
 
 	double * prediction = (double*)malloc(outputs_count * sizeof(double));
 	

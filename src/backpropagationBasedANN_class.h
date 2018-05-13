@@ -73,7 +73,6 @@ private:
 
 	LOSS_FUNCTION_LIST_NODE * loss_functions_head_node_threads;
 	LOSS_FUNCTION_LIST_NODE ** loss_functions_tail_node_threads;
-
 #endif
 
 	double * weights_deltas;
@@ -98,6 +97,11 @@ private:
 	int allocateNetworkArchitectureParallel();
 	int allocateTrainingDataParallel();
 	int allocateLevenbergMarquardtParallel();
+
+	void deallocateLossFunctionsParallel();
+	void deallocateNetworkArchitectureParallel();
+	void deallocateTrainingDataParallel();
+	void deallocateLevenbergMarquardtParallel();
 #endif //_OPENMP
 
 	int allocateMethodMemory();

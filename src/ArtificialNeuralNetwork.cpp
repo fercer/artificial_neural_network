@@ -318,18 +318,18 @@ void ArtificialNeuralNetwork::loadNetworkData(const char * src_filename)
 		xml_node<> * activation_function_node = neuron_node->first_node("ActivationFunction");
 		char * activation_function_name = activation_function_node->first_attribute("type")->value();
 
-		Neuron::ACTIVATION_FUNCTION_TYPE activations_function_type;
+		ActivationFunctionBase::ACTIVATION_FUNCTION_TYPE activations_function_type;
 		if (strcmp(activation_function_name, "ACT_IDENTITY") == 0)
 		{
-			activations_function_type = Neuron::ACT_IDENTITY;
+			activations_function_type = ActivationFunctionBase::ACT_IDENTITY;
 		}
 		else if (strcmp(activation_function_name, "ACT_SIGMOID") == 0)
 		{
-			activations_function_type = Neuron::ACT_SIGMOID;
+			activations_function_type = ActivationFunctionBase::ACT_SIGMOID;
 		}
 		else // ACT_HYPERBOLIC_TANGENT
 		{
-			activations_function_type = Neuron::ACT_HYPERBOLIC_TANGENT;
+			activations_function_type = ActivationFunctionBase::ACT_HYPERBOLIC_TANGENT;
 		}
 
 		unsigned int parameters_count = 0;

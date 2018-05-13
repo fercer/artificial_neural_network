@@ -55,6 +55,12 @@ public:
 		global_output_index = src_global_output_index;
 	}
 
+	// Returns the position in the pointer from where the groundtruth data will be accessed
+	unsigned int getGlobalOutputIndex()
+	{
+		return global_output_index;
+	}
+
 	// Designates the pointer from where the output values will be accessed
 	void setOutputNode(Input_node * src_output_pointer)
 	{
@@ -75,6 +81,13 @@ public:
 	{
 		return difference;
 	}
+
+
+	LOSS_FUNCTION_TYPE getLossFunctionType()
+	{
+		return my_loss_function_type;
+	}
+
 
 	void resetErrorCurrentTime()
 	{

@@ -16,6 +16,7 @@ Weight_node::Weight_node(const unsigned int src_outputs_count, const WEIGHT_INPU
 		get_input_response_with_derivatives = &Weight_node::getBias;
 		get_input_response = &Weight_node::getBias;
 		dump_weight_method = &Weight_node::dumpWeightDataBias;
+		get_input_node_global_index = &Weight_node::getBiasGlobalIndex;
 		break;
 
 	case WIT_PATTERN:
@@ -23,6 +24,7 @@ Weight_node::Weight_node(const unsigned int src_outputs_count, const WEIGHT_INPU
 		get_input_response_with_derivatives = &Weight_node::getWeightedInputWithDerivatives;
 		get_input_response = &Weight_node::getWeightedInput;
 		dump_weight_method = &Weight_node::dumpWeightDataPattern;
+		get_input_node_global_index = &Weight_node::getWeightedInputNodeGlobalIndex;
 		break;
 
 	case WIT_NEURON:
@@ -30,6 +32,7 @@ Weight_node::Weight_node(const unsigned int src_outputs_count, const WEIGHT_INPU
 		get_input_response_with_derivatives = &Weight_node::getWeightedInputWithDerivatives;
 		get_input_response = &Weight_node::getWeightedInput;
 		dump_weight_method = &Weight_node::dumpWeightDataNeuron;
+		get_input_node_global_index = &Weight_node::getWeightedInputNodeGlobalIndex;
 		break;
 	}
 	
@@ -141,6 +144,7 @@ Weight_node::Weight_node(const Weight_node & src_weight_node)
 		this->get_input_response_with_derivatives = &Weight_node::getBias;
 		this->get_input_response = &Weight_node::getBias;
 		this->dump_weight_method = &Weight_node::dumpWeightDataBias;
+		get_input_node_global_index = &Weight_node::getBiasGlobalIndex;
 		break;
 
 	case WIT_PATTERN:
@@ -148,6 +152,7 @@ Weight_node::Weight_node(const Weight_node & src_weight_node)
 		this->get_input_response_with_derivatives = &Weight_node::getWeightedInputWithDerivatives;
 		this->get_input_response = &Weight_node::getWeightedInput;
 		this->dump_weight_method = &Weight_node::dumpWeightDataPattern;
+		get_input_node_global_index = &Weight_node::getWeightedInputNodeGlobalIndex;
 		break;
 
 	case WIT_NEURON:
@@ -155,6 +160,7 @@ Weight_node::Weight_node(const Weight_node & src_weight_node)
 		this->get_input_response_with_derivatives = &Weight_node::getWeightedInputWithDerivatives;
 		this->get_input_response = &Weight_node::getWeightedInput;
 		this->dump_weight_method = &Weight_node::dumpWeightDataNeuron;
+		get_input_node_global_index = &Weight_node::getWeightedInputNodeGlobalIndex;
 		break;
 	}
 }
@@ -209,6 +215,7 @@ Weight_node & Weight_node::operator= (const Weight_node & src_weight_node)
 			this->get_input_response_with_derivatives = &Weight_node::getBias;
 			this->get_input_response = &Weight_node::getBias;
 			this->dump_weight_method = &Weight_node::dumpWeightDataBias;
+			get_input_node_global_index = &Weight_node::getBiasGlobalIndex;
 			break;
 
 		case WIT_PATTERN:
@@ -216,6 +223,7 @@ Weight_node & Weight_node::operator= (const Weight_node & src_weight_node)
 			this->get_input_response_with_derivatives = &Weight_node::getWeightedInputWithDerivatives;
 			this->get_input_response = &Weight_node::getWeightedInput;
 			this->dump_weight_method = &Weight_node::dumpWeightDataPattern;
+			get_input_node_global_index = &Weight_node::getWeightedInputNodeGlobalIndex;
 			break;
 
 		case WIT_NEURON:
@@ -223,6 +231,7 @@ Weight_node & Weight_node::operator= (const Weight_node & src_weight_node)
 			this->get_input_response_with_derivatives = &Weight_node::getWeightedInputWithDerivatives;
 			this->get_input_response = &Weight_node::getWeightedInput;
 			this->dump_weight_method = &Weight_node::dumpWeightDataNeuron;
+			get_input_node_global_index = &Weight_node::getWeightedInputNodeGlobalIndex;
 			break;
 		}
 	}
@@ -440,10 +449,14 @@ void Weight_node::dumpWeightDataPattern(FILE * fp_network_data)
 		input_node_pointer->getGlobalNodeIndex());
 }
 
+
+
 int Weight_node::getWeightedInputNodeGlobalIndex()
 {
 	return input_node_pointer->getGlobalNodeIndex();
 }
+
+
 
 int Weight_node::getBiasGlobalIndex()
 {
