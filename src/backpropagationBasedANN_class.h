@@ -55,9 +55,6 @@ private:
 
 	double ** jacobian_error_derivative_product_threads;
 	double ** hessian_matrix_threads;
-	double ** previous_weights_values_threads;
-	double ** previous_jacobian_error_derivative_product_threads;
-	double ** previous_hessian_matrix_threads;
 
 	// Network architecture:
 	Input_pattern *** network_input_nodes_threads;
@@ -72,7 +69,6 @@ private:
 	int *** groundtruth_data_threads;
 
 	LOSS_FUNCTION_LIST_NODE * loss_functions_head_node_threads;
-	LOSS_FUNCTION_LIST_NODE ** loss_functions_tail_node_threads;
 #endif
 
 	double * weights_deltas;

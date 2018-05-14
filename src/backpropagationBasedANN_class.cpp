@@ -35,6 +35,8 @@ backpropagationBasedANN::backpropagationBasedANN()
 
 	random_number_generator_seed = initSeed(777);
 
+	omp_set_num_threads(2);
+
 #ifdef _OPENMP
 #pragma omp parallel
 	{
@@ -66,11 +68,21 @@ backpropagationBasedANN::~backpropagationBasedANN()
 			free(hessian_matrix);
 			free(previous_jacobian_error_derivative_product);
 			free(previous_hessian_matrix);
+
+#ifdef _OEPNMP
+			deallocateLevenbergMarquardtParallel();
+#endif //_OPENMP
 		}
 		else
 		{
 			free(weights_deltas);
 		}
+
+#ifdef _OEPNMP
+		deallocateLossFunctionsParallel();
+		deallocateTrainingDataParallel();
+		deallocateNetworkArchitectureParallel();
+#endif //_OPENMP
 	}
 	
 	free(random_number_generator_seed);
@@ -82,12 +94,7 @@ int backpropagationBasedANN::allocateLossFunctionsParallel()
 {
 	// Allocate memory for the loss functions:
 	loss_functions_head_node_threads = (LOSS_FUNCTION_LIST_NODE*)malloc(available_threads * sizeof(LOSS_FUNCTION_LIST_NODE));
-	loss_functions_tail_node_threads = (LOSS_FUNCTION_LIST_NODE**)malloc(available_threads * sizeof(LOSS_FUNCTION_LIST_NODE*));
-
-	for (unsigned int thread_id = 0; thread_id < available_threads; thread_id++)
-	{
-		*(loss_functions_tail_node_threads + thread_id) = loss_functions_head_node_threads + thread_id;
-	}
+	LOSS_FUNCTION_LIST_NODE * loss_functions_tail_node_threads;
 
 	LOSS_FUNCTION_LIST_NODE * current_loss_function_node;
 	LOSS_FUNCTION_LIST_NODE * next_loss_function_node = loss_functions_head_node.next_loss_function_node;
@@ -101,31 +108,34 @@ int backpropagationBasedANN::allocateLossFunctionsParallel()
 
 		for (unsigned int thread_id = 0; thread_id < available_threads; thread_id++)
 		{
-			(*(loss_functions_tail_node_threads + thread_id))->next_loss_function_node = new LOSS_FUNCTION_LIST_NODE;
-			*(loss_functions_tail_node_threads + thread_id) = (*(loss_functions_tail_node_threads + thread_id))->next_loss_function_node;
-			(*(loss_functions_tail_node_threads + thread_id))->next_loss_function_node = NULL;
+			loss_functions_tail_node_threads = loss_functions_head_node_threads + thread_id;
+
+			loss_functions_tail_node_threads->next_loss_function_node = new LOSS_FUNCTION_LIST_NODE;
+			loss_functions_tail_node_threads = loss_functions_tail_node_threads->next_loss_function_node;
+
+			loss_functions_tail_node_threads->next_loss_function_node = NULL;
 
 			switch (current_loss_function_node->loss_function_pointer->getLossFunctionType())
 			{
 			case LossFunction::LF_L1_NORM:
-				(*(loss_functions_tail_node_threads + thread_id))->loss_function_pointer = new L1LossFunction(*(L1LossFunction*)(current_loss_function_node->loss_function_pointer));
+				loss_functions_tail_node_threads->loss_function_pointer = new L1LossFunction(*(L1LossFunction*)(current_loss_function_node->loss_function_pointer));
 				break;
 
 			case LossFunction::LF_L2_NORM:
-				(*(loss_functions_tail_node_threads + thread_id))->loss_function_pointer = new L2LossFunction(*(L2LossFunction*)(current_loss_function_node->loss_function_pointer));
+				loss_functions_tail_node_threads->loss_function_pointer = new L2LossFunction(*(L2LossFunction*)(current_loss_function_node->loss_function_pointer));
 				break;
 
 			case LossFunction::LF_CROSS_ENTROPY:
-				(*(loss_functions_tail_node_threads + thread_id))->loss_function_pointer = new crossEntropyLossFunction(*(crossEntropyLossFunction*)(current_loss_function_node->loss_function_pointer));
+				loss_functions_tail_node_threads->loss_function_pointer = new crossEntropyLossFunction(*(crossEntropyLossFunction*)(current_loss_function_node->loss_function_pointer));
 				break;
 			}
 
-			(*(loss_functions_tail_node_threads + thread_id))->loss_function_pointer->setOutputNode(
+			loss_functions_tail_node_threads->loss_function_pointer->setOutputNode(
 				*(*(network_output_nodes_threads + thread_id) + current_loss_function_index));
 			
-			(*(loss_functions_tail_node_threads + thread_id))->loss_function_pointer->setGlobalOutputIndex(current_loss_function_index);
+			loss_functions_tail_node_threads->loss_function_pointer->setGlobalOutputIndex(current_loss_function_index);
 			
-			(*(loss_functions_tail_node_threads + thread_id))->loss_function_pointer->setGroundtruth(groundtruth_master_pointer_threads + thread_id);
+			loss_functions_tail_node_threads->loss_function_pointer->setGroundtruth(groundtruth_master_pointer_threads + thread_id);
 		}
 	}
 
@@ -249,6 +259,7 @@ int backpropagationBasedANN::allocateTrainingDataParallel()
 	for (unsigned int thread_id = 0; thread_id < available_threads; thread_id++)
 	{
 		const unsigned int current_thread_batch_size = ((thread_id + 1) * batch_size_per_thread) > training_data_size ? (training_data_size - thread_id*batch_size_per_thread) : batch_size_per_thread;
+
 		*(groundtruth_data_threads + thread_id) = (int**)malloc(current_thread_batch_size * sizeof(int*));
 		*(training_data_threads + thread_id) = (double**)malloc(current_thread_batch_size * sizeof(double*));
 
@@ -274,19 +285,11 @@ int backpropagationBasedANN::allocateLevenbergMarquardtParallel()
 {	
 	// Allocate memory for the weights update directions:
 	hessian_matrix_threads = (double**)malloc(available_threads * sizeof(double*));
-	previous_hessian_matrix_threads = (double**)malloc(available_threads * sizeof(double*));
 	jacobian_error_derivative_product_threads = (double**)malloc(available_threads * sizeof(double*));
-	previous_jacobian_error_derivative_product_threads = (double**)malloc(available_threads * sizeof(double*));
-	previous_weights_values_threads = (double**)malloc(available_threads * sizeof(double*));
-
 	for (unsigned int thread_id = 0; thread_id < available_threads; thread_id++)
 	{
 		*(hessian_matrix_threads + thread_id) = (double*)malloc(weights_count * (weights_count + 1) / 2 * sizeof(double));
-		*(previous_hessian_matrix_threads + thread_id) = (double*)malloc(weights_count * (weights_count + 1) / 2 * sizeof(double));
-
 		*(jacobian_error_derivative_product_threads + thread_id) = (double*)malloc(weights_count * sizeof(double));
-		*(previous_jacobian_error_derivative_product_threads + thread_id) = (double*)malloc(weights_count * sizeof(double));
-		*(previous_weights_values_threads + thread_id) = (double*)malloc(weights_count * sizeof(double));
 	}
 
 	return 1;
@@ -313,7 +316,6 @@ void backpropagationBasedANN::deallocateLossFunctionsParallel()
 	}
 
 	free(loss_functions_head_node_threads);
-	free(loss_functions_tail_node_threads);
 }
 
 
@@ -360,10 +362,7 @@ void backpropagationBasedANN::deallocateTrainingDataParallel()
 {
 	for (unsigned int thread_id = 0; thread_id < available_threads; thread_id++)
 	{
-		const unsigned int current_thread_batch_size =
-			(batch_size_per_thread * (thread_id + 1) > training_data_size) ?
-			batch_size_per_thread * (thread_id + 1) :
-			(training_data_size - batch_size_per_thread * thread_id);
+		const unsigned int current_thread_batch_size = ((thread_id + 1) * batch_size_per_thread) > training_data_size ? (training_data_size - thread_id*batch_size_per_thread) : batch_size_per_thread;
 
 		for (unsigned int pattern_index = 0; pattern_index < current_thread_batch_size; pattern_index++)
 		{
@@ -387,17 +386,11 @@ void backpropagationBasedANN::deallocateLevenbergMarquardtParallel()
 	for (unsigned int thread_id = 0; thread_id < available_threads; thread_id++)
 	{
 		free(*(hessian_matrix_threads + thread_id));
-		free(*(previous_hessian_matrix_threads + thread_id));
 		free(*(jacobian_error_derivative_product_threads + thread_id));
-		free(*(previous_jacobian_error_derivative_product_threads + thread_id));
-		free(*(previous_weights_values_threads + thread_id));
 	}
 
 	free(hessian_matrix_threads);
-	free(previous_hessian_matrix_threads);
 	free(jacobian_error_derivative_product_threads);
-	free(previous_jacobian_error_derivative_product_threads);
-	free(previous_weights_values_threads);
 }
 #endif //_OPENMP
 
@@ -446,12 +439,6 @@ int backpropagationBasedANN::allocateMethodMemory()
 		weight_index_base += current_neuron_inputs_count;
 	}
 
-#ifdef _OPENMP
-	batch_size_per_thread = (training_data_size + 1) / available_threads;
-	allocateTrainingDataParallel();
-	allocateNetworkArchitectureParallel();
-	allocateLossFunctionsParallel();
-#endif //_OPENMP
 
 	if (hessian_matrix_was_required)
 	{
@@ -464,6 +451,10 @@ int backpropagationBasedANN::allocateMethodMemory()
 		previous_weights_values = (double*)malloc(weights_count * sizeof(double));
 
 #ifdef _OPENMP
+		batch_size_per_thread = (training_data_size + 1) / available_threads;
+		allocateTrainingDataParallel();
+		allocateNetworkArchitectureParallel();
+		allocateLossFunctionsParallel();
 		allocateLevenbergMarquardtParallel();
 #endif //_OPENMP
 	}
@@ -804,32 +795,92 @@ bool backpropagationBasedANN::computeEpoch_levenberg_marquardt()
 	const unsigned int outputs_count_parallel_temp = outputs_count;
 	const unsigned int weights_count_parallel_temp = weights_count;
 
-	unsigned int network_current_time_thread = network_current_time;
+	double *** network_weights_derivatives_values_threads_parallel_temp = 
+		network_weights_derivatives_values_threads;
+
+	double ** jacobian_error_derivative_product_threads_parallel_temp = 
+		jacobian_error_derivative_product_threads;
+	double ** hessian_matrix_threads_parallel_temp = hessian_matrix_threads;
+
+	// Network architecture:
+	Neuron *** network_neurons_threads_parallel_temp = network_neurons_threads;
+	Neuron *** network_output_nodes_threads_parallel_temp = network_output_nodes_threads;
+
+	// Trained network data:
+	double *** training_data_threads_parallel_temp = training_data_threads;
+	double ** input_pattern_master_pointer_threads_parallel_temp = 
+		input_pattern_master_pointer_threads;
+
+	int ** groundtruth_master_pointer_threads_parallel_temp = groundtruth_master_pointer_threads;
+	int *** groundtruth_data_threads_parallel_temp = groundtruth_data_threads;
+
+	LOSS_FUNCTION_LIST_NODE * loss_functions_head_node_threads_parallel_temp = 
+		loss_functions_head_node_threads;
+
+	unsigned int current_thread_network_time = network_current_time;
 	// Perform the feed-forward process for each pattern in the training set (per thread):
 #pragma omp parallel default(none) \
 firstprivate(\
 batch_size_per_thread_parallel_temp,\
 training_data_size_parallel_temp,\
-network_current_time_thread,\
+current_thread_network_time,\
 neurons_count_parallel_temp,\
 outputs_count_parallel_temp,\
-weights_count_parallel_temp\
+weights_count_parallel_temp,\
+network_weights_derivatives_values_threads_parallel_temp,\
+jacobian_error_derivative_product_threads_parallel_temp,\
+hessian_matrix_threads_parallel_temp,\
+network_neurons_threads_parallel_temp,\
+network_output_nodes_threads_parallel_temp,\
+training_data_threads_parallel_temp,\
+input_pattern_master_pointer_threads_parallel_temp,\
+groundtruth_master_pointer_threads_parallel_temp,\
+groundtruth_data_threads_parallel_temp,\
+loss_functions_head_node_threads_parallel_temp\
 )\
 shared(\
 total_epoch_loss_parallel_temp\
 )
 	{
 		const int current_thread_id = omp_get_thread_num();
-		const unsigned int current_thread_batch_size = 
-			((batch_size_per_thread_parallel_temp * (current_thread_id + 1)) < training_data_size) ?
-			batch_size_per_thread_parallel_temp :
-			(training_data_size - batch_size_per_thread_parallel_temp * current_thread_id);
+
+		double ** current_thread_network_weights_derivatives_values =
+			*(network_weights_derivatives_values_threads_parallel_temp + current_thread_id);
+
+		double * current_thread_jacobian_error_derivative_product =
+			*(jacobian_error_derivative_product_threads_parallel_temp + current_thread_id);
+
+		double * current_thread_hessian_matrix = 
+			*(hessian_matrix_threads_parallel_temp + current_thread_id);
+
+		Neuron ** current_thread_network_neurons =
+			*(network_neurons_threads_parallel_temp + current_thread_id);
+
+		Neuron ** current_thread_network_output_nodes =
+			*(network_output_nodes_threads_parallel_temp + current_thread_id);
+
+		double ** current_thread_training_data =
+			*(training_data_threads_parallel_temp + current_thread_id);
+
+		double ** current_thread_input_pattern_master_pointer =
+			input_pattern_master_pointer_threads_parallel_temp + current_thread_id;
+
+		int ** current_thread_groundtruth_master_pointer = 
+			groundtruth_master_pointer_threads_parallel_temp + current_thread_id;
+
+		int **	current_thread_groundtruth_data =
+			*(groundtruth_data_threads_parallel_temp + current_thread_id);
+
+		LOSS_FUNCTION_LIST_NODE * current_thread_loss_functions_head_node =
+			loss_functions_head_node_threads_parallel_temp + current_thread_id;
+
+		const unsigned int current_thread_batch_size = ((current_thread_id + 1) * batch_size_per_thread_parallel_temp) > training_data_size_parallel_temp ? (training_data_size_parallel_temp - current_thread_id*batch_size_per_thread_parallel_temp) : batch_size_per_thread_parallel_temp;
 
 		// Set the hessian and jacobian arrays to 0, to perform a cummulated sum of their values:
-		memset(*(hessian_matrix_threads + current_thread_id), 0,
+		memset(current_thread_hessian_matrix, 0,
 			weights_count_parallel_temp * (weights_count_parallel_temp + 1) / 2 * sizeof(double));
 
-		memset(*(jacobian_error_derivative_product_threads + current_thread_id), 0,
+		memset(current_thread_jacobian_error_derivative_product, 0,
 			weights_count_parallel_temp * sizeof(double));
 
 		LOSS_FUNCTION_LIST_NODE * current_loss_function_node;
@@ -838,26 +889,29 @@ total_epoch_loss_parallel_temp\
 		double current_thread_total_epoch_loss = 0.0;
 		unsigned int output_index;
 		
-		for (unsigned int pattern_index = 0; pattern_index < current_thread_batch_size; pattern_index++, network_current_time_thread++)
+		for (unsigned int pattern_index = 0; pattern_index < current_thread_batch_size; pattern_index++, current_thread_network_time++)
 		{
 			// Use the current pattern to feed the network:
-			*(input_pattern_master_pointer_threads + current_thread_id) = *(*(training_data_threads + current_thread_id) + pattern_index);
-			*(groundtruth_master_pointer_threads + current_thread_id) = *(*(groundtruth_data_threads + current_thread_id) + pattern_index);
+			*current_thread_input_pattern_master_pointer = 
+				*(current_thread_training_data + pattern_index);
+
+			*current_thread_groundtruth_master_pointer = 
+				*(current_thread_groundtruth_data + pattern_index);
 
 			// Perform the Feed forward:
-			next_loss_function_node = (loss_functions_head_node_threads + current_thread_id)->next_loss_function_node;
+			next_loss_function_node = current_thread_loss_functions_head_node->next_loss_function_node;
 			output_index = 0;
 			while (next_loss_function_node)
 			{
 				current_loss_function_node = next_loss_function_node;
 				next_loss_function_node = current_loss_function_node->next_loss_function_node;
 
-				current_thread_total_epoch_loss += current_loss_function_node->loss_function_pointer->computeLossWithDerivatives(network_current_time_thread);
+				current_thread_total_epoch_loss += current_loss_function_node->loss_function_pointer->computeLossWithDerivatives(current_thread_network_time);
 
 				/* This is necessary to back propagate only the error contribution
 				to each isolated loss function.
 				*/
-				(*(*(network_output_nodes_threads + current_thread_id) + output_index))->addNodeErrorContribution(1.0, output_index);
+				(*(current_thread_network_output_nodes + output_index))->addNodeErrorContribution(1.0, output_index);
 
 				output_index++;
 			}
@@ -866,14 +920,14 @@ total_epoch_loss_parallel_temp\
 			for (int neuron_index = (neurons_count_parallel_temp - 1); neuron_index >= 0; neuron_index--)
 			{
 				// Backpropagate the error contribution:
-				(*(*(network_neurons_threads + current_thread_id) + neuron_index))->backpropagateNodeError();
+				(*(current_thread_network_neurons + neuron_index))->backpropagateNodeError();
 			}
 
 			for (unsigned int weight_index = 0; weight_index < weights_count_parallel_temp; weight_index++)
 			{
 				// Compute the product between the Jacobian matrix and the vector of errors:
 				output_index = 0;
-				next_loss_function_node = (loss_functions_head_node_threads + current_thread_id)->next_loss_function_node;
+				next_loss_function_node = current_thread_loss_functions_head_node->next_loss_function_node;
 
 				double error_contribution_product = 0.0;
 				while (next_loss_function_node)
@@ -881,21 +935,23 @@ total_epoch_loss_parallel_temp\
 					current_loss_function_node = next_loss_function_node;
 					next_loss_function_node = current_loss_function_node->next_loss_function_node;
 
-					*(*(jacobian_error_derivative_product_threads + current_thread_id) + weight_index) =
-						*(*(jacobian_error_derivative_product_threads + current_thread_id) + weight_index) +
-						*(*(*(network_weights_derivatives_values_threads + current_thread_id) + weight_index) + output_index) *
+					*(current_thread_jacobian_error_derivative_product + weight_index) =
+						*(current_thread_jacobian_error_derivative_product + weight_index) +
+						*(*(current_thread_network_weights_derivatives_values + weight_index) + output_index) *
 						current_loss_function_node->loss_function_pointer->getErrorDerivative();
 
 					/* Compute the hessian matrix entry that corresponds to
 					the product of the current weight and the first weight of the network:
 					*/
-					error_contribution_product += *(*(*(network_weights_derivatives_values_threads + current_thread_id) + weight_index) + output_index) *
-						*(**(network_weights_derivatives_values_threads + current_thread_id) + output_index);
+					error_contribution_product += 
+						*(*(current_thread_network_weights_derivatives_values + weight_index) + output_index) *
+						*(*(current_thread_network_weights_derivatives_values + weight_index) + output_index);
 
 					output_index++;
 				}
 				const unsigned int weight_index_base = weight_index * (weight_index + 1) / 2;
-				*(*(hessian_matrix_threads + current_thread_id) + weight_index_base) = *(*(hessian_matrix_threads + current_thread_id) + weight_index_base) + error_contribution_product;
+				*(current_thread_hessian_matrix + weight_index_base) = 
+					*(current_thread_hessian_matrix + weight_index_base) + error_contribution_product;
 
 				// Compute the jacobian matrix product with its self transpose:
 				for (unsigned int weight_index_j = 0; weight_index_j <= weight_index; weight_index_j++)
@@ -903,11 +959,14 @@ total_epoch_loss_parallel_temp\
 					double error_contribution_product = 0.0;
 					for (unsigned int output_index = 0; output_index < outputs_count_parallel_temp; output_index++)
 					{
-						error_contribution_product += *(*(*(network_weights_derivatives_values_threads + current_thread_id) + weight_index) + output_index) *
-							*(*(*(network_weights_derivatives_values_threads + current_thread_id) + weight_index_j) + output_index);
+						error_contribution_product += 
+							*(*(current_thread_network_weights_derivatives_values + weight_index) + output_index) *
+							*(*(current_thread_network_weights_derivatives_values + weight_index_j) + output_index);
 					}
 
-					*(*(hessian_matrix_threads + current_thread_id) + weight_index_base + weight_index_j) = *(*(hessian_matrix_threads + current_thread_id) + weight_index_base + weight_index_j) + error_contribution_product;
+					*(current_thread_hessian_matrix + weight_index_base + weight_index_j) =
+						*(current_thread_hessian_matrix + weight_index_base + weight_index_j) +
+						error_contribution_product;
 				}
 			}
 		}
@@ -917,8 +976,12 @@ total_epoch_loss_parallel_temp\
 			total_epoch_loss_parallel_temp += current_thread_total_epoch_loss;
 		}
 	} // End of the parallel section
+	current_loss = total_epoch_loss_parallel_temp / (double)training_data_size;
 
 	// Join the hessian matrices of all the threads:
+	memset(hessian_matrix, 0, weights_count * (weights_count + 1) / 2 * sizeof(double));
+	memset(jacobian_error_derivative_product, 0, weights_count * sizeof(double));
+
 	for (unsigned int thread_id = 0; thread_id < available_threads; thread_id++)
 	{
 		for (unsigned int weight_index = 0; weight_index < weights_count; weight_index++)
@@ -936,10 +999,7 @@ total_epoch_loss_parallel_temp\
 				*(*(hessian_matrix_threads + thread_id) + weight_index);
 		}
 	}
-
-	current_loss = total_epoch_loss_parallel_temp / (double)training_data_size;
-
-
+	
 	LOSS_FUNCTION_LIST_NODE * current_loss_function_node;
 	LOSS_FUNCTION_LIST_NODE * next_loss_function_node;
 
@@ -1079,6 +1139,12 @@ total_epoch_loss_parallel_temp\
 		}
 	} while (1);
 
+
+	for (unsigned int thread_id = 0; thread_id < available_threads; thread_id++)
+	{
+		memcpy(*(network_weights_values_threads + thread_id), network_weights_values, weights_count * sizeof(double));
+	}
+
 	printf("Epoch computed successfully");
 
 	if ((mu_value > max_mu_value) || (current_loss < target_loss) || (squared_gradient_norm < target_loss*target_loss))
@@ -1102,7 +1168,6 @@ double backpropagationBasedANN::trainNetwork(const int save_each_n_epochs, const
 	{
 		if ((restart_time_each_n_epochs > 0) && !(current_epoch % restart_time_each_n_epochs))
 		{
-#ifndef _OPENMP
 			LOSS_FUNCTION_LIST_NODE * current_loss_function_node;
 			LOSS_FUNCTION_LIST_NODE * next_loss_function_node = loss_functions_head_node.next_loss_function_node;
 			while (next_loss_function_node)
@@ -1112,16 +1177,23 @@ double backpropagationBasedANN::trainNetwork(const int save_each_n_epochs, const
 
 				current_loss_function_node->loss_function_pointer->resetErrorCurrentTime();
 			}
-#else //_OPENMP
 
-			LOSS_FUNCTION_LIST_NODE * current_loss_function_node;
-			LOSS_FUNCTION_LIST_NODE * next_loss_function_node = loss_functions_head_node.next_loss_function_node;
-			while (next_loss_function_node)
+#ifdef _OPENMP
+			for (unsigned int thread_id = 0; thread_id < available_threads; thread_id++)
 			{
-				current_loss_function_node = next_loss_function_node;
-				next_loss_function_node = current_loss_function_node->next_loss_function_node;
+				next_loss_function_node = (loss_functions_head_node_threads + thread_id)->next_loss_function_node;
+				while (next_loss_function_node)
+				{
+					current_loss_function_node = next_loss_function_node;
+					next_loss_function_node = current_loss_function_node->next_loss_function_node;
 
-				current_loss_function_node->loss_function_pointer->resetErrorCurrentTime();
+					current_loss_function_node->loss_function_pointer->resetErrorCurrentTime();
+				}
+
+				for (unsigned int neuron_index = 0; neuron_index < neurons_count; neuron_index++)
+				{
+					(*(*(network_neurons_threads + thread_id) + neuron_index))->resetNodeCurrentTime();
+				}
 			}
 #endif //_OPENMP
 		}

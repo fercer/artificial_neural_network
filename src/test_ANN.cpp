@@ -26,7 +26,7 @@ int main(int argc, char * argv[])
 	bpt_ann_test.setEpochs(1000);
 	bpt_ann_test.setLearningRates(0.05);
 	bpt_ann_test.setMomentums(0.9);
-	bpt_ann_test.setTargetLoss(0.01);
+	bpt_ann_test.setTargetLoss(0.001);
 	bpt_ann_test.setTrainingDataSize(testing_size);
 	bpt_ann_test.setTrainingData(testing_patterns_database);
 	bpt_ann_test.setGroundtruthData(testing_outputs_database);

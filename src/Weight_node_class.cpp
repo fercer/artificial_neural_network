@@ -350,7 +350,7 @@ double Weight_node::getWeightedInput()
 
 double Weight_node::getBias()
 {
-	return *(*(*weight_values_master_pointer + ewv_neuron_index) + ewv_input_index);
+	return  *(*(*weight_values_master_pointer + ewv_neuron_index) + ewv_input_index);
 }
 
 

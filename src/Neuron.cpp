@@ -346,7 +346,7 @@ double Neuron::getInput(const unsigned long long src_current_network_time)
 			neuron_weighted_sum += current_weight_node_pointer->weighted_input->getWeightedInput(src_current_network_time);
 		}
 		
-		response_to_input = neuron_activation_function->evaluateFunction(neuron_weighted_sum, src_current_network_time);
+		this->response_to_input = neuron_activation_function->evaluateFunction(neuron_weighted_sum, src_current_network_time);
 		node_current_time = src_current_network_time;
 	}
 
@@ -384,6 +384,8 @@ double Neuron::getInputWithDerivatives(const unsigned long long src_current_netw
 
 void Neuron::makeExternalWeightValues(double *** src_weight_values_master_pointer, double **** src_weight_derivatives_values_master_pointer)
 {
+	dumpWeightsListIntoArray();
+
 	WEIGHTS_LIST_NODE * current_weight_node_pointer;
 	WEIGHTS_LIST_NODE * next_weight_node_pointer = weights_list_head.next_weighted_input;
 
@@ -394,12 +396,17 @@ void Neuron::makeExternalWeightValues(double *** src_weight_values_master_pointe
 
 		current_weight_node_pointer->weighted_input->makeExternalWeigthValue(src_weight_values_master_pointer, src_weight_derivatives_values_master_pointer);
 	}
+
+	weight_values_master_pointer = src_weight_values_master_pointer;
+	weight_derivatives_values_master_pointer = src_weight_derivatives_values_master_pointer;
 }
 
 
 
 void Neuron::makeInternalWeightValues(const bool make_weights_values_internal, const bool make_weights_derivatives_values_internal)
 {
+	dumpWeightsListIntoArray();
+
 	WEIGHTS_LIST_NODE * current_weight_node_pointer;
 	WEIGHTS_LIST_NODE * next_weight_node_pointer = weights_list_head.next_weighted_input;
 
