@@ -12,7 +12,7 @@ int main(int argc, char * argv[])
 	bpt_ann_test.loadNetworkData("Trained_network_test.xml");
 
 	data_handler testing_data;
-	testing_data.setFilename("trainingDataXOR_slim.txt");
+	testing_data.setFilename("trainingData.txt");
 	testing_data.loadData();
 
 	const unsigned int testing_size = testing_data.getDataSize();
@@ -22,7 +22,7 @@ int main(int argc, char * argv[])
 	double **testing_patterns_database = testing_data.getInputData();
 	int **testing_outputs_database = testing_data.getOutputData();
 	
-	bpt_ann_test.setBackpropagationMethod(backpropagationBasedANN::BPM_LEVENBERG_MARQUARDT);
+	bpt_ann_test.setBackpropagationMethod(backpropagationBasedANN::BPM_GRADIENT_DESCENT);
 	bpt_ann_test.setEpochs(1000);
 	bpt_ann_test.setLearningRates(0.05);
 	bpt_ann_test.setMomentums(0.9);
@@ -38,7 +38,9 @@ int main(int argc, char * argv[])
 	}
 
 	bpt_ann_test.trainNetwork();
-	bpt_ann_test.saveNetworkState();
+	bpt_ann_test.saveState();
+
+	ArtificialNeuralNetwork trained_ann = bpt_ann_test.getTrainedANN();
 
 	double * prediction = (double*)malloc(outputs_count * sizeof(double));
 	
@@ -47,7 +49,7 @@ int main(int argc, char * argv[])
 		double *testing_pattern = *(testing_patterns_database + pattern_index);
 		int *ground_truth = *(testing_outputs_database + pattern_index);
 
-		bpt_ann_test.predict(testing_pattern, prediction);
+		trained_ann.predict(testing_pattern, prediction);
 
 		for (unsigned int input_index = 0; input_index < inputs_count; input_index++)
 		{

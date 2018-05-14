@@ -59,20 +59,12 @@ private:
 	double ** previous_jacobian_error_derivative_product_threads;
 	double ** previous_hessian_matrix_threads;
 
-	// Network architecture:
-	Input_pattern *** network_input_nodes_threads;
-	Neuron *** network_neurons_threads;
-	Neuron *** network_output_nodes_threads;
-
 	// Trained network data:
 	double *** training_data_threads;
 	double ** input_pattern_master_pointer_threads;
 
 	int ** groundtruth_master_pointer_threads;
 	int *** groundtruth_data_threads;
-
-	LOSS_FUNCTION_LIST_NODE * loss_functions_head_node_threads;
-	LOSS_FUNCTION_LIST_NODE ** loss_functions_tail_node_threads;
 #endif
 
 	double * weights_deltas;

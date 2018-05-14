@@ -78,159 +78,9 @@ backpropagationBasedANN::~backpropagationBasedANN()
 
 
 #ifdef _OPENMP
-int backpropagationBasedANN::allocateLossFunctionsParallel()
-{
-	// Allocate memory for the loss functions:
-	loss_functions_head_node_threads = (LOSS_FUNCTION_LIST_NODE*)malloc(available_threads * sizeof(LOSS_FUNCTION_LIST_NODE));
-	loss_functions_tail_node_threads = (LOSS_FUNCTION_LIST_NODE**)malloc(available_threads * sizeof(LOSS_FUNCTION_LIST_NODE*));
-
-	for (unsigned int thread_id = 0; thread_id < available_threads; thread_id++)
-	{
-		*(loss_functions_tail_node_threads + thread_id) = loss_functions_head_node_threads + thread_id;
-	}
-
-	LOSS_FUNCTION_LIST_NODE * current_loss_function_node;
-	LOSS_FUNCTION_LIST_NODE * next_loss_function_node = loss_functions_head_node.next_loss_function_node;
-
-	while (next_loss_function_node)
-	{
-		current_loss_function_node = next_loss_function_node;
-		next_loss_function_node = current_loss_function_node->next_loss_function_node;
-
-		const unsigned int current_loss_function_index = current_loss_function_node->loss_function_pointer->getGlobalOutputIndex();
-
-		for (unsigned int thread_id = 0; thread_id < available_threads; thread_id++)
-		{
-			(*(loss_functions_tail_node_threads + thread_id))->next_loss_function_node = new LOSS_FUNCTION_LIST_NODE;
-			*(loss_functions_tail_node_threads + thread_id) = (*(loss_functions_tail_node_threads + thread_id))->next_loss_function_node;
-			(*(loss_functions_tail_node_threads + thread_id))->next_loss_function_node = NULL;
-
-			switch (current_loss_function_node->loss_function_pointer->getLossFunctionType())
-			{
-			case LossFunction::LF_L1_NORM:
-				(*(loss_functions_tail_node_threads + thread_id))->loss_function_pointer = new L1LossFunction(*(L1LossFunction*)(current_loss_function_node->loss_function_pointer));
-				break;
-
-			case LossFunction::LF_L2_NORM:
-				(*(loss_functions_tail_node_threads + thread_id))->loss_function_pointer = new L2LossFunction(*(L2LossFunction*)(current_loss_function_node->loss_function_pointer));
-				break;
-
-			case LossFunction::LF_CROSS_ENTROPY:
-				(*(loss_functions_tail_node_threads + thread_id))->loss_function_pointer = new crossEntropyLossFunction(*(crossEntropyLossFunction*)(current_loss_function_node->loss_function_pointer));
-				break;
-			}
-
-			(*(loss_functions_tail_node_threads + thread_id))->loss_function_pointer->setOutputNode(
-				*(*(network_output_nodes_threads + thread_id) + current_loss_function_index));
-			
-			(*(loss_functions_tail_node_threads + thread_id))->loss_function_pointer->setGlobalOutputIndex(current_loss_function_index);
-			
-			(*(loss_functions_tail_node_threads + thread_id))->loss_function_pointer->setGroundtruth(groundtruth_master_pointer_threads + thread_id);
-		}
-	}
-
-	return 1;
-}
-
-
-
 int backpropagationBasedANN::allocateNetworkArchitectureParallel()
 {
-	network_weights_values_threads = (double**)malloc(available_threads * sizeof(double*));
-	network_weights_derivatives_values_threads = (double***)malloc(available_threads * sizeof(double**));
-
-	network_weights_pointers_manager_threads = (double***)malloc(available_threads * sizeof(double**));
-	network_weights_derivatives_pointers_manager_threads = (double****)malloc(available_threads * sizeof(double***));
-
-	// Allocate memory for the copied architectures:
-	network_input_nodes_threads = (Input_pattern***)malloc(available_threads * sizeof(Input_pattern**));
-	network_neurons_threads = (Neuron***)malloc(available_threads * sizeof(Neuron**));
-	network_output_nodes_threads = (Neuron***)malloc(available_threads * sizeof(Neuron**));
-
-	for (unsigned int thread_id = 0; thread_id < available_threads; thread_id++)
-	{
-		*(network_weights_values_threads + thread_id) = (double*)malloc(weights_count * sizeof(double));
-		*(network_weights_derivatives_values_threads + thread_id) = (double**)malloc(weights_count * sizeof(double*));
-
-		*(network_weights_pointers_manager_threads + thread_id) = (double**)malloc(neurons_count + sizeof(double*));
-		*(network_weights_derivatives_pointers_manager_threads + thread_id) = (double***)malloc(neurons_count * sizeof(double**));
-
-		// Copy the network's architecture 'available_threads' times:
-		*(network_input_nodes_threads + thread_id) = (Input_pattern**)malloc(inputs_count * sizeof(Input_pattern*));
-		*(network_neurons_threads + thread_id) = (Neuron**)malloc(neurons_count * sizeof(Neuron*));
-		*(network_output_nodes_threads + thread_id) = (Neuron**)malloc(outputs_count * sizeof(Neuron*));
-
-		for (unsigned int input_index = 0; input_index < inputs_count; input_index++)
-		{
-			*(*(network_input_nodes_threads + thread_id) + input_index) = new Input_pattern(**(network_input_nodes + input_index));
-
-			(*(*(network_input_nodes_threads + thread_id) + input_index))->setInputPointer(input_pattern_master_pointer_threads + thread_id);
-		}
-
-		for (unsigned int neuron_index = 0; neuron_index < neurons_count; neuron_index++)
-		{
-			*(*(network_neurons_threads + thread_id) + neuron_index) = new Neuron(**(network_neurons + neuron_index));
-
-			const unsigned int current_neuron_inputs_count = (*(network_neurons + neuron_index))->getInputsCount();
-
-			for (unsigned int weighted_input_index = 1; weighted_input_index < current_neuron_inputs_count; weighted_input_index++)
-			{
-				// Referenciate the neuron's inputs to the current thread's neurons:
-				const unsigned int current_input_global_index = (*(*(network_neurons_threads + thread_id) + neuron_index))->getInputNodeGlobalIndex(weighted_input_index);
-
-				switch ((*(*(network_neurons_threads + thread_id) + neuron_index))->getInputType(weighted_input_index))
-				{
-				case Weight_node::WIT_BIAS:
-					break;
-				case Weight_node::WIT_PATTERN:
-					(*(*(network_neurons_threads + thread_id) + neuron_index))->setInputNodePointer(
-						*(*(network_input_nodes_threads + thread_id) + current_input_global_index),
-						weighted_input_index);
-					break;
-				case Weight_node::WIT_NEURON:
-					(*(*(network_neurons_threads + thread_id) + neuron_index))->setInputNodePointer(
-						*(*(network_neurons_threads + thread_id) + current_input_global_index),
-						weighted_input_index);
-					break;
-				}
-			}
-		}
-
-		for (unsigned int output_index = 0; output_index < outputs_count; output_index++)
-		{
-			const unsigned int current_input_global_index = (*(network_output_nodes + output_index))->getGlobalNodeIndex();
-
-			*(*(network_output_nodes_threads + thread_id) + output_index) = *(*(network_neurons_threads + thread_id) + current_input_global_index);
-		}
-	}
-
-	unsigned int weight_index_base = 0;
-	for (unsigned int neuron_index = 0; neuron_index < neurons_count; neuron_index++)
-	{
-		const unsigned int current_neuron_inputs_count = (*(network_neurons + neuron_index))->getInputsCount();
-
-		for (unsigned int thread_id = 0; thread_id < available_threads; thread_id++)
-		{
-			// Copy the initial values to the current thread weights values:
-			*(*(network_weights_values_threads + thread_id) + weight_index_base) = *(network_weights_values + weight_index_base);
-
-			*(*(network_weights_derivatives_values_threads + thread_id) + weight_index_base) = (double*)malloc(outputs_count * sizeof(double));
-			for (unsigned int weight_index = 1; weight_index < current_neuron_inputs_count; weight_index++)
-			{
-				*(*(network_weights_values_threads + thread_id) + weight_index_base + weight_index) = *(network_weights_values + weight_index_base + weight_index);
-
-				*(*(network_weights_derivatives_values_threads + thread_id) + weight_index_base + weight_index) = (double*)malloc(outputs_count * sizeof(double));
-			}
-
-			*(*(network_weights_pointers_manager_threads + thread_id) + neuron_index) = *(network_weights_values_threads + thread_id) + weight_index_base;
-			*(*(network_weights_derivatives_pointers_manager_threads + thread_id) + neuron_index) = *(network_weights_derivatives_values_threads + thread_id) + weight_index_base;
-
-			// Make the copied network ofneurons to use the threads values pointers managers:
-			(*(*(network_neurons_threads + thread_id) + neuron_index))->makeExternalWeightValues(network_weights_pointers_manager_threads + thread_id, network_weights_derivatives_pointers_manager_threads + thread_id);
-		}
-		weight_index_base += current_neuron_inputs_count;
-	}
-
+	
 	return 1;
 }
 
@@ -293,65 +143,9 @@ int backpropagationBasedANN::allocateLevenbergMarquardtParallel()
 }
 
 
-
-void backpropagationBasedANN::deallocateLossFunctionsParallel()
-{
-	LOSS_FUNCTION_LIST_NODE * current_loss_function_node;
-	LOSS_FUNCTION_LIST_NODE * next_loss_function_node;
-	for (unsigned int thread_id = 0; thread_id < available_threads; thread_id++)
-	{
-		next_loss_function_node = (loss_functions_head_node_threads + thread_id)->next_loss_function_node;
-
-		while (next_loss_function_node)
-		{
-			current_loss_function_node = next_loss_function_node;
-			next_loss_function_node = current_loss_function_node->next_loss_function_node;
-
-			delete current_loss_function_node->loss_function_pointer;
-			delete current_loss_function_node;
-		}
-	}
-
-	free(loss_functions_head_node_threads);
-	free(loss_functions_tail_node_threads);
-}
-
-
-
 void backpropagationBasedANN::deallocateNetworkArchitectureParallel()
 {
-	for (unsigned int thread_id = 0; thread_id < available_threads; thread_id++)
-	{
-		for (unsigned int input_index = 0; input_index < inputs_count; input_index++)
-		{
-			delete *(*(network_input_nodes_threads + thread_id) + input_index);
-		}
-
-		for (unsigned int neuron_index = 0; neuron_index < neurons_count; neuron_index++)
-		{
-			delete *(*(network_neurons_threads + thread_id) + neuron_index);
-		}
-
-		free(*(network_input_nodes_threads + thread_id));
-		free(*(network_neurons_threads + thread_id));
-		free(*(network_output_nodes_threads + thread_id));
-
-		free(*(network_weights_values_threads + thread_id));
-		free(*(network_weights_derivatives_values_threads + thread_id));
-
-		free(*(network_weights_pointers_manager_threads + thread_id));
-		free(*(network_weights_derivatives_pointers_manager_threads + thread_id));
-	}
-
-	free(network_weights_values_threads);
-	free(network_weights_derivatives_values_threads);
-
-	free(network_weights_pointers_manager_threads);
-	free(network_weights_derivatives_pointers_manager_threads);
-
-	free(network_input_nodes_threads);
-	free(network_neurons_threads);
-	free(network_output_nodes_threads);
+	
 }
 
 
@@ -424,7 +218,7 @@ int backpropagationBasedANN::allocateMethodMemory()
 	unsigned int weight_index_base = 0;
 	for (unsigned int neuron_index = 0; neuron_index < neurons_count; neuron_index++)
 	{
-		const unsigned int current_neuron_inputs_count = (*(network_neurons + neuron_index))->getInputsCount();
+		const unsigned int current_neuron_inputs_count = my_ann->getWeightedInputsInNeuron(neuron_index);
 
 		*(network_weights_derivatives_values + weight_index_base) = (double*)malloc(outputs_count * sizeof(double));
 
@@ -441,10 +235,11 @@ int backpropagationBasedANN::allocateMethodMemory()
 		*(network_weights_pointers_manager + neuron_index) = network_weights_values + weight_index_base;
 		*(network_weights_derivatives_pointers_manager + neuron_index) = network_weights_derivatives_values + weight_index_base;
 
-		(*(network_neurons + neuron_index))->makeExternalWeightValues(&network_weights_pointers_manager, &network_weights_derivatives_pointers_manager);
-
 		weight_index_base += current_neuron_inputs_count;
 	}
+
+	my_ann->setNetworkWeightsAndDerivatives(&network_weights_pointers_manager, 
+		&network_weights_derivatives_pointers_manager);
 
 #ifdef _OPENMP
 	batch_size_per_thread = (training_data_size + 1) / available_threads;
@@ -481,10 +276,6 @@ int backpropagationBasedANN::allocateMethodMemory()
 
 bool backpropagationBasedANN::computeEpoch_gradient_descent()
 {
-	// Reset the time to prevent overflow
-	LOSS_FUNCTION_LIST_NODE * current_loss_function_node;
-	LOSS_FUNCTION_LIST_NODE * next_loss_function_node;
-
 	double squared_gradient_norm;
 
 	// Reset the weights and bias delta values to 0:
@@ -493,30 +284,16 @@ bool backpropagationBasedANN::computeEpoch_gradient_descent()
 	TIMERS;
 	GETTIME_INI;
 	double total_epoch_loss = 0.0;
-	for (unsigned int pattern_index = 0; pattern_index < training_data_size; pattern_index++, network_current_time++)
+	for (unsigned int pattern_index = 0; pattern_index < training_data_size; pattern_index++)
 	{
 		// Use the current pattern to feed the network:
-		setInputPatternPointer(*(training_data + pattern_index));
-		groundtruth_master_pointer = *(groundtruth_data + pattern_index);
+		my_ann->assignInputPatternPointer(*(training_data + pattern_index));
+		my_ann->assignGroundtruthPointer(*(groundtruth_data + pattern_index));
 
 		// Perform the Feed forward:
-		next_loss_function_node = loss_functions_head_node.next_loss_function_node;
-		while (next_loss_function_node)
-		{
-			current_loss_function_node = next_loss_function_node;
-			next_loss_function_node = current_loss_function_node->next_loss_function_node;
+		total_epoch_loss += my_ann->computeNetworkLossWithDerivatives();
+		my_ann->backPropagateErrors();
 
-			total_epoch_loss += current_loss_function_node->loss_function_pointer->computeLossWithDerivatives(network_current_time);
-
-			// Backpropagate the error contribution:
-			current_loss_function_node->loss_function_pointer->backpropagateErrorDerivative();
-		}
-
-		// Backpropagate the neuron's error contribution:
-		for (int neuron_index = (neurons_count - 1); neuron_index >= 0; neuron_index--)
-		{
-			(*(network_neurons + neuron_index))->backpropagateNodeError();
-		}
 		squared_gradient_norm = 0.0;
 		for (unsigned int weight_index = 0; weight_index < weights_count; weight_index++)
 		{
@@ -549,11 +326,7 @@ bool backpropagationBasedANN::computeEpoch_gradient_descent()
 
 #ifndef _OPENMP
 bool backpropagationBasedANN::computeEpoch_levenberg_marquardt()
-{
-	// Reset the time to prevent overflow
-	LOSS_FUNCTION_LIST_NODE * current_loss_function_node;
-	LOSS_FUNCTION_LIST_NODE * next_loss_function_node;
-	
+{	
 	double squared_gradient_norm;
 	unsigned int worsening_count = 0;
 	double training_epoch_loss;
@@ -565,61 +338,36 @@ bool backpropagationBasedANN::computeEpoch_levenberg_marquardt()
 	memset(jacobian_error_derivative_product, 0, weights_count * sizeof(double));
 
 	// Perform the feed-forward process for each pattern in the training set:
-	for (unsigned int pattern_index = 0; pattern_index < training_data_size; pattern_index++, network_current_time++)
+	for (unsigned int pattern_index = 0; pattern_index < training_data_size; pattern_index++)
 	{
 		// Use the current pattern to feed the network:
-		setInputPatternPointer(*(training_data + pattern_index));
-		groundtruth_master_pointer = *(groundtruth_data + pattern_index);
+		my_ann->assignInputPatternPointer(*(training_data + pattern_index));
+		my_ann->assignGroundtruthPointer(*(groundtruth_data + pattern_index));
 
 		// Perform the Feed forward:
-		next_loss_function_node = loss_functions_head_node.next_loss_function_node;
-		output_index = 0;
-		while(next_loss_function_node)
-		{
-			current_loss_function_node = next_loss_function_node;
-			next_loss_function_node = current_loss_function_node->next_loss_function_node;
-
-			total_epoch_loss += current_loss_function_node->loss_function_pointer->computeLossWithDerivatives(network_current_time);
-
-			/* This is necessary to back propagate only the error contribution 
-			to each isolated loss function.
-			*/
-			(*(network_output_nodes + output_index))->addNodeErrorContribution(1.0, output_index);
-
-			output_index++;
-		}
+		total_epoch_loss += my_ann->computeNetworkLossWithDerivatives(true);
 
 		// Backpropagate the neuron's error contribution:
-		for (int neuron_index = (neurons_count - 1); neuron_index >= 0; neuron_index--)
-		{
-			// Backpropagate the error contribution:
-			(*(network_neurons + neuron_index))->backpropagateNodeError();
-		}
+		my_ann->backPropagateErrors();
 
 		for (unsigned int weight_index = 0; weight_index < weights_count; weight_index++)
 		{
 			// Compute the product between the Jacobian matrix and the vector of errors:
-			output_index = 0;
-			next_loss_function_node = loss_functions_head_node.next_loss_function_node;
 			double error_contribution_product = 0.0;
-			while(next_loss_function_node)
+			for (unsigned int output_index = 0; output_index < outputs_count; output_index++)
 			{
-				current_loss_function_node = next_loss_function_node;
-				next_loss_function_node = current_loss_function_node->next_loss_function_node;
-
 				*(jacobian_error_derivative_product + weight_index) =
 					*(jacobian_error_derivative_product + weight_index) +
 					*(*(network_weights_derivatives_values + weight_index) + output_index) *
-					current_loss_function_node->loss_function_pointer->getErrorDerivative();
+					my_ann->getLossFunctionErrorContribution(output_index);
 
 				/* Compute the hessian matrix entry that corresponds to 
 				the product of the current weight and the first weight of the network:
 				*/
 				error_contribution_product += *(*(network_weights_derivatives_values + weight_index) + output_index) *
 					*(*network_weights_derivatives_values + output_index);
-
-				output_index++;
 			}
+			
 			const unsigned int weight_index_base = weight_index * (weight_index + 1) / 2;
 			*(hessian_matrix + weight_index_base) = *(hessian_matrix + weight_index_base) + error_contribution_product;
 
@@ -726,21 +474,14 @@ bool backpropagationBasedANN::computeEpoch_levenberg_marquardt()
 		// Evaluate the new weight values:
 		training_epoch_loss = 0.0;
 
-		for (unsigned int pattern_index = 0; pattern_index < training_data_size; pattern_index++, network_current_time++)
+		for (unsigned int pattern_index = 0; pattern_index < training_data_size; pattern_index++)
 		{
 			// Use the current pattern to feed the network:
-			setInputPatternPointer(*(training_data + pattern_index));
-			groundtruth_master_pointer = *(groundtruth_data + pattern_index);
+			my_ann->assignInputPatternPointer(*(training_data + pattern_index));
+			my_ann->assignGroundtruthPointer(*(groundtruth_data + pattern_index));
 
 			// Perform the Feed forward without the computation of the activation functions derivatives:
-			next_loss_function_node = loss_functions_head_node.next_loss_function_node;
-			while(next_loss_function_node)
-			{
-				current_loss_function_node = next_loss_function_node;
-				next_loss_function_node = current_loss_function_node->next_loss_function_node;
-
-				training_epoch_loss += current_loss_function_node->loss_function_pointer->computeLoss(network_current_time);
-			}
+			training_epoch_loss += my_ann->computeNetworkLoss();
 		}
 
 		training_epoch_loss /= (double)training_data_size;
@@ -1102,26 +843,11 @@ double backpropagationBasedANN::trainNetwork(const int save_each_n_epochs, const
 	{
 		if ((restart_time_each_n_epochs > 0) && !(current_epoch % restart_time_each_n_epochs))
 		{
-#ifndef _OPENMP
-			LOSS_FUNCTION_LIST_NODE * current_loss_function_node;
-			LOSS_FUNCTION_LIST_NODE * next_loss_function_node = loss_functions_head_node.next_loss_function_node;
-			while (next_loss_function_node)
+			my_ann->resetNetworkTime();
+#ifdef _OPENMP
+			for (unsigned int thread_id = 0; thread_id < available_threads; thread_id++)
 			{
-				current_loss_function_node = next_loss_function_node;
-				next_loss_function_node = current_loss_function_node->next_loss_function_node;
 
-				current_loss_function_node->loss_function_pointer->resetErrorCurrentTime();
-			}
-#else //_OPENMP
-
-			LOSS_FUNCTION_LIST_NODE * current_loss_function_node;
-			LOSS_FUNCTION_LIST_NODE * next_loss_function_node = loss_functions_head_node.next_loss_function_node;
-			while (next_loss_function_node)
-			{
-				current_loss_function_node = next_loss_function_node;
-				next_loss_function_node = current_loss_function_node->next_loss_function_node;
-
-				current_loss_function_node->loss_function_pointer->resetErrorCurrentTime();
 			}
 #endif //_OPENMP
 		}
@@ -1130,7 +856,7 @@ double backpropagationBasedANN::trainNetwork(const int save_each_n_epochs, const
 		GETTIME_FIN;
 		if ((save_each_n_epochs > 0) && !(current_epoch % save_each_n_epochs))
 		{
-			saveNetworkState();
+			my_ann->saveNetworkState();
 			saveState();
 		}
 		elapsed_time += DIFTIME;
@@ -1145,7 +871,7 @@ double backpropagationBasedANN::trainNetwork(const int save_each_n_epochs, const
 
 void backpropagationBasedANN::saveState()
 {
-
+	my_ann->saveNetworkState();
 }
 
 

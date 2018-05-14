@@ -220,6 +220,8 @@ void Neuron::dumpWeightsListIntoArray()
 
 unsigned int Neuron::getInputsCount()
 {
+	dumpWeightsListIntoArray();
+
 	return neuron_inputs_count;
 }
 
@@ -313,6 +315,7 @@ Weight_node::WEIGHT_INPUT_TYPE Neuron::getInputType(const unsigned int src_input
 
 void Neuron::resetNodeCurrentTime()
 {
+	// Reset the time of the weights:
 	node_current_time = 0;
 	neuron_activation_function->resetActivationFunctionCurrentTime();
 
@@ -384,6 +387,8 @@ double Neuron::getInputWithDerivatives(const unsigned long long src_current_netw
 
 void Neuron::makeExternalWeightValues(double *** src_weight_values_master_pointer, double **** src_weight_derivatives_values_master_pointer)
 {
+	this->dumpWeightsListIntoArray();
+
 	WEIGHTS_LIST_NODE * current_weight_node_pointer;
 	WEIGHTS_LIST_NODE * next_weight_node_pointer = weights_list_head.next_weighted_input;
 
@@ -400,6 +405,8 @@ void Neuron::makeExternalWeightValues(double *** src_weight_values_master_pointe
 
 void Neuron::makeInternalWeightValues(const bool make_weights_values_internal, const bool make_weights_derivatives_values_internal)
 {
+	dumpWeightsListIntoArray();
+
 	WEIGHTS_LIST_NODE * current_weight_node_pointer;
 	WEIGHTS_LIST_NODE * next_weight_node_pointer = weights_list_head.next_weighted_input;
 

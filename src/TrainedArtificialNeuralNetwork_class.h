@@ -13,8 +13,7 @@
 
 #include "ArtificialNeuralNetwork.h"
 
-class TrainedArtificialNeuralNetwork:
-	public ArtificialNeuralNetwork
+class TrainedArtificialNeuralNetwork
 {
 
 public:
@@ -26,28 +25,17 @@ public:
 		learning_rates = 0.0;
 		momentums = 0.0;
 
-		loss_functions_head_node.next_loss_function_node = NULL;
-		loss_functions_tail_node = &loss_functions_head_node;
-		loss_functions_count = 0;
-
 		log_filename[0] = '\0';
 		first_log_method_entry = true;
 
 		target_loss = 1e-3;
+
+		my_ann = new ArtificialNeuralNetwork;
 	}
 
-	~TrainedArtificialNeuralNetwork() {
-		LOSS_FUNCTION_LIST_NODE * current_loss_function_node;
-		LOSS_FUNCTION_LIST_NODE * next_loss_function_node = loss_functions_head_node.next_loss_function_node;
-
-		while (next_loss_function_node)
-		{
-			current_loss_function_node = next_loss_function_node;
-			next_loss_function_node = current_loss_function_node->next_loss_function_node;
-
-			delete current_loss_function_node->loss_function_pointer;
-			delete current_loss_function_node;
-		}
+	~TrainedArtificialNeuralNetwork()
+	{
+		delete my_ann;		
 	}
 
 	void setLogFilename(const char * src_log_filename)
@@ -84,50 +72,61 @@ public:
 	{
 		training_data_size = src_training_data_size;
 	}
-
+		
 	// Finds the network weights throught the optimization method
 	virtual double trainNetwork(const int save_each_n_epochs = -1, const int restart_time_each_n_epochs = 1) = 0;
 
 	// Saves the current state of the update method
 	virtual void saveState() = 0;
-
-	void assignLossFunction(const LossFunction::LOSS_FUNCTION_TYPE src_loss_function_type)
-	{
-		loss_functions_tail_node->next_loss_function_node = new LOSS_FUNCTION_LIST_NODE;
-		loss_functions_tail_node = loss_functions_tail_node->next_loss_function_node;
-		loss_functions_tail_node->next_loss_function_node = NULL;
-
-		switch (src_loss_function_type)
-		{
-		case LossFunction::LF_L1_NORM:
-			loss_functions_tail_node->loss_function_pointer = new L1LossFunction;
-			break;
-
-		case LossFunction::LF_L2_NORM:
-			loss_functions_tail_node->loss_function_pointer = new L2LossFunction;
-			break;
-
-		case LossFunction::LF_CROSS_ENTROPY:
-			loss_functions_tail_node->loss_function_pointer = new crossEntropyLossFunction;
-			break;
-		}
-		loss_functions_tail_node->loss_function_pointer->setOutputNode(*(network_output_nodes + loss_functions_count));
-		loss_functions_tail_node->loss_function_pointer->setGlobalOutputIndex(loss_functions_count);
-		loss_functions_tail_node->loss_function_pointer->setGroundtruth(&groundtruth_master_pointer);
-		loss_functions_count++;
-	}
-
+	
 	void setTargetLoss(const double src_target_loss)
 	{
 		target_loss = src_target_loss;
 	}
 
-protected:
-	typedef struct LOSS_FUNCTION_LIST_NODE
+	ArtificialNeuralNetwork getTrainedANN()
 	{
-		LossFunction * loss_function_pointer;
-		LOSS_FUNCTION_LIST_NODE * next_loss_function_node;
-	} LOSS_FUNCTION_LIST_NODE;
+		return *my_ann;
+	}
+
+	/// Interface to work with the artificial neural network:
+	void setNetworkLogFilename(const char * src_filename)
+	{
+		my_ann->setNetworkLogFilename(src_filename);
+	}
+
+	void loadNetworkData(const char * src_filename)
+	{
+		my_ann->loadNetworkData(src_filename);
+
+		inputs_count = my_ann->getInputsCount();
+		outputs_count = my_ann->getOutputsCount();
+		neurons_count = my_ann->getNeuronsCount();
+		weights_count = my_ann->getWeightsCount();
+	}
+
+	void loadNetworkData(const ArtificialNeuralNetwork & src_ann)
+	{
+		*my_ann = src_ann;
+
+		inputs_count = my_ann->getInputsCount();
+		outputs_count = my_ann->getOutputsCount();
+		neurons_count = my_ann->getNeuronsCount();
+		weights_count = my_ann->getWeightsCount();
+	}
+
+	void assignLossFunction(const LossFunction::LOSS_FUNCTION_TYPE src_loss_function_type)
+	{
+		my_ann->assignLossFunction(src_loss_function_type);
+	}
+	
+protected:
+	ArtificialNeuralNetwork * my_ann;
+
+	unsigned int inputs_count;
+	unsigned int outputs_count;
+	unsigned int neurons_count;
+	unsigned int weights_count;
 
 	char log_filename[512];
 	bool first_log_method_entry;
@@ -144,13 +143,6 @@ protected:
 
 	double ** training_data;
 	int ** groundtruth_data;
-
-	LOSS_FUNCTION_LIST_NODE loss_functions_head_node;
-	LOSS_FUNCTION_LIST_NODE * loss_functions_tail_node;
-
-	unsigned int loss_functions_count;
-
-	int * groundtruth_master_pointer;
 };
 
 #endif // TRAINEDARTIFICIALNEURALNETWORK_CLASS_H_INCLUDED
