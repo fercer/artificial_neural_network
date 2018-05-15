@@ -12,7 +12,7 @@ int main(int argc, char * argv[])
 	bpt_ann_test.loadNetworkData("Trained_network_test.xml");
 
 	data_handler testing_data;
-	testing_data.setFilename("trainingData.txt");
+	testing_data.setFilename("trainingDataXOR_slim.txt");
 	testing_data.loadData();
 
 	const unsigned int testing_size = testing_data.getDataSize();
@@ -42,9 +42,12 @@ int main(int argc, char * argv[])
 
 	ArtificialNeuralNetwork trained_ann = bpt_ann_test.getTrainedANN();
 
+	trained_ann.setNetworkLogFilename("testing_network_architecture.xml");
+	trained_ann.saveNetworkState();
+
 	double * prediction = (double*)malloc(outputs_count * sizeof(double));
 	
-	for (unsigned int pattern_index = 0; pattern_index < testing_size; pattern_index++)
+	for (unsigned int pattern_index = 0; pattern_index < (unsigned int)(0.1*(double)testing_size); pattern_index++)
 	{
 		double *testing_pattern = *(testing_patterns_database + pattern_index);
 		int *ground_truth = *(testing_outputs_database + pattern_index);
@@ -69,6 +72,6 @@ int main(int argc, char * argv[])
 	}
 
 	free(prediction);
-
+	
 	return 1;
 }

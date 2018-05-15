@@ -64,15 +64,9 @@ public:
 
 	// Loads the architecture of the network, and the value of all the bias and weights
 	void loadNetworkData(const char * src_filename);
-
+	
 	// Set the weights of the network
-	void setNetworkWeights(double *** src_weights_and_bias);
-
-	// Set the bias of the network
-	void setNetworkWeightsDerivatives(double **** src_weights_and_bias_derivatives);
-
-	// Set the weights of the network
-	void setNetworkWeightsAndDerivatives(double *** src_weights_and_bias, double **** src_weights_and_bias_derivatives);
+	void setNetworkWeightsAndDerivatives(double *** src_weights_and_bias, double **** src_weights_and_bias_derivatives = NULL, const bool src_copy_to_external = true);
 
 	// Saves the current state of the network to a file
 	void saveNetworkState();

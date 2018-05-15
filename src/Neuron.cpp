@@ -35,8 +35,8 @@ Neuron::Neuron(const Neuron &src_neuron)
 
 	this->neuron_error_contribution = (double*)malloc(this->neuron_outputs_count * sizeof(double));
 
-	this->weight_values_master_pointer = src_neuron.weight_values_master_pointer;
-	this->weight_derivatives_values_master_pointer = src_neuron.weight_derivatives_values_master_pointer;
+	this->weight_values_master_pointer = NULL;
+	this->weight_derivatives_values_master_pointer = NULL;
 	
 	/* Allocate the memory for the bias: */
 	this->weights_list_head.next_weighted_input = NULL;
@@ -56,10 +56,9 @@ Neuron::Neuron(const Neuron &src_neuron)
 
 		this->weights_list_tail->weighted_input = new Weight_node(*(current_src_weight_node_pointer->weighted_input));
 		this->weights_list_tail->next_weighted_input = NULL;
-		dump_weights_list_into_array_required = true;
 	}
 
-	dumpWeightsListIntoArray();
+	this->dumpWeightsListIntoArray();
 
 	switch (src_neuron.neuron_activation_function->getActivationFunctionType())
 	{
@@ -83,7 +82,6 @@ Neuron & Neuron::operator= (const Neuron &src_neuron)
 	{
 		this->weights_array = NULL;
 		this->dump_weights_list_into_array_required = true;
-
 		this->global_node_index = src_neuron.global_node_index;
 		this->node_current_time = 0;
 		this->neuron_outputs_count = src_neuron.neuron_outputs_count;
@@ -91,12 +89,12 @@ Neuron & Neuron::operator= (const Neuron &src_neuron)
 
 		this->neuron_error_contribution = (double*)malloc(this->neuron_outputs_count * sizeof(double));
 
-		this->weight_values_master_pointer = src_neuron.weight_values_master_pointer;
-		this->weight_derivatives_values_master_pointer = src_neuron.weight_derivatives_values_master_pointer;
+		this->weight_values_master_pointer = NULL;
+		this->weight_derivatives_values_master_pointer = NULL;
 
 		/* Allocate the memory for the bias: */
-		this->weights_list_head.weighted_input = NULL;
 		this->weights_list_head.next_weighted_input = NULL;
+		this->weights_list_head.weighted_input = NULL;
 		this->weights_list_tail = &(this->weights_list_head);
 
 		WEIGHTS_LIST_NODE * current_src_weight_node_pointer;
@@ -112,10 +110,9 @@ Neuron & Neuron::operator= (const Neuron &src_neuron)
 
 			this->weights_list_tail->weighted_input = new Weight_node(*(current_src_weight_node_pointer->weighted_input));
 			this->weights_list_tail->next_weighted_input = NULL;
-			dump_weights_list_into_array_required = true;
 		}
 
-		dumpWeightsListIntoArray();
+		this->dumpWeightsListIntoArray();
 
 		switch (src_neuron.neuron_activation_function->getActivationFunctionType())
 		{
@@ -308,6 +305,8 @@ int  Neuron::getInputNodeGlobalIndex(const unsigned int src_input_index)
 
 Weight_node::WEIGHT_INPUT_TYPE Neuron::getInputType(const unsigned int src_input_index)
 {
+	dumpWeightsListIntoArray();
+
 	return (*(weights_array + src_input_index))->getWeigthedInputType();
 }
 
@@ -385,7 +384,7 @@ double Neuron::getInputWithDerivatives(const unsigned long long src_current_netw
 
 
 
-void Neuron::makeExternalWeightValues(double *** src_weight_values_master_pointer, double **** src_weight_derivatives_values_master_pointer)
+void Neuron::makeExternalWeightValues(double *** src_weight_values_master_pointer, double **** src_weight_derivatives_values_master_pointer, const double src_copy_to_external)
 {
 	this->dumpWeightsListIntoArray();
 
@@ -397,8 +396,11 @@ void Neuron::makeExternalWeightValues(double *** src_weight_values_master_pointe
 		current_weight_node_pointer = next_weight_node_pointer;
 		next_weight_node_pointer = current_weight_node_pointer->next_weighted_input;
 
-		current_weight_node_pointer->weighted_input->makeExternalWeigthValue(src_weight_values_master_pointer, src_weight_derivatives_values_master_pointer);
+		current_weight_node_pointer->weighted_input->makeExternalWeigthValue(src_weight_values_master_pointer, src_weight_derivatives_values_master_pointer, src_copy_to_external);
 	}
+
+	weight_values_master_pointer = src_weight_values_master_pointer;
+	weight_derivatives_values_master_pointer = src_weight_derivatives_values_master_pointer;
 }
 
 
@@ -417,6 +419,9 @@ void Neuron::makeInternalWeightValues(const bool make_weights_values_internal, c
 
 		current_weight_node_pointer->weighted_input->makeInternalWeightValue(make_weights_values_internal, make_weights_derivatives_values_internal);
 	}
+
+	weight_values_master_pointer = NULL;
+	weight_derivatives_values_master_pointer = NULL;
 }
 
 

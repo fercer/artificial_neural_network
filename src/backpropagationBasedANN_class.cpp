@@ -239,7 +239,7 @@ int backpropagationBasedANN::allocateMethodMemory()
 	}
 
 	my_ann->setNetworkWeightsAndDerivatives(&network_weights_pointers_manager, 
-		&network_weights_derivatives_pointers_manager);
+		&network_weights_derivatives_pointers_manager, false);
 
 #ifdef _OPENMP
 	batch_size_per_thread = (training_data_size + 1) / available_threads;
@@ -307,6 +307,7 @@ bool backpropagationBasedANN::computeEpoch_gradient_descent()
 
 			// update the weights and bias values:
 			*(network_weights_values + weight_index) = *(network_weights_values + weight_index) - *(weights_deltas + weight_index);
+
 			squared_gradient_norm += *(weights_deltas + weight_index) * *(weights_deltas + weight_index);
 		}
 	}
@@ -488,7 +489,7 @@ bool backpropagationBasedANN::computeEpoch_levenberg_marquardt()
 		if (training_epoch_loss < current_loss)
 		{
 			mu_value *= mu_decreasing_factor;
-			memcpy(previous_weights_values, network_weights_pointers_manager, weights_count * sizeof(double));
+			memcpy(previous_weights_values, network_weights_values, weights_count * sizeof(double));
 			break;
 		}
 		else
@@ -507,7 +508,7 @@ bool backpropagationBasedANN::computeEpoch_levenberg_marquardt()
 				/* If the error has not decreased,
 				the diagonal of the hessian matrix is modified in order to change the descent direction
 				*/
-				memcpy(network_weights_pointers_manager, previous_weights_values, weights_count * sizeof(double));
+				memcpy(network_weights_values, previous_weights_values, weights_count * sizeof(double));
 
 				memcpy(hessian_matrix, previous_hessian_matrix, weights_count * (weights_count  + 1) / 2 * sizeof(double));
 

@@ -40,19 +40,16 @@ ArtificialNeuralNetwork::ArtificialNeuralNetwork(const ArtificialNeuralNetwork &
 	this->outputs_count = src_ann.outputs_count;
 	this->neurons_count = src_ann.neurons_count;
 	this->weights_count = src_ann.weights_count;
-	this->loss_functions_count = 0;
 
-	this->network_input_nodes = (Input_pattern**) malloc(this->inputs_count * sizeof(Input_pattern*));
-	this->network_neurons = (Neuron**) malloc(this->neurons_count * sizeof(Neuron*));
-	this->network_output_nodes = (Neuron**) malloc(this->outputs_count * sizeof(Neuron*));
-
+	this->network_input_nodes = (Input_pattern**)malloc(this->inputs_count * sizeof(Input_pattern*));
 	for (unsigned int input_index = 0; input_index < this->inputs_count; input_index++)
 	{
 		*(this->network_input_nodes + input_index) = new Input_pattern(input_index);
-		(*(this->network_input_nodes + input_index))->setInputPointer(&input_pattern_master_pointer);
+		(*(this->network_input_nodes + input_index))->setInputPointer(&(this->input_pattern_master_pointer));
 	}
 
-	for (unsigned int neuron_index = 0; neuron_index < this->inputs_count; neuron_index++)
+	this->network_neurons = (Neuron**)malloc(this->neurons_count * sizeof(Neuron*));
+	for (unsigned int neuron_index = 0; neuron_index < this->neurons_count; neuron_index++)
 	{
 		*(this->network_neurons + neuron_index) = new Neuron(*(*(src_ann.network_neurons + neuron_index)));
 	}
@@ -62,33 +59,43 @@ ArtificialNeuralNetwork::ArtificialNeuralNetwork(const ArtificialNeuralNetwork &
 	{
 		const unsigned int current_inputs_count = (*(this->network_neurons + neuron_index))->getInputsCount();
 
-		for (unsigned int weighted_input_index = 0; weighted_input_index < current_inputs_count; weighted_input_index++)
+		for (unsigned int weighted_input_index = 1; weighted_input_index < current_inputs_count; weighted_input_index++)
 		{
 			/* Get the current's global input index in the source's network */
 			const int current_input_global_index = (*(this->network_neurons + neuron_index))->getInputNodeGlobalIndex(weighted_input_index);
 
-			/* The bias will have a NULL pointer, for the other weighted inputs, it is changed */
-			if (current_input_global_index >= 0)
+			/* Change the pointer to this network's neuron */
+			switch ((*(this->network_neurons + neuron_index))->getInputType(weighted_input_index))
 			{
-				/* Change the pointer to this network's neuron */
+			case Weight_node::WIT_BIAS:
+				break;
+
+			case Weight_node::WIT_NEURON:
 				(*(this->network_neurons + neuron_index))->setInputNodePointer(*(this->network_neurons + current_input_global_index), weighted_input_index);
+				break;
+
+			case Weight_node::WIT_PATTERN:
+				(*(this->network_neurons + neuron_index))->setInputNodePointer(*(this->network_input_nodes + current_input_global_index), weighted_input_index);
+				break;
 			}
 		}
 	}
 
+	this->network_output_nodes = (Neuron**)malloc(this->outputs_count * sizeof(Neuron*));
 	for (unsigned int output_index = 0; output_index < this->outputs_count; output_index++)
 	{
 		const unsigned int current_neuron_position = (*(src_ann.network_output_nodes + output_index))->getGlobalNodeIndex();
 		*(this->network_output_nodes + output_index) = *(this->network_neurons + current_neuron_position);
 	}
 
+	this->loss_functions_count = 0;
 
 	this->loss_functions_head_node.loss_function_pointer = NULL;
 	this->loss_functions_head_node.next_loss_function_node = NULL;
-	this->loss_functions_tail_node = &loss_functions_head_node;
+	this->loss_functions_tail_node = &(this->loss_functions_head_node);
 
 	LOSS_FUNCTION_LIST_NODE * current_loss_function_list_node;
-	LOSS_FUNCTION_LIST_NODE * next_loss_function_list_node = 
+	LOSS_FUNCTION_LIST_NODE * next_loss_function_list_node =
 		src_ann.loss_functions_head_node.next_loss_function_node;
 
 	while (next_loss_function_list_node)
@@ -103,12 +110,12 @@ ArtificialNeuralNetwork::ArtificialNeuralNetwork(const ArtificialNeuralNetwork &
 		switch (current_loss_function_list_node->loss_function_pointer->getLossFunctionType())
 		{
 		case LossFunction::LF_L1_NORM:
-			this->loss_functions_tail_node->loss_function_pointer = 
-				new L1LossFunction (*(L1LossFunction*)current_loss_function_list_node->loss_function_pointer);
+			this->loss_functions_tail_node->loss_function_pointer =
+				new L1LossFunction(*(L1LossFunction*)current_loss_function_list_node->loss_function_pointer);
 			break;
 
 		case LossFunction::LF_L2_NORM:
-			this->loss_functions_tail_node->loss_function_pointer = 
+			this->loss_functions_tail_node->loss_function_pointer =
 				new L2LossFunction(*(L2LossFunction*)current_loss_function_list_node->loss_function_pointer);
 			break;
 
@@ -145,18 +152,15 @@ ArtificialNeuralNetwork & ArtificialNeuralNetwork::operator=(const ArtificialNeu
 		this->outputs_count = src_ann.outputs_count;
 		this->neurons_count = src_ann.neurons_count;
 		this->weights_count = src_ann.weights_count;
-		this->loss_functions_count = 0;
 		
 		this->network_input_nodes = (Input_pattern**)malloc(this->inputs_count * sizeof(Input_pattern*));
-		this->network_neurons = (Neuron**)malloc(this->neurons_count * sizeof(Neuron*));
-		this->network_output_nodes = (Neuron**)malloc(this->outputs_count * sizeof(Neuron*));
-
 		for (unsigned int input_index = 0; input_index < this->inputs_count; input_index++)
 		{
 			*(this->network_input_nodes + input_index) = new Input_pattern(input_index);
-			(*(this->network_input_nodes + input_index))->setInputPointer(&input_pattern_master_pointer);
+			(*(this->network_input_nodes + input_index))->setInputPointer(&(this->input_pattern_master_pointer));
 		}
 
+		this->network_neurons = (Neuron**)malloc(this->neurons_count * sizeof(Neuron*));
 		for (unsigned int neuron_index = 0; neuron_index < this->neurons_count; neuron_index++)
 		{
 			*(this->network_neurons + neuron_index) = new Neuron(*(*(src_ann.network_neurons + neuron_index)));
@@ -167,29 +171,40 @@ ArtificialNeuralNetwork & ArtificialNeuralNetwork::operator=(const ArtificialNeu
 		{
 			const unsigned int current_inputs_count = (*(this->network_neurons + neuron_index))->getInputsCount();
 
-			for (unsigned int weighted_input_index = 0; weighted_input_index < current_inputs_count; weighted_input_index++)
+			for (unsigned int weighted_input_index = 1; weighted_input_index < current_inputs_count; weighted_input_index++)
 			{
 				/* Get the current's global input index in the source's network */
 				const int current_input_global_index = (*(this->network_neurons + neuron_index))->getInputNodeGlobalIndex(weighted_input_index);
 
-				/* The bias will have a negative global index, for the other weighted inputs, it is changed */
-				if (current_input_global_index >= 0)
+				/* Change the pointer to this network's neuron */
+				switch ((*(this->network_neurons + neuron_index))->getInputType(weighted_input_index))
 				{
-					/* Change the pointer to this network's neuron */
+				case Weight_node::WIT_BIAS:
+					break;
+
+				case Weight_node::WIT_NEURON:
 					(*(this->network_neurons + neuron_index))->setInputNodePointer(*(this->network_neurons + current_input_global_index), weighted_input_index);
+					break;
+
+				case Weight_node::WIT_PATTERN:
+					(*(this->network_neurons + neuron_index))->setInputNodePointer(*(this->network_input_nodes + current_input_global_index), weighted_input_index);
+					break;
 				}
 			}
 		}
 
+		this->network_output_nodes = (Neuron**)malloc(this->outputs_count * sizeof(Neuron*));
 		for (unsigned int output_index = 0; output_index < this->outputs_count; output_index++)
 		{
 			const unsigned int current_neuron_position = (*(src_ann.network_output_nodes + output_index))->getGlobalNodeIndex();
 			*(this->network_output_nodes + output_index) = *(this->network_neurons + current_neuron_position);
 		}
+		
+		this->loss_functions_count = 0;
 
 		this->loss_functions_head_node.loss_function_pointer = NULL;
 		this->loss_functions_head_node.next_loss_function_node = NULL;
-		this->loss_functions_tail_node = &loss_functions_head_node;
+		this->loss_functions_tail_node = &(this->loss_functions_head_node);
 
 		LOSS_FUNCTION_LIST_NODE * current_loss_function_list_node;
 		LOSS_FUNCTION_LIST_NODE * next_loss_function_list_node =
@@ -392,36 +407,13 @@ void ArtificialNeuralNetwork::dumpLossFunctionsListIntoArray()
 }
 
 
-
-void ArtificialNeuralNetwork::setNetworkWeights(double *** src_weights_and_bias)
+void ArtificialNeuralNetwork::setNetworkWeightsAndDerivatives(double *** src_weights_and_bias, double **** src_weights_and_bias_derivatives, const bool src_copy_to_external)
 {
 	dumpLossFunctionsListIntoArray();
 
 	for (unsigned int neuron_index = 0; neuron_index < neurons_count; neuron_index++)
 	{
-		(*(network_neurons + neuron_index))->makeExternalWeightValues(src_weights_and_bias, NULL);
-	}
-}
-
-
-
-void ArtificialNeuralNetwork::setNetworkWeightsDerivatives(double **** src_weights_and_bias_derivatives)
-{
-	dumpLossFunctionsListIntoArray();
-
-	for (unsigned int neuron_index = 0; neuron_index < neurons_count; neuron_index++)
-	{
-		(*(network_neurons + neuron_index))->makeExternalWeightValues(NULL, src_weights_and_bias_derivatives);
-	}
-}
-
-void ArtificialNeuralNetwork::setNetworkWeightsAndDerivatives(double *** src_weights_and_bias, double **** src_weights_and_bias_derivatives)
-{
-	dumpLossFunctionsListIntoArray();
-
-	for (unsigned int neuron_index = 0; neuron_index < neurons_count; neuron_index++)
-	{
-		(*(network_neurons + neuron_index))->makeExternalWeightValues(src_weights_and_bias, src_weights_and_bias_derivatives);
+		(*(network_neurons + neuron_index))->makeExternalWeightValues(src_weights_and_bias, src_weights_and_bias_derivatives, src_copy_to_external);
 	}
 }
 
@@ -635,7 +627,6 @@ void ArtificialNeuralNetwork::predict(double * src_input_pattern_pointer, double
 	{
 		*(dst_prediction + i) = (*(network_output_nodes + i))->getInput(network_current_time);
 	}
-
 	network_current_time++;
 }
 
@@ -656,6 +647,7 @@ double ArtificialNeuralNetwork::computeNetworkLoss()
 		overall_loss += current_loss_function_node->loss_function_pointer->computeLoss(network_current_time);
 	}
 
+	network_current_time++;
 	return overall_loss;
 }
 
@@ -689,8 +681,8 @@ double ArtificialNeuralNetwork::computeNetworkLossWithDerivatives(const bool src
 		output_index++;
 	}
 
+	network_current_time++;
 	return overall_loss;
-
 }
 
 

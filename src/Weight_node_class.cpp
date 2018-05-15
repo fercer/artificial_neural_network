@@ -111,8 +111,7 @@ Weight_node::Weight_node(const Weight_node & src_weight_node)
 	this->input_node_pointer = src_weight_node.input_node_pointer;
 
 	/* The time is restarted */
-	current_weight_time = 0;
-	
+	current_weight_time = 0;	
 
 	/* This copy constructor will define the weight and derivatives values as self allocated.
 	All the values will be extracted from the master pointers in the source weight object
@@ -121,12 +120,10 @@ Weight_node::Weight_node(const Weight_node & src_weight_node)
 	method.
 	*/
 	this->self_weight_value = *(*(*(src_weight_node.weight_values_master_pointer) + src_weight_node.ewv_neuron_index) + src_weight_node.ewv_input_index);
-	this->self_weight_derivatives_values = (double*)malloc(outputs_count * sizeof(double));
-	for (unsigned int output_index = 0; output_index < outputs_count; output_index++)
-	{
-		*(this->self_weight_derivatives_values + output_index) =
-			*(*(*(*(src_weight_node.weight_derivatives_values_master_pointer) + src_weight_node.ewdv_neuron_index) + src_weight_node.ewdv_input_index) + output_index);
-	}
+	this->self_weight_derivatives_values = (double*)malloc(this->outputs_count * sizeof(double));
+	memcpy(this->self_weight_derivatives_values, 
+		*(*(*(src_weight_node.weight_derivatives_values_master_pointer) + src_weight_node.ewdv_neuron_index) + src_weight_node.ewdv_input_index),
+		this->outputs_count * sizeof(double));
 
 	this->self_neuron_weight_values = &(this->self_weight_value);
 	this->self_neuron_weight_derivatives_values = &(this->self_weight_derivatives_values);
@@ -137,6 +134,12 @@ Weight_node::Weight_node(const Weight_node & src_weight_node)
 	this->weight_values_master_pointer = &(this->self_weights_pointers_manager);
 	this->weight_derivatives_values_master_pointer = &(this->self_weights_derivatives_pointers_manager);
 	
+	this->ewv_input_index = 0;
+	this->ewv_neuron_index = 0;
+
+	this->ewdv_input_index = 0;
+	this->ewdv_neuron_index = 0;
+	
 	switch (this->input_type)
 	{
 	case WIT_BIAS:
@@ -144,7 +147,7 @@ Weight_node::Weight_node(const Weight_node & src_weight_node)
 		this->get_input_response_with_derivatives = &Weight_node::getBias;
 		this->get_input_response = &Weight_node::getBias;
 		this->dump_weight_method = &Weight_node::dumpWeightDataBias;
-		get_input_node_global_index = &Weight_node::getBiasGlobalIndex;
+		this->get_input_node_global_index = &Weight_node::getBiasGlobalIndex;
 		break;
 
 	case WIT_PATTERN:
@@ -152,7 +155,7 @@ Weight_node::Weight_node(const Weight_node & src_weight_node)
 		this->get_input_response_with_derivatives = &Weight_node::getWeightedInputWithDerivatives;
 		this->get_input_response = &Weight_node::getWeightedInput;
 		this->dump_weight_method = &Weight_node::dumpWeightDataPattern;
-		get_input_node_global_index = &Weight_node::getWeightedInputNodeGlobalIndex;
+		this->get_input_node_global_index = &Weight_node::getWeightedInputNodeGlobalIndex;
 		break;
 
 	case WIT_NEURON:
@@ -160,7 +163,7 @@ Weight_node::Weight_node(const Weight_node & src_weight_node)
 		this->get_input_response_with_derivatives = &Weight_node::getWeightedInputWithDerivatives;
 		this->get_input_response = &Weight_node::getWeightedInput;
 		this->dump_weight_method = &Weight_node::dumpWeightDataNeuron;
-		get_input_node_global_index = &Weight_node::getWeightedInputNodeGlobalIndex;
+		this->get_input_node_global_index = &Weight_node::getWeightedInputNodeGlobalIndex;
 		break;
 	}
 }
@@ -184,7 +187,6 @@ Weight_node & Weight_node::operator= (const Weight_node & src_weight_node)
 		/* The time is restarted */
 		current_weight_time = 0;
 
-
 		/* This copy constructor will define the weight and derivatives values as self allocated.
 		All the values will be extracted from the master pointers in the source weight object
 		despite their actual origin.
@@ -192,12 +194,10 @@ Weight_node & Weight_node::operator= (const Weight_node & src_weight_node)
 		method.
 		*/
 		this->self_weight_value = *(*(*(src_weight_node.weight_values_master_pointer) + src_weight_node.ewv_neuron_index) + src_weight_node.ewv_input_index);
-		this->self_weight_derivatives_values = (double*)malloc(outputs_count * sizeof(double));
-		for (unsigned int output_index = 0; output_index < outputs_count; output_index++)
-		{
-			*(this->self_weight_derivatives_values + output_index) =
-				*(*(*(*(src_weight_node.weight_derivatives_values_master_pointer) + src_weight_node.ewdv_neuron_index) + src_weight_node.ewdv_input_index) + output_index);
-		}
+		this->self_weight_derivatives_values = (double*)malloc(this->outputs_count * sizeof(double));
+		memcpy(this->self_weight_derivatives_values,
+			*(*(*(src_weight_node.weight_derivatives_values_master_pointer) + src_weight_node.ewdv_neuron_index) + src_weight_node.ewdv_input_index),
+			this->outputs_count * sizeof(double));
 
 		this->self_neuron_weight_values = &(this->self_weight_value);
 		this->self_neuron_weight_derivatives_values = &(this->self_weight_derivatives_values);
@@ -208,6 +208,12 @@ Weight_node & Weight_node::operator= (const Weight_node & src_weight_node)
 		this->weight_values_master_pointer = &(this->self_weights_pointers_manager);
 		this->weight_derivatives_values_master_pointer = &(this->self_weights_derivatives_pointers_manager);
 
+		this->ewv_input_index = 0;
+		this->ewv_neuron_index = 0;
+
+		this->ewdv_input_index = 0;
+		this->ewdv_neuron_index = 0;
+
 		switch (this->input_type)
 		{
 		case WIT_BIAS:
@@ -215,7 +221,7 @@ Weight_node & Weight_node::operator= (const Weight_node & src_weight_node)
 			this->get_input_response_with_derivatives = &Weight_node::getBias;
 			this->get_input_response = &Weight_node::getBias;
 			this->dump_weight_method = &Weight_node::dumpWeightDataBias;
-			get_input_node_global_index = &Weight_node::getBiasGlobalIndex;
+			this->get_input_node_global_index = &Weight_node::getBiasGlobalIndex;
 			break;
 
 		case WIT_PATTERN:
@@ -223,7 +229,7 @@ Weight_node & Weight_node::operator= (const Weight_node & src_weight_node)
 			this->get_input_response_with_derivatives = &Weight_node::getWeightedInputWithDerivatives;
 			this->get_input_response = &Weight_node::getWeightedInput;
 			this->dump_weight_method = &Weight_node::dumpWeightDataPattern;
-			get_input_node_global_index = &Weight_node::getWeightedInputNodeGlobalIndex;
+			this->get_input_node_global_index = &Weight_node::getWeightedInputNodeGlobalIndex;
 			break;
 
 		case WIT_NEURON:
@@ -231,7 +237,7 @@ Weight_node & Weight_node::operator= (const Weight_node & src_weight_node)
 			this->get_input_response_with_derivatives = &Weight_node::getWeightedInputWithDerivatives;
 			this->get_input_response = &Weight_node::getWeightedInput;
 			this->dump_weight_method = &Weight_node::dumpWeightDataNeuron;
-			get_input_node_global_index = &Weight_node::getWeightedInputNodeGlobalIndex;
+			this->get_input_node_global_index = &Weight_node::getWeightedInputNodeGlobalIndex;
 			break;
 		}
 	}
@@ -355,7 +361,7 @@ double Weight_node::getBias()
 
 
 
-void Weight_node::makeExternalWeigthValue(double *** src_weight_values_master_pointer, double **** src_weight_derivatives_values_master_pointer)
+void Weight_node::makeExternalWeigthValue(double *** src_weight_values_master_pointer, double **** src_weight_derivatives_values_master_pointer, const bool src_copy_to_external)
 {
 	if (src_weight_values_master_pointer)
 	{
@@ -363,7 +369,10 @@ void Weight_node::makeExternalWeigthValue(double *** src_weight_values_master_po
 		ewv_input_index = input_index;
 
 		weight_values_master_pointer = src_weight_values_master_pointer;
-		*(*(*weight_values_master_pointer + ewv_neuron_index) + ewv_input_index) = self_weight_value;
+		if (src_copy_to_external)
+		{
+			*(*(*weight_values_master_pointer + ewv_neuron_index) + ewv_input_index) = self_weight_value;
+		}
 	}
 
 	if (src_weight_derivatives_values_master_pointer)
@@ -372,9 +381,12 @@ void Weight_node::makeExternalWeigthValue(double *** src_weight_values_master_po
 		ewdv_input_index = input_index;
 		weight_derivatives_values_master_pointer = src_weight_derivatives_values_master_pointer;
 		
-		memcpy(*(*(*weight_derivatives_values_master_pointer + ewdv_neuron_index) + ewdv_input_index),
-			self_weight_derivatives_values,
-			outputs_count * sizeof(double));
+		if (src_copy_to_external)
+		{
+			memcpy(*(*(*weight_derivatives_values_master_pointer + ewdv_neuron_index) + ewdv_input_index),
+				self_weight_derivatives_values,
+				outputs_count * sizeof(double));
+		}
 
 		free(self_weight_derivatives_values);
 		self_weight_derivatives_values = NULL;
