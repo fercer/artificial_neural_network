@@ -61,10 +61,9 @@ private:
 
 	// Trained network data:
 	double *** training_data_threads;
-	double ** input_pattern_master_pointer_threads;
-
-	int ** groundtruth_master_pointer_threads;
 	int *** groundtruth_data_threads;
+
+	ArtificialNeuralNetwork ** ann_threads;
 #endif
 
 	double * weights_deltas;
@@ -85,12 +84,10 @@ private:
 	COMPUTE_EPOCH_METHOD computeEpoch;
 
 #ifdef _OPENMP
-	int allocateLossFunctionsParallel();
 	int allocateNetworkArchitectureParallel();
 	int allocateTrainingDataParallel();
 	int allocateLevenbergMarquardtParallel();
 
-	void deallocateLossFunctionsParallel();
 	void deallocateNetworkArchitectureParallel();
 	void deallocateTrainingDataParallel();
 	void deallocateLevenbergMarquardtParallel();
