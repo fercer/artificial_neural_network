@@ -22,7 +22,7 @@ int main(int argc, char * argv[])
 	double **testing_patterns_database = testing_data.getInputData();
 	int **testing_outputs_database = testing_data.getOutputData();
 	
-	bpt_ann_test.setBackpropagationMethod(backpropagationBasedANN::BPM_GRADIENT_DESCENT);
+	bpt_ann_test.setBackpropagationMethod(backpropagationBasedANN::BPM_LEVENBERG_MARQUARDT);
 	bpt_ann_test.setEpochs(1000);
 	bpt_ann_test.setLearningRates(0.05);
 	bpt_ann_test.setMomentums(0.9);

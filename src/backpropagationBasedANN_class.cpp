@@ -33,7 +33,7 @@ backpropagationBasedANN::backpropagationBasedANN()
 	momentums = 0.9;
 	learning_rates = 0.05;
 
-	random_number_generator_seed = initSeed(777);
+	random_number_generator_seed = initSeed(778);
 
 #ifdef _OPENMP
 #pragma omp parallel
@@ -315,8 +315,9 @@ bool backpropagationBasedANN::computeEpoch_gradient_descent()
 	printf("Pattern processed in %f s\n", DIFTIME);
 
 	current_loss = total_epoch_loss / (double)training_data_size;
+	printf("Epoch computed successfully, gradient norm = %f, first weight = %f\n", squared_gradient_norm, *network_weights_values);
 
-	if ((current_loss < target_loss) || (squared_gradient_norm < 1e-16))
+	if ((current_loss < target_loss) || (squared_gradient_norm < target_loss*target_loss))
 	{
 		return false;
 	}
@@ -351,34 +352,34 @@ bool backpropagationBasedANN::computeEpoch_levenberg_marquardt()
 		// Backpropagate the neuron's error contribution:
 		my_ann->backPropagateErrors();
 
-		for (unsigned int weight_index = 0; weight_index < weights_count; weight_index++)
+		for (unsigned int weight_index_i = 0; weight_index_i < weights_count; weight_index_i++)
 		{
 			// Compute the product between the Jacobian matrix and the vector of errors:
 			double error_contribution_product = 0.0;
 			for (unsigned int output_index = 0; output_index < outputs_count; output_index++)
 			{
-				*(jacobian_error_derivative_product + weight_index) =
-					*(jacobian_error_derivative_product + weight_index) +
-					*(*(network_weights_derivatives_values + weight_index) + output_index) *
+				*(jacobian_error_derivative_product + weight_index_i) =
+					*(jacobian_error_derivative_product + weight_index_i) +
+					*(*(network_weights_derivatives_values + weight_index_i) + output_index) *
 					my_ann->getLossFunctionErrorContribution(output_index);
 
 				/* Compute the hessian matrix entry that corresponds to 
 				the product of the current weight and the first weight of the network:
 				*/
-				error_contribution_product += *(*(network_weights_derivatives_values + weight_index) + output_index) *
+				error_contribution_product += *(*(network_weights_derivatives_values + weight_index_i) + output_index) *
 					*(*network_weights_derivatives_values + output_index);
 			}
 			
-			const unsigned int weight_index_base = weight_index * (weight_index + 1) / 2;
+			const unsigned int weight_index_base = weight_index_i * (weight_index_i + 1) / 2;
 			*(hessian_matrix + weight_index_base) = *(hessian_matrix + weight_index_base) + error_contribution_product;
 
 			// Compute the jacobian matrix product with its self transpose:
-			for (unsigned int weight_index_j = 0; weight_index_j <= weight_index; weight_index_j++)
+			for (unsigned int weight_index_j = 1; weight_index_j <= weight_index_i; weight_index_j++)
 			{
 				double error_contribution_product = 0.0;
 				for (unsigned int output_index = 0; output_index < outputs_count; output_index++)
 				{
-					error_contribution_product += *(*(network_weights_derivatives_values + weight_index) + output_index) *
+					error_contribution_product += *(*(network_weights_derivatives_values + weight_index_i) + output_index) *
 						*(*(network_weights_derivatives_values + weight_index_j) + output_index);
 				}
 				
@@ -399,7 +400,8 @@ bool backpropagationBasedANN::computeEpoch_levenberg_marquardt()
 		{
 			// Perform the Cholesky's factorization to obtain L * L^T = H + mu * I
 			// Solve L * z = J^T*e at the same time:
-			for (unsigned int weight_index_i = 0; weight_index_i < weights_count; weight_index_i++)
+			unsigned int weight_index_i;
+			for (weight_index_i = 0; weight_index_i < weights_count; weight_index_i++)
 			{
 				double jacobian_factorized_hessian_product = 0.0;
 				const unsigned int weight_index_base_i = weight_index_i * (weight_index_i + 1) / 2;
@@ -418,7 +420,7 @@ bool backpropagationBasedANN::computeEpoch_levenberg_marquardt()
 
 					*(hessian_matrix + weight_index_base_i + weight_index_j) =
 						(*(hessian_matrix + weight_index_base_i + weight_index_j) - row_product_sum) /
-						*(hessian_matrix + weight_index_j + weight_index_j);
+						*(hessian_matrix + weight_index_base_j + weight_index_j);
 
 					// Compue the squared sum of the values of the i-th row of the hessian matrix:
 					row_squared_sum += *(hessian_matrix + weight_index_base_i + weight_index_j) *
@@ -440,7 +442,7 @@ bool backpropagationBasedANN::computeEpoch_levenberg_marquardt()
 					mu_value *= mu_increasing_factor;
 					// Copy only the values that were modified:
 					memcpy(hessian_matrix, previous_hessian_matrix, (weight_index_base_i + weight_index_i)* sizeof(double));
-					memcpy(jacobian_error_derivative_product, previous_jacobian_error_derivative_product, weight_index_i * sizeof(double));
+					memcpy(jacobian_error_derivative_product, previous_jacobian_error_derivative_product, (weight_index_i) * sizeof(double));
 					break;
 				}
 
@@ -449,7 +451,11 @@ bool backpropagationBasedANN::computeEpoch_levenberg_marquardt()
 				// Compute the i-th entry of the temporal 'z' vector
 				*(jacobian_error_derivative_product + weight_index_i) = (*(jacobian_error_derivative_product + weight_index_i) - jacobian_factorized_hessian_product) / *(hessian_matrix + weight_index_base_i + weight_index_i);
 			}
-			break;
+
+			if (weight_index_i == weights_count)
+			{
+				break;
+			}
 		} while (1);
 
 		// Solve L^T * w = z to determine the new weights delta values:
@@ -468,8 +474,8 @@ bool backpropagationBasedANN::computeEpoch_levenberg_marquardt()
 
 			// Update the weights:
 			*(network_weights_values + weight_index_i) = *(network_weights_values + weight_index_i) - *(jacobian_error_derivative_product + weight_index_i);
-			squared_gradient_norm += *(network_weights_values + weight_index_i) * 
-				*(network_weights_values + weight_index_i);
+			squared_gradient_norm += *(jacobian_error_derivative_product + weight_index_i) *
+				*(jacobian_error_derivative_product + weight_index_i);
 		}
 
 		// Evaluate the new weight values:
@@ -489,7 +495,6 @@ bool backpropagationBasedANN::computeEpoch_levenberg_marquardt()
 		if (training_epoch_loss < current_loss)
 		{
 			mu_value *= mu_decreasing_factor;
-			memcpy(previous_weights_values, network_weights_values, weights_count * sizeof(double));
 			break;
 		}
 		else
@@ -518,7 +523,7 @@ bool backpropagationBasedANN::computeEpoch_levenberg_marquardt()
 		}
 	} while (1);
 	
-	printf("Epoch computed successfully");
+	printf("Epoch computed successfully, gradient norm = %f, first weight = %f\n", squared_gradient_norm, *network_weights_values);
 
 	if ((mu_value > max_mu_value) || (current_loss < target_loss) || (squared_gradient_norm < target_loss*target_loss))
 	{
