@@ -80,7 +80,47 @@ backpropagationBasedANN::~backpropagationBasedANN()
 #ifdef _OPENMP
 int backpropagationBasedANN::allocateNetworkArchitectureParallel()
 {
-	
+	ann_threads = (ArtificialNeuralNetwork**) malloc(available_threads * sizeof(ArtificialNeuralNetwork*));
+
+	network_weights_derivatives_pointers_manager_threads = (double****)malloc(available_threads * sizeof(double***));
+	network_weights_pointers_manager_threads = (double***)malloc(available_threads * sizeof(double**));
+
+	network_weights_derivatives_values_threads = (double***)malloc(available_threads * sizeof(double**));
+	network_weights_values_threads = (double**)malloc(available_threads * sizeof(double*));
+
+	for (unsigned int thread_id = 0; thread_id < available_threads; thread_id++)
+	{
+		*(ann_threads + thread_id) = new ArtificialNeuralNetwork(*my_ann);
+
+		*(network_weights_pointers_manager_threads + thread_id) = (double**)malloc(neurons_count * sizeof(double*));
+		*(network_weights_derivatives_pointers_manager_threads + thread_id) = (double***)malloc(neurons_count * sizeof(double**));
+
+		*(network_weights_derivatives_values_threads + thread_id) = (double**)malloc(weights_count * sizeof(double*));
+		*(network_weights_values_threads + thread_id) = (double*)malloc(weights_count * sizeof(double));
+		
+		memcpy(*(network_weights_values_threads + thread_id),
+			network_weights_values, weights_count * sizeof(double));
+
+		unsigned int weight_index_base = 0;
+		for (unsigned int neuron_index = 0; neuron_index < neurons_count; neuron_index++)
+		{
+			*(*(network_weights_pointers_manager_threads + thread_id) + neuron_index) =
+			*(network_weights_values_threads + thread_id) + weight_index_base;
+
+			*(*(network_weights_derivatives_pointers_manager_threads + thread_id) + neuron_index) =
+				*(network_weights_derivatives_values_threads + thread_id) + weight_index_base;
+
+			const unsigned int current_neuron_inputs_count = my_ann->getWeightedInputsInNeuron(neuron_index);
+			for (unsigned int weight_index = 0; weight_index < current_neuron_inputs_count; weight_index++, weight_index_base++)
+			{
+				*(*(network_weights_derivatives_values_threads + thread_id) + weight_index_base) =
+					(double*)malloc(outputs_count * sizeof(double));
+			}
+		}
+
+		(*(ann_threads + thread_id))->setNetworkWeightsAndDerivatives(network_weights_pointers_manager_threads + thread_id, network_weights_derivatives_pointers_manager_threads + thread_id, false);
+	}
+
 	return 1;
 }
 
@@ -90,10 +130,8 @@ int backpropagationBasedANN::allocateTrainingDataParallel()
 {
 	// Allocate memory for the training data batches:
 	groundtruth_data_threads = (int***)malloc(available_threads * sizeof(int**));
-	groundtruth_master_pointer_threads = (int**)malloc(available_threads * sizeof(int*));
 
 	training_data_threads = (double***)malloc(available_threads * sizeof(double**));
-	input_pattern_master_pointer_threads = (double**)malloc(available_threads * sizeof(double*));
 
 	unsigned int pattern_index_base = 0;
 	for (unsigned int thread_id = 0; thread_id < available_threads; thread_id++)
@@ -145,7 +183,29 @@ int backpropagationBasedANN::allocateLevenbergMarquardtParallel()
 
 void backpropagationBasedANN::deallocateNetworkArchitectureParallel()
 {
-	
+	for (unsigned int thread_id = 0; thread_id < available_threads; thread_id++)
+	{
+		unsigned int weight_index_base = 0;
+		for (unsigned int neuron_index = 0; neuron_index < neurons_count; neuron_index++)
+		{
+			const unsigned int current_neuron_inputs_count = (*(ann_threads + thread_id))->getWeightedInputsInNeuron(neuron_index);
+			for (unsigned int weight_index = 0; weight_index < current_neuron_inputs_count; weight_index++, weight_index_base++)
+			{
+				free(*(*(network_weights_derivatives_values_threads + thread_id) + weight_index_base));
+			}
+
+			free(*(*(network_weights_derivatives_pointers_manager_threads + thread_id) + neuron_index));
+			free(*(*(network_weights_pointers_manager_threads + thread_id) + neuron_index));
+		}
+		free(*(network_weights_derivatives_pointers_manager_threads + thread_id));
+		free(*(network_weights_pointers_manager_threads + thread_id));
+		free(*(network_weights_derivatives_values_threads + thread_id));
+		free(*(network_weights_values_threads + thread_id));
+
+		delete *(ann_threads + thread_id);
+	}
+
+	free(ann_threads);
 }
 
 
@@ -170,9 +230,7 @@ void backpropagationBasedANN::deallocateTrainingDataParallel()
 	}
 
 	free(groundtruth_data_threads);
-	free(groundtruth_master_pointer_threads);
 	free(training_data_threads);
-	free(input_pattern_master_pointer_threads);
 }
 
 
@@ -245,7 +303,6 @@ int backpropagationBasedANN::allocateMethodMemory()
 	batch_size_per_thread = (training_data_size + 1) / available_threads;
 	allocateTrainingDataParallel();
 	allocateNetworkArchitectureParallel();
-	allocateLossFunctionsParallel();
 #endif //_OPENMP
 
 	if (hessian_matrix_was_required)
