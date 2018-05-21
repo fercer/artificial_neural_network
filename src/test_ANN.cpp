@@ -12,10 +12,9 @@ int main(int argc, char * argv[])
 	//bpt_ann_test.loadNetworkData("Trained_network_test.xml");
 	bpt_ann_test.loadNetworkData("iris_network.xml");
 
-	data_handler training_data;
-	//training_data.setFilename("trainingDataXOR_slim.txt");
-	training_data.setFilename("training_set.dat");
-	training_data.loadData();
+	data_handler testing_data;
+	testing_data.setFilename("trainingDataXOR.txt");
+	testing_data.loadData();
 
 	const unsigned int training_size = training_data.getDataSize();
 	const unsigned int inputs_count = training_data.getInputSize();

@@ -10,6 +10,8 @@
 #include <sstream>
 #include <vector>
 
+#include "rapidxml.hpp"
+
 class data_handler
 {
 public:
@@ -30,6 +32,16 @@ public:
 	int ** getOutputData();
 
 private:
+	typedef union VARIABLE_TYPE { 
+		double * input;
+		int * output;
+	} VARIABLE_TYPE;
+
+	typedef struct DATA_LIST_NODE {
+		VARIABLE_TYPE variable_value;
+		DATA_LIST_NODE * next_entry;
+	} DATA_LIST_NODE;
+
 	char data_filename[512];
 	unsigned int data_size;
 	unsigned int number_of_variables;
@@ -37,6 +49,11 @@ private:
 
 	double ** input_data;
 	int ** output_data;
+
+	void (data_handler::*load_data_method)();
+	void loadDataXML();
+	void loadDataTXT();
+
 };
 
 #endif // DATA_HANDLER_CLASS_INCLUDED
