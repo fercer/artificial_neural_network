@@ -11,6 +11,7 @@ ArtificialNeuralNetwork::ArtificialNeuralNetwork()
 	outputs_count = 0;
 	neurons_count = 0;
 	weights_count = 0;
+	loss_functions_count = 0;
 
 	network_current_time = 1;
 
@@ -19,8 +20,16 @@ ArtificialNeuralNetwork::ArtificialNeuralNetwork()
 	network_output_nodes = NULL;
 	
 	input_pattern_master_pointer = NULL;
+	groundtruth_master_pointer = NULL;
 
 	sprintf(ann_log_filename, "NULL");
+
+	loss_functions_head_node.loss_function_pointer = NULL;
+	loss_functions_head_node.next_loss_function_node = NULL;
+	loss_functions_tail_node = &loss_functions_head_node;
+
+	loss_functions_array = NULL;
+	dump_loss_functions_list_into_array_required = false;
 }
 
 
@@ -31,18 +40,16 @@ ArtificialNeuralNetwork::ArtificialNeuralNetwork(const ArtificialNeuralNetwork &
 	this->outputs_count = src_ann.outputs_count;
 	this->neurons_count = src_ann.neurons_count;
 	this->weights_count = src_ann.weights_count;
-	
-	this->network_input_nodes = (Input_pattern**) malloc(this->inputs_count * sizeof(Input_pattern*));
-	this->network_neurons = (Neuron**) malloc(this->neurons_count * sizeof(Neuron*));
-	this->network_output_nodes = (Neuron**) malloc(this->outputs_count * sizeof(Neuron*));
 
+	this->network_input_nodes = (Input_pattern**)malloc(this->inputs_count * sizeof(Input_pattern*));
 	for (unsigned int input_index = 0; input_index < this->inputs_count; input_index++)
 	{
 		*(this->network_input_nodes + input_index) = new Input_pattern(input_index);
-		(*(this->network_input_nodes + input_index))->setInputPointer(&input_pattern_master_pointer);
+		(*(this->network_input_nodes + input_index))->setInputPointer(&(this->input_pattern_master_pointer));
 	}
 
-	for (unsigned int neuron_index = 0; neuron_index < this->inputs_count; neuron_index++)
+	this->network_neurons = (Neuron**)malloc(this->neurons_count * sizeof(Neuron*));
+	for (unsigned int neuron_index = 0; neuron_index < this->neurons_count; neuron_index++)
 	{
 		*(this->network_neurons + neuron_index) = new Neuron(*(*(src_ann.network_neurons + neuron_index)));
 	}
@@ -52,28 +59,85 @@ ArtificialNeuralNetwork::ArtificialNeuralNetwork(const ArtificialNeuralNetwork &
 	{
 		const unsigned int current_inputs_count = (*(this->network_neurons + neuron_index))->getInputsCount();
 
-		for (unsigned int weighted_input_index = 0; weighted_input_index < current_inputs_count; weighted_input_index++)
+		for (unsigned int weighted_input_index = 1; weighted_input_index < current_inputs_count; weighted_input_index++)
 		{
 			/* Get the current's global input index in the source's network */
 			const int current_input_global_index = (*(this->network_neurons + neuron_index))->getInputNodeGlobalIndex(weighted_input_index);
 
-			/* The bias will have a NULL pointer, for the other weighted inputs, it is changed */
-			if (current_input_global_index >= 0)
+			/* Change the pointer to this network's neuron */
+			switch ((*(this->network_neurons + neuron_index))->getInputType(weighted_input_index))
 			{
-				/* Change the pointer to this network's neuron */
+			case Weight_node::WIT_BIAS:
+				break;
+
+			case Weight_node::WIT_NEURON:
 				(*(this->network_neurons + neuron_index))->setInputNodePointer(*(this->network_neurons + current_input_global_index), weighted_input_index);
+				break;
+
+			case Weight_node::WIT_PATTERN:
+				(*(this->network_neurons + neuron_index))->setInputNodePointer(*(this->network_input_nodes + current_input_global_index), weighted_input_index);
+				break;
 			}
 		}
 	}
 
+	this->network_output_nodes = (Neuron**)malloc(this->outputs_count * sizeof(Neuron*));
 	for (unsigned int output_index = 0; output_index < this->outputs_count; output_index++)
 	{
 		const unsigned int current_neuron_position = (*(src_ann.network_output_nodes + output_index))->getGlobalNodeIndex();
 		*(this->network_output_nodes + output_index) = *(this->network_neurons + current_neuron_position);
 	}
 
+	this->loss_functions_count = 0;
+
+	this->loss_functions_head_node.loss_function_pointer = NULL;
+	this->loss_functions_head_node.next_loss_function_node = NULL;
+	this->loss_functions_tail_node = &(this->loss_functions_head_node);
+
+	LOSS_FUNCTION_LIST_NODE * current_loss_function_list_node;
+	LOSS_FUNCTION_LIST_NODE * next_loss_function_list_node =
+		src_ann.loss_functions_head_node.next_loss_function_node;
+
+	while (next_loss_function_list_node)
+	{
+		current_loss_function_list_node = next_loss_function_list_node;
+		next_loss_function_list_node = current_loss_function_list_node->next_loss_function_node;
+
+		this->loss_functions_tail_node->next_loss_function_node = new LOSS_FUNCTION_LIST_NODE;
+		this->loss_functions_tail_node = this->loss_functions_tail_node->next_loss_function_node;
+		this->loss_functions_tail_node->next_loss_function_node = NULL;
+
+		switch (current_loss_function_list_node->loss_function_pointer->getLossFunctionType())
+		{
+		case LossFunction::LF_L1_NORM:
+			this->loss_functions_tail_node->loss_function_pointer =
+				new L1LossFunction(*(L1LossFunction*)current_loss_function_list_node->loss_function_pointer);
+			break;
+
+		case LossFunction::LF_L2_NORM:
+			this->loss_functions_tail_node->loss_function_pointer =
+				new L2LossFunction(*(L2LossFunction*)current_loss_function_list_node->loss_function_pointer);
+			break;
+
+		case LossFunction::LF_CROSS_ENTROPY:
+			this->loss_functions_tail_node->loss_function_pointer =
+				new crossEntropyLossFunction(*(crossEntropyLossFunction*)current_loss_function_list_node->loss_function_pointer);
+			break;
+		}
+
+		this->loss_functions_tail_node->loss_function_pointer->setOutputNode(*(this->network_output_nodes + loss_functions_count));
+		this->loss_functions_tail_node->loss_function_pointer->setGlobalOutputIndex(this->loss_functions_count);
+		this->loss_functions_tail_node->loss_function_pointer->setGroundtruth(&(this->groundtruth_master_pointer));
+		this->loss_functions_count = this->loss_functions_count + 1;
+	}
 
 	this->input_pattern_master_pointer = src_ann.input_pattern_master_pointer;
+	this->groundtruth_master_pointer = src_ann.groundtruth_master_pointer;
+
+	this->loss_functions_array = NULL;
+	this->dump_loss_functions_list_into_array_required = true;
+
+	this->dumpLossFunctionsListIntoArray();
 
 	this->network_current_time = 1;
 }
@@ -90,15 +154,13 @@ ArtificialNeuralNetwork & ArtificialNeuralNetwork::operator=(const ArtificialNeu
 		this->weights_count = src_ann.weights_count;
 		
 		this->network_input_nodes = (Input_pattern**)malloc(this->inputs_count * sizeof(Input_pattern*));
-		this->network_neurons = (Neuron**)malloc(this->neurons_count * sizeof(Neuron*));
-		this->network_output_nodes = (Neuron**)malloc(this->outputs_count * sizeof(Neuron*));
-
 		for (unsigned int input_index = 0; input_index < this->inputs_count; input_index++)
 		{
 			*(this->network_input_nodes + input_index) = new Input_pattern(input_index);
-			(*(this->network_input_nodes + input_index))->setInputPointer(&input_pattern_master_pointer);
+			(*(this->network_input_nodes + input_index))->setInputPointer(&(this->input_pattern_master_pointer));
 		}
 
+		this->network_neurons = (Neuron**)malloc(this->neurons_count * sizeof(Neuron*));
 		for (unsigned int neuron_index = 0; neuron_index < this->neurons_count; neuron_index++)
 		{
 			*(this->network_neurons + neuron_index) = new Neuron(*(*(src_ann.network_neurons + neuron_index)));
@@ -109,27 +171,85 @@ ArtificialNeuralNetwork & ArtificialNeuralNetwork::operator=(const ArtificialNeu
 		{
 			const unsigned int current_inputs_count = (*(this->network_neurons + neuron_index))->getInputsCount();
 
-			for (unsigned int weighted_input_index = 0; weighted_input_index < current_inputs_count; weighted_input_index++)
+			for (unsigned int weighted_input_index = 1; weighted_input_index < current_inputs_count; weighted_input_index++)
 			{
 				/* Get the current's global input index in the source's network */
 				const int current_input_global_index = (*(this->network_neurons + neuron_index))->getInputNodeGlobalIndex(weighted_input_index);
 
-				/* The bias will have a negative global index, for the other weighted inputs, it is changed */
-				if (current_input_global_index >= 0)
+				/* Change the pointer to this network's neuron */
+				switch ((*(this->network_neurons + neuron_index))->getInputType(weighted_input_index))
 				{
-					/* Change the pointer to this network's neuron */
+				case Weight_node::WIT_BIAS:
+					break;
+
+				case Weight_node::WIT_NEURON:
 					(*(this->network_neurons + neuron_index))->setInputNodePointer(*(this->network_neurons + current_input_global_index), weighted_input_index);
+					break;
+
+				case Weight_node::WIT_PATTERN:
+					(*(this->network_neurons + neuron_index))->setInputNodePointer(*(this->network_input_nodes + current_input_global_index), weighted_input_index);
+					break;
 				}
 			}
 		}
 
+		this->network_output_nodes = (Neuron**)malloc(this->outputs_count * sizeof(Neuron*));
 		for (unsigned int output_index = 0; output_index < this->outputs_count; output_index++)
 		{
 			const unsigned int current_neuron_position = (*(src_ann.network_output_nodes + output_index))->getGlobalNodeIndex();
 			*(this->network_output_nodes + output_index) = *(this->network_neurons + current_neuron_position);
 		}
+		
+		this->loss_functions_count = 0;
+
+		this->loss_functions_head_node.loss_function_pointer = NULL;
+		this->loss_functions_head_node.next_loss_function_node = NULL;
+		this->loss_functions_tail_node = &(this->loss_functions_head_node);
+
+		LOSS_FUNCTION_LIST_NODE * current_loss_function_list_node;
+		LOSS_FUNCTION_LIST_NODE * next_loss_function_list_node =
+			src_ann.loss_functions_head_node.next_loss_function_node;
+
+		while (next_loss_function_list_node)
+		{
+			current_loss_function_list_node = next_loss_function_list_node;
+			next_loss_function_list_node = current_loss_function_list_node->next_loss_function_node;
+
+			this->loss_functions_tail_node->next_loss_function_node = new LOSS_FUNCTION_LIST_NODE;
+			this->loss_functions_tail_node = this->loss_functions_tail_node->next_loss_function_node;
+			this->loss_functions_tail_node->next_loss_function_node = NULL;
+
+			switch (current_loss_function_list_node->loss_function_pointer->getLossFunctionType())
+			{
+			case LossFunction::LF_L1_NORM:
+				this->loss_functions_tail_node->loss_function_pointer =
+					new L1LossFunction(*(L1LossFunction*)current_loss_function_list_node->loss_function_pointer);
+				break;
+
+			case LossFunction::LF_L2_NORM:
+				this->loss_functions_tail_node->loss_function_pointer =
+					new L2LossFunction(*(L2LossFunction*)current_loss_function_list_node->loss_function_pointer);
+				break;
+
+			case LossFunction::LF_CROSS_ENTROPY:
+				this->loss_functions_tail_node->loss_function_pointer =
+					new crossEntropyLossFunction(*(crossEntropyLossFunction*)current_loss_function_list_node->loss_function_pointer);
+				break;
+			}
+
+			this->loss_functions_tail_node->loss_function_pointer->setOutputNode(*(this->network_output_nodes + loss_functions_count));
+			this->loss_functions_tail_node->loss_function_pointer->setGlobalOutputIndex(this->loss_functions_count);
+			this->loss_functions_tail_node->loss_function_pointer->setGroundtruth(&(this->groundtruth_master_pointer));
+			this->loss_functions_count = this->loss_functions_count + 1;
+		}
 
 		this->input_pattern_master_pointer = src_ann.input_pattern_master_pointer;
+		this->groundtruth_master_pointer = src_ann.groundtruth_master_pointer;
+
+		this->loss_functions_array = NULL;
+		this->dump_loss_functions_list_into_array_required = true;
+
+		this->dumpLossFunctionsListIntoArray();
 
 		this->network_current_time = 1;
 	}
@@ -163,6 +283,26 @@ ArtificialNeuralNetwork::~ArtificialNeuralNetwork()
 	if (outputs_count > 0)
 	{
 		free(network_output_nodes);
+	}
+
+	if (loss_functions_count > 0)
+	{
+		LOSS_FUNCTION_LIST_NODE * current_loss_function_list_node;
+		LOSS_FUNCTION_LIST_NODE * next_loss_function_list_node = loss_functions_head_node.next_loss_function_node;
+
+		while (next_loss_function_list_node)
+		{
+			current_loss_function_list_node = next_loss_function_list_node;
+			next_loss_function_list_node = current_loss_function_list_node->next_loss_function_node;
+
+			delete current_loss_function_list_node->loss_function_pointer;
+			delete current_loss_function_list_node;
+		}
+	}
+
+	if (loss_functions_array)
+	{
+		free(loss_functions_array);
 	}
 }
 
@@ -237,21 +377,43 @@ void ArtificialNeuralNetwork::addOutputNode(const unsigned int src_neuron_positi
 
 
 
-void ArtificialNeuralNetwork::setNetworkWeights(double *** src_weights_and_bias)
+void ArtificialNeuralNetwork::dumpLossFunctionsListIntoArray()
 {
-	for (unsigned int neuron_index = 0; neuron_index < neurons_count; neuron_index++)
+	if (dump_loss_functions_list_into_array_required)
 	{
-		(*(network_neurons + neuron_index))->makeExternalWeightValues(src_weights_and_bias, NULL);
+		if (loss_functions_array)
+		{
+			free(loss_functions_array);
+		}
+
+		loss_functions_array = (LossFunction**)malloc(loss_functions_count * sizeof(LossFunction*));
+
+		LOSS_FUNCTION_LIST_NODE * current_loss_function_list_node;
+		LOSS_FUNCTION_LIST_NODE * next_loss_function_list_node = loss_functions_head_node.next_loss_function_node;
+
+		unsigned int output_index = 0;
+		while (next_loss_function_list_node)
+		{
+			current_loss_function_list_node = next_loss_function_list_node;
+			next_loss_function_list_node = current_loss_function_list_node->next_loss_function_node;
+
+			*(loss_functions_array + output_index) = current_loss_function_list_node->loss_function_pointer;
+
+			output_index++;
+		}
+
+		dump_loss_functions_list_into_array_required = false;
 	}
 }
 
 
-
-void ArtificialNeuralNetwork::setNetworkWeightsDerivatives(double **** src_weights_and_bias_derivatives)
+void ArtificialNeuralNetwork::setNetworkWeightsAndDerivatives(double *** src_weights_and_bias, double **** src_weights_and_bias_derivatives, const bool src_copy_to_external)
 {
+	dumpLossFunctionsListIntoArray();
+
 	for (unsigned int neuron_index = 0; neuron_index < neurons_count; neuron_index++)
 	{
-		(*(network_neurons + neuron_index))->makeExternalWeightValues(NULL, src_weights_and_bias_derivatives);
+		(*(network_neurons + neuron_index))->makeExternalWeightValues(src_weights_and_bias, src_weights_and_bias_derivatives, src_copy_to_external);
 	}
 }
 
@@ -441,9 +603,16 @@ void ArtificialNeuralNetwork::saveNetworkState()
 
 
 
-void ArtificialNeuralNetwork::setInputPatternPointer(double * src_input_pattern_pointer)
+void ArtificialNeuralNetwork::assignInputPatternPointer(double * src_input_pattern_pointer)
 {
 	input_pattern_master_pointer = src_input_pattern_pointer;
+}
+
+
+
+void ArtificialNeuralNetwork::assignGroundtruthPointer(int * src_groundtruth_pointer)
+{
+	groundtruth_master_pointer = src_groundtruth_pointer;
 }
 
 
@@ -458,39 +627,168 @@ void ArtificialNeuralNetwork::predict(double * src_input_pattern_pointer, double
 	{
 		*(dst_prediction + i) = (*(network_output_nodes + i))->getInput(network_current_time);
 	}
-
 	network_current_time++;
 }
 
 
 
-void ArtificialNeuralNetwork::predictWithDerivatives(double * src_input_pattern_pointer, double * dst_prediction)
+double ArtificialNeuralNetwork::computeNetworkLoss()
 {
-	// Assign the input pattern master pointer to the testing array pointer
-	input_pattern_master_pointer = src_input_pattern_pointer;
+	double overall_loss = 0.0;
 
-	// Save the output to the destination prediction array
-	for (unsigned int i = 0; i < outputs_count; i++)
+	LOSS_FUNCTION_LIST_NODE * current_loss_function_node;
+	LOSS_FUNCTION_LIST_NODE * next_loss_function_node = loss_functions_head_node.next_loss_function_node;
+
+	while (next_loss_function_node)
 	{
-		*(dst_prediction + i) = (*(network_output_nodes + i))->getInputWithDerivatives(network_current_time);
+		current_loss_function_node = next_loss_function_node;
+		next_loss_function_node = current_loss_function_node->next_loss_function_node;
+
+		overall_loss += current_loss_function_node->loss_function_pointer->computeLoss(network_current_time);
 	}
 
 	network_current_time++;
+	return overall_loss;
 }
 
 
-Input_node * ArtificialNeuralNetwork::getOutputNode(const unsigned int src_output_index)
+
+double ArtificialNeuralNetwork::computeNetworkLossWithDerivatives(const bool src_fixed_loss_function_error, const double loss_function_error)
 {
-	return *(network_output_nodes + src_output_index);
+	double overall_loss = 0.0;
+
+	LOSS_FUNCTION_LIST_NODE * current_loss_function_node;
+	LOSS_FUNCTION_LIST_NODE * next_loss_function_node = loss_functions_head_node.next_loss_function_node;
+
+	unsigned int output_index = 0;
+	while (next_loss_function_node)
+	{
+		current_loss_function_node = next_loss_function_node;
+		next_loss_function_node = current_loss_function_node->next_loss_function_node;
+
+		overall_loss += current_loss_function_node->loss_function_pointer->computeLossWithDerivatives(network_current_time);
+
+		if (src_fixed_loss_function_error)
+		{
+			// The contribution error is set to 1.0, and later taken into account by the jacobian matrix:
+			(*(network_output_nodes + output_index))->addNodeErrorContribution(loss_function_error, output_index);
+		}
+		else
+		{
+			// The loss function assigns the contribution error:
+			current_loss_function_node->loss_function_pointer->backpropagateErrorDerivative();
+		}
+		output_index++;
+	}
+
+	network_current_time++;
+	return overall_loss;
+}
+
+
+
+void ArtificialNeuralNetwork::backPropagateErrors()
+{
+	// Backpropagate the neuron's error contribution:
+	for (int neuron_index = (neurons_count - 1); neuron_index >= 0; neuron_index--)
+	{
+		(*(network_neurons + neuron_index))->backpropagateNodeError();
+	}
+}
+
+
+
+double ArtificialNeuralNetwork::getLossFunctionErrorContribution(const unsigned int src_output_index)
+{
+	return (*(loss_functions_array + src_output_index))->getErrorDerivative();
 }
 
 
 
 void ArtificialNeuralNetwork::resetNetworkTime()
 {
+	// Reset the time of the neurons:
 	for (unsigned int neuron_index = 0; neuron_index < neurons_count; neuron_index++)
 	{
 		(*(network_neurons + neuron_index))->resetNodeCurrentTime();
 	}
+
+	LOSS_FUNCTION_LIST_NODE * current_loss_function_node;
+	LOSS_FUNCTION_LIST_NODE * next_loss_function_node = loss_functions_head_node.next_loss_function_node;
+
+	// Reset the time of the loss functions:
+	while (next_loss_function_node)
+	{
+		current_loss_function_node = next_loss_function_node;
+		next_loss_function_node = current_loss_function_node->next_loss_function_node;
+
+		current_loss_function_node->loss_function_pointer->resetErrorCurrentTime();
+	}
+
 	network_current_time = 1;
+}
+
+
+
+unsigned int ArtificialNeuralNetwork::getInputsCount()
+{
+	return inputs_count;
+}
+
+
+
+unsigned int ArtificialNeuralNetwork::getOutputsCount()
+{
+	return outputs_count;
+}
+
+
+
+unsigned int ArtificialNeuralNetwork::getNeuronsCount()
+{
+	return neurons_count;
+}
+
+
+
+unsigned int ArtificialNeuralNetwork::getWeightsCount()
+{
+	return weights_count;
+}
+
+
+
+unsigned int ArtificialNeuralNetwork::getWeightedInputsInNeuron(const unsigned int src_neuron_index)
+{
+	return (*(network_neurons + src_neuron_index))->getInputsCount();
+}
+
+
+
+void ArtificialNeuralNetwork::assignLossFunction(const LossFunction::LOSS_FUNCTION_TYPE src_loss_function_type)
+{
+	loss_functions_tail_node->next_loss_function_node = new LOSS_FUNCTION_LIST_NODE;
+	loss_functions_tail_node = loss_functions_tail_node->next_loss_function_node;
+	loss_functions_tail_node->next_loss_function_node = NULL;
+	
+	switch (src_loss_function_type)
+	{
+	case LossFunction::LF_L1_NORM:
+		loss_functions_tail_node->loss_function_pointer = new L1LossFunction;
+		break;
+
+	case LossFunction::LF_L2_NORM:
+		loss_functions_tail_node->loss_function_pointer = new L2LossFunction;
+		break;
+
+	case LossFunction::LF_CROSS_ENTROPY:
+		loss_functions_tail_node->loss_function_pointer = new crossEntropyLossFunction;
+		break;
+	}
+	loss_functions_tail_node->loss_function_pointer->setOutputNode(*(network_output_nodes + loss_functions_count));
+	loss_functions_tail_node->loss_function_pointer->setGlobalOutputIndex(loss_functions_count);
+	loss_functions_tail_node->loss_function_pointer->setGroundtruth(&groundtruth_master_pointer);
+
+	loss_functions_count++;
+	dump_loss_functions_list_into_array_required = true;
 }

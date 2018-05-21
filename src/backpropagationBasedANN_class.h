@@ -56,19 +56,11 @@ private:
 	double ** jacobian_error_derivative_product_threads;
 	double ** hessian_matrix_threads;
 
-	// Network architecture:
-	Input_pattern *** network_input_nodes_threads;
-	Neuron *** network_neurons_threads;
-	Neuron *** network_output_nodes_threads;
-
 	// Trained network data:
 	double *** training_data_threads;
-	double ** input_pattern_master_pointer_threads;
-
-	int ** groundtruth_master_pointer_threads;
 	int *** groundtruth_data_threads;
 
-	LOSS_FUNCTION_LIST_NODE * loss_functions_head_node_threads;
+	ArtificialNeuralNetwork ** ann_threads;
 #endif
 
 	double * weights_deltas;
@@ -89,12 +81,10 @@ private:
 	COMPUTE_EPOCH_METHOD computeEpoch;
 
 #ifdef _OPENMP
-	int allocateLossFunctionsParallel();
 	int allocateNetworkArchitectureParallel();
 	int allocateTrainingDataParallel();
 	int allocateLevenbergMarquardtParallel();
 
-	void deallocateLossFunctionsParallel();
 	void deallocateNetworkArchitectureParallel();
 	void deallocateTrainingDataParallel();
 	void deallocateLevenbergMarquardtParallel();

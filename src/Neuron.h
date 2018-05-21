@@ -43,7 +43,7 @@ public:
 	int getInputNodeGlobalIndex(const unsigned int src_input_index);
 	Weight_node::WEIGHT_INPUT_TYPE getInputType(const unsigned int src_input_index);
 	
-	void makeExternalWeightValues(double *** src_weight_values_master_pointer = NULL, double **** src_weight_derivatives_values_master_pointer = NULL);
+	void makeExternalWeightValues(double *** src_weight_values_master_pointer = NULL, double **** src_weight_derivatives_values_master_pointer = NULL, const double src_copy_to_external = true);
 
 	void makeInternalWeightValues(const bool make_weights_values_internal = true, const bool make_weights_derivatives_values_internal = true);
 
@@ -63,9 +63,7 @@ private:
 
 	unsigned long long node_current_time;
 	unsigned int neuron_inputs_count;
-
-	bool compute_derivatives;
-
+	
 	double response_to_input;
 	double derivative_response_to_input;
 	double * neuron_error_contribution;

@@ -41,6 +41,11 @@
 
 #include "Neuron.h"
 #include "Input_pattern_class.h"
+#include "LossFunction_class.h"
+
+#include "L1LossFunction_class.h"
+#include "L2LossFunction_class.h"
+#include "crossEntropyLossFunction_class.h"
 
 class ArtificialNeuralNetwork
 {
@@ -59,47 +64,75 @@ public:
 
 	// Loads the architecture of the network, and the value of all the bias and weights
 	void loadNetworkData(const char * src_filename);
+	
+	// Set the weights of the network
+	void setNetworkWeightsAndDerivatives(double *** src_weights_and_bias, double **** src_weights_and_bias_derivatives = NULL, const bool src_copy_to_external = true);
 
 	// Saves the current state of the network to a file
 	void saveNetworkState();
 
+	// Assign the input pattern pointer:
+	void assignInputPatternPointer(double * src_input_pattern_pointer);
+
+	// Assign the input pattern pointer:
+	void assignGroundtruthPointer(int * src_groundtruth_pointer);
+
 	// Predicts the output using the passed data:
 	void predict(double * src_input_pattern_pointer, double * dst_prediction);//, const double threshold);
 
-	Input_node * getOutputNode(const unsigned int src_output_index);
+	// Predicts the output using the passed data (computes the error using the loss function assigned):
+	double computeNetworkLoss();
+	double computeNetworkLossWithDerivatives(const bool src_fixed_loss_function_error = false, const double loss_function_error = 1.0);
+
+	void backPropagateErrors();
+	double getLossFunctionErrorContribution(const unsigned int src_output_index);
 
 	void resetNetworkTime();
 
-protected:
+	unsigned int getInputsCount();
+	unsigned int getOutputsCount();
+	unsigned int getNeuronsCount();
+	unsigned int getWeightsCount();
+	unsigned int getWeightedInputsInNeuron(const unsigned int src_neuron_index);
+
+	void assignLossFunction(const LossFunction::LOSS_FUNCTION_TYPE src_loss_function_type);
+	
+private:
+	typedef struct LOSS_FUNCTION_LIST_NODE
+	{
+		LossFunction * loss_function_pointer;
+		LOSS_FUNCTION_LIST_NODE * next_loss_function_node;
+	} LOSS_FUNCTION_LIST_NODE;
+
+
 	unsigned int inputs_count;
 	unsigned int outputs_count;
 	unsigned int neurons_count;
 	unsigned int weights_count;
+	unsigned int loss_functions_count;
 	
 	unsigned long long network_current_time;
 
 	Input_pattern ** network_input_nodes;
 	Neuron ** network_neurons;
 	Neuron ** network_output_nodes;
+	
+	LOSS_FUNCTION_LIST_NODE loss_functions_head_node;
+	LOSS_FUNCTION_LIST_NODE * loss_functions_tail_node;
+	
+	LossFunction ** loss_functions_array;	
+	bool dump_loss_functions_list_into_array_required;
 
-	void setInputPatternPointer(double * src_input_pattern_pointer);
-
-	// Set the weights of the network
-	void setNetworkWeights(double *** src_weights_and_bias);
-
-	// Set the bias of the network
-	void setNetworkWeightsDerivatives(double **** src_weights_and_bias_derivatives);
-
-	void predictWithDerivatives(double * src_input_pattern_pointer, double * dst_prediction);//, const double threshold);
-
-private:
 	char ann_log_filename[512];
 
 	double * input_pattern_master_pointer;
+	int * groundtruth_master_pointer;
 
 	void addInputNode(const unsigned int src_input_position);
 	void addNeuron();
 	void addOutputNode(const unsigned int src_neuron_position);
+
+	void dumpLossFunctionsListIntoArray();
 };
 
 #endif //ARTIFICIALNEURALNETWORK_H_INCLUDED
