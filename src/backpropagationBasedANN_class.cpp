@@ -590,7 +590,6 @@ bool backpropagationBasedANN::computeEpoch_levenberg_marquardt()
 }
 
 
-
 #else //_OPENMP
 bool backpropagationBasedANN::computeEpoch_levenberg_marquardt()
 {
