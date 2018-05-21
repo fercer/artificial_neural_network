@@ -688,7 +688,6 @@ bool backpropagationBasedANN::computeEpoch_levenberg_marquardt()
 	double total_epoch_loss = 0.0;
 	unsigned int output_index;
 
-<<<<<<< HEAD
 	double total_epoch_loss_parallel_temp = 0.0;
 
 	const unsigned int batch_size_per_thread_parallel_temp = batch_size_per_thread;
@@ -784,26 +783,10 @@ total_epoch_loss_parallel_temp\
 
 		memset(current_thread_jacobian_error_derivative_product, 0,
 			weights_count_parallel_temp * sizeof(double));
-=======
-	// Set the hessian and jacobian arrays to 0, to perform a cummulated sum of their values:
-	memset(hessian_matrix, 0, weights_count * (weights_count + 1) / 2 * sizeof(double));
-	memset(jacobian_error_derivative_product, 0, weights_count * sizeof(double));
-
-	// Perform the feed-forward process for each pattern in the training set:
-	for (unsigned int pattern_index = 0; pattern_index < training_data_size; pattern_index++)
-	{
-		// Use the current pattern to feed the network:
-		my_ann->assignInputPatternPointer(*(training_data + pattern_index));
-		my_ann->assignGroundtruthPointer(*(groundtruth_data + pattern_index));
-
-		// Perform the Feed forward:
-		total_epoch_loss += my_ann->computeNetworkLossWithDerivatives(true);
->>>>>>> 2f246c9dcaabc080fffda96ce0f9f7a27bbeb070
 
 		// Backpropagate the neuron's error contribution:
 		my_ann->backPropagateErrors();
 
-<<<<<<< HEAD
 		double current_thread_total_epoch_loss = 0.0;
 		unsigned int output_index;
 		
@@ -820,20 +803,12 @@ total_epoch_loss_parallel_temp\
 			next_loss_function_node = current_thread_loss_functions_head_node->next_loss_function_node;
 			output_index = 0;
 			while (next_loss_function_node)
-=======
-		for (unsigned int weight_index_i = 0; weight_index_i < weights_count; weight_index_i++)
-		{
-			// Compute the product between the Jacobian matrix and the vector of errors:
-			double error_contribution_product = 0.0;
-			for (unsigned int output_index = 0; output_index < outputs_count; output_index++)
->>>>>>> 2f246c9dcaabc080fffda96ce0f9f7a27bbeb070
 			{
 				*(jacobian_error_derivative_product + weight_index_i) =
 					*(jacobian_error_derivative_product + weight_index_i) +
 					*(*(network_weights_derivatives_values + weight_index_i) + output_index) *
 					my_ann->getLossFunctionErrorContribution(output_index);
 
-<<<<<<< HEAD
 				current_thread_total_epoch_loss += current_loss_function_node->loss_function_pointer->computeLossWithDerivatives(current_thread_network_time);
 
 				/* This is necessary to back propagate only the error contribution
@@ -850,7 +825,6 @@ total_epoch_loss_parallel_temp\
 				// Backpropagate the error contribution:
 				(*(current_thread_network_neurons + neuron_index))->backpropagateNodeError();
 			}
-=======
 				/* Compute the hessian matrix entry that corresponds to
 				the product of the current weight and the first weight of the network:
 				*/
@@ -860,93 +834,17 @@ total_epoch_loss_parallel_temp\
 
 			const unsigned int weight_index_base = weight_index_i * (weight_index_i + 1) / 2;
 			*(hessian_matrix + weight_index_base) = *(hessian_matrix + weight_index_base) + error_contribution_product;
->>>>>>> 2f246c9dcaabc080fffda96ce0f9f7a27bbeb070
 
 			// Compute the jacobian matrix product with its self transpose:
 			for (unsigned int weight_index_j = 1; weight_index_j <= weight_index_i; weight_index_j++)
 			{
-<<<<<<< HEAD
 				// Compute the product between the Jacobian matrix and the vector of errors:
 				output_index = 0;
 				next_loss_function_node = current_thread_loss_functions_head_node->next_loss_function_node;
 
-=======
->>>>>>> 2f246c9dcaabc080fffda96ce0f9f7a27bbeb070
 				double error_contribution_product = 0.0;
 				for (unsigned int output_index = 0; output_index < outputs_count; output_index++)
 				{
-<<<<<<< HEAD
-					current_loss_function_node = next_loss_function_node;
-					next_loss_function_node = current_loss_function_node->next_loss_function_node;
-
-					*(current_thread_jacobian_error_derivative_product + weight_index) =
-						*(current_thread_jacobian_error_derivative_product + weight_index) +
-						*(*(current_thread_network_weights_derivatives_values + weight_index) + output_index) *
-						current_loss_function_node->loss_function_pointer->getErrorDerivative();
-
-					/* Compute the hessian matrix entry that corresponds to
-					the product of the current weight and the first weight of the network:
-					*/
-					error_contribution_product += 
-						*(*(current_thread_network_weights_derivatives_values + weight_index) + output_index) *
-						*(*(current_thread_network_weights_derivatives_values + weight_index) + output_index);
-
-					output_index++;
-				}
-				const unsigned int weight_index_base = weight_index * (weight_index + 1) / 2;
-				*(current_thread_hessian_matrix + weight_index_base) = 
-					*(current_thread_hessian_matrix + weight_index_base) + error_contribution_product;
-
-				// Compute the jacobian matrix product with its self transpose:
-				for (unsigned int weight_index_j = 0; weight_index_j <= weight_index; weight_index_j++)
-				{
-					double error_contribution_product = 0.0;
-					for (unsigned int output_index = 0; output_index < outputs_count_parallel_temp; output_index++)
-					{
-						error_contribution_product += 
-							*(*(current_thread_network_weights_derivatives_values + weight_index) + output_index) *
-							*(*(current_thread_network_weights_derivatives_values + weight_index_j) + output_index);
-					}
-
-					*(current_thread_hessian_matrix + weight_index_base + weight_index_j) =
-						*(current_thread_hessian_matrix + weight_index_base + weight_index_j) +
-						error_contribution_product;
-				}
-			}
-		}
-
-#pragma omp critical
-		{
-			total_epoch_loss_parallel_temp += current_thread_total_epoch_loss;
-		}
-	} // End of the parallel section
-	current_loss = total_epoch_loss_parallel_temp / (double)training_data_size;
-
-	// Join the hessian matrices of all the threads:
-	memset(hessian_matrix, 0, weights_count * (weights_count + 1) / 2 * sizeof(double));
-	memset(jacobian_error_derivative_product, 0, weights_count * sizeof(double));
-
-	for (unsigned int thread_id = 0; thread_id < available_threads; thread_id++)
-	{
-		for (unsigned int weight_index = 0; weight_index < weights_count; weight_index++)
-		{
-			*(hessian_matrix + weight_index) = *(hessian_matrix + weight_index) +
-				*(*(hessian_matrix_threads + thread_id) + weight_index);
-
-			*(jacobian_error_derivative_product + weight_index) = *(jacobian_error_derivative_product + weight_index) +
-				*(*(jacobian_error_derivative_product_threads + thread_id) + weight_index);
-		}
-
-		for (unsigned int weight_index = weights_count; weight_index < (weights_count * (weights_count + 1) / 2); weight_index++)
-		{
-			*(hessian_matrix + weight_index) = *(hessian_matrix + weight_index) +
-				*(*(hessian_matrix_threads + thread_id) + weight_index);
-		}
-	}
-	
-	LOSS_FUNCTION_LIST_NODE * current_loss_function_node;
-	LOSS_FUNCTION_LIST_NODE * next_loss_function_node;
-=======
 					error_contribution_product += *(*(network_weights_derivatives_values + weight_index_i) + output_index) *
 						*(*(network_weights_derivatives_values + weight_index_j) + output_index);
 				}
@@ -957,7 +855,6 @@ total_epoch_loss_parallel_temp\
 	}
 
 	current_loss = total_epoch_loss / (double)training_data_size;
->>>>>>> 2f246c9dcaabc080fffda96ce0f9f7a27bbeb070
 
 	// Save the current computed hessian matrix in case that it is singular:
 	memcpy(previous_hessian_matrix, hessian_matrix, weights_count * (weights_count + 1) / 2 * sizeof(double));
@@ -1092,17 +989,7 @@ total_epoch_loss_parallel_temp\
 		}
 	} while (1);
 
-<<<<<<< HEAD
-
-	for (unsigned int thread_id = 0; thread_id < available_threads; thread_id++)
-	{
-		memcpy(*(network_weights_values_threads + thread_id), network_weights_values, weights_count * sizeof(double));
-	}
-
-	printf("Epoch computed successfully");
-=======
 	printf("Epoch computed successfully, gradient norm = %f, first weight = %f\n", squared_gradient_norm, *network_weights_values);
->>>>>>> 2f246c9dcaabc080fffda96ce0f9f7a27bbeb070
 
 	if ((mu_value > max_mu_value) || (current_loss < target_loss) || (squared_gradient_norm < target_loss*target_loss))
 	{
