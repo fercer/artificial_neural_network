@@ -915,7 +915,7 @@ double backpropagationBasedANN::trainNetwork(const int save_each_n_epochs, const
 #ifdef _OPENMP
 			for (unsigned int thread_id = 0; thread_id < available_threads; thread_id++)
 			{
-
+				(*(ann_threads + thread_id))->resetNetworkTime();
 			}
 #endif //_OPENMP
 		}
