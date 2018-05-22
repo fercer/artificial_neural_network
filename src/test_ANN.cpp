@@ -8,13 +8,11 @@
 int main(int argc, char * argv[])
 {
 	backpropagationBasedANN bpt_ann_test;
-	//bpt_ann_test.loadNetworkData("XOR_trained_network.xml");
-	//bpt_ann_test.loadNetworkData("Trained_network_test.xml");
 	bpt_ann_test.loadNetworkData("iris_network.xml");
 
-	data_handler testing_data;
-	testing_data.setFilename("trainingDataXOR.txt");
-	testing_data.loadData();
+	data_handler training_data;
+	training_data.setFilename("training_set.dat");
+	training_data.loadData();
 
 	const unsigned int training_size = training_data.getDataSize();
 	const unsigned int inputs_count = training_data.getInputSize();
@@ -24,7 +22,7 @@ int main(int argc, char * argv[])
 	int **training_outputs_database = training_data.getOutputData();
 	
 	bpt_ann_test.setBackpropagationMethod(backpropagationBasedANN::BPM_LEVENBERG_MARQUARDT);
-	bpt_ann_test.setEpochs(1795);
+	bpt_ann_test.setEpochs(1000);
 	bpt_ann_test.setLearningRates(0.05);
 	bpt_ann_test.setMomentums(0.9);
 

@@ -94,6 +94,8 @@ public:
 		error_current_time = 0;
 	}
 
+	virtual void dumpLossFunctionData(FILE * fp_network_data) = 0;
+
 protected:
 	int ** groundtruth_pointer;
 	Input_node * network_output_pointer;

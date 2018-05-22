@@ -16,6 +16,9 @@ public:
 	ActivationFunctionBase()
 	{
 		function_was_reevaluated = true;
+		current_input_value = 0.0;
+		current_evaluation = 0.0;
+		current_evaluation_derivative = 0.0;
 		current_activation_function_time = 0;
 	}
 
@@ -44,7 +47,9 @@ protected:
 	unsigned int parameters_count;
 	unsigned long long current_activation_function_time;
 	bool function_was_reevaluated;
-	double * parameters;
+	double * parameters; 
+
+	double current_input_value;
 	double current_evaluation;
 	double current_evaluation_derivative;
 

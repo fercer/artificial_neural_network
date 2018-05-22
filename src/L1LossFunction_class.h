@@ -20,6 +20,7 @@ public:
 	double computeLoss(const unsigned long long data_idx);
 	double computeLossWithDerivatives(const unsigned long long data_idx);
 	
+	void dumpLossFunctionData(FILE * fp_network_data);
 };
 
 #endif //L1LOSSFUNCTION_CLASS_H_INCLUDED-

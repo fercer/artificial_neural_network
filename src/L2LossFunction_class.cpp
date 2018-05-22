@@ -86,3 +86,14 @@ double L2LossFunction::computeLossWithDerivatives(const unsigned long long curre
 
 	return error;
 }
+
+
+
+void L2LossFunction::dumpLossFunctionData(FILE * fp_network_data)
+{
+	fprintf(fp_network_data, "\t<LossFunction type=\"LF_L2_NORM\" output_position=\"%i\">\n", global_output_index);
+	fprintf(fp_network_data, "\t\t<Output value=\"%.63f\"></Output>\n", error);
+	fprintf(fp_network_data, "\t\t<Difference value=\"%.63f\"></Difference>\n", difference);
+	fprintf(fp_network_data, "\t\t<Derivative value=\"%.63f\"></Derivative>\n", error_derivative);
+	fprintf(fp_network_data, "\t</LossFunction>\n");
+}

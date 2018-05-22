@@ -438,7 +438,15 @@ void Weight_node::dumpWeightData(FILE * fp_network_data)
 void Weight_node::dumpWeightDataBias(FILE * fp_network_data)
 {
 	/* As bias, only its value is printed: */
-	fprintf(fp_network_data, "\t\t<Bias value = \"%.63f\"></Bias>\n", *(*(*weight_values_master_pointer + ewv_neuron_index) + ewv_input_index));
+	fprintf(fp_network_data, "\t\t<Bias value = \"%.63f\">\n", *(*(*weight_values_master_pointer + ewv_neuron_index) + ewv_input_index));
+
+	for (unsigned int output_index = 0; output_index < outputs_count; output_index++)
+	{
+		fprintf(fp_network_data, "\t\t\t<ErrorContribution output_position=\"%i\" value=\"%.63f\"></ErrorContribution>\n", output_index, 
+			*(*(*(*weight_derivatives_values_master_pointer + ewdv_neuron_index) + ewdv_input_index) + output_index));
+	}
+
+	fprintf(fp_network_data, "\t\t</Bias>\n");
 }
 
 
@@ -446,9 +454,17 @@ void Weight_node::dumpWeightDataBias(FILE * fp_network_data)
 void Weight_node::dumpWeightDataNeuron(FILE * fp_network_data)
 {
 	/* Print weight value into the file: */
-	fprintf(fp_network_data, "\t\t<Weight value = \"%.63f\" input_connection = \"Neuron\" input_position = \"%i\"></Weight>\n",
+	fprintf(fp_network_data, "\t\t<Weight value = \"%.63f\" input_connection = \"Neuron\" input_position = \"%i\">\n",
 		*(*(*weight_values_master_pointer + ewv_neuron_index) + ewv_input_index),
 		input_node_pointer->getGlobalNodeIndex());
+
+	for (unsigned int output_index = 0; output_index < outputs_count; output_index++)
+	{
+		fprintf(fp_network_data, "\t\t\t<ErrorContribution output_position=\"%i\" value=\"%.63f\"></ErrorContribution>\n", output_index,
+			*(*(*(*weight_derivatives_values_master_pointer + ewdv_neuron_index) + ewdv_input_index) + output_index));
+	}
+
+	fprintf(fp_network_data, "\t\t</Weight>\n");
 }
 
 
@@ -456,9 +472,17 @@ void Weight_node::dumpWeightDataNeuron(FILE * fp_network_data)
 void Weight_node::dumpWeightDataPattern(FILE * fp_network_data)
 {
 	/* Print weight value into the file: */
-	fprintf(fp_network_data, "\t\t<Weight value = \"%.63f\" input_connection = \"Pattern\" input_position = \"%i\"></Weight>\n",
+	fprintf(fp_network_data, "\t\t<Weight value = \"%.63f\" input_connection = \"Pattern\" input_position = \"%i\">\n",
 		*(*(*weight_values_master_pointer + ewv_neuron_index) + ewv_input_index),
 		input_node_pointer->getGlobalNodeIndex());
+
+	for (unsigned int output_index = 0; output_index < outputs_count; output_index++)
+	{
+		fprintf(fp_network_data, "\t\t\t<ErrorContribution output_position=\"%i\" value=\"%.63f\"></ErrorContribution>\n", output_index,
+			*(*(*(*weight_derivatives_values_master_pointer + ewdv_neuron_index) + ewdv_input_index) + output_index));
+	}
+
+	fprintf(fp_network_data, "\t\t</Weight>\n");
 }
 
 

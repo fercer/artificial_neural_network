@@ -92,3 +92,15 @@ double crossEntropyLossFunction::computeLossWithDerivatives(const unsigned long 
 
 	return error;
 }
+
+
+
+
+void crossEntropyLossFunction::dumpLossFunctionData(FILE * fp_network_data)
+{
+	fprintf(fp_network_data, "\t<LossFunction type=\"LF_CROSS_ENTROPY\" output_position=\"%i\">\n", global_output_index);
+	fprintf(fp_network_data, "\t\t<Output value=\"%.63f\"></Output>\n", error);
+	fprintf(fp_network_data, "\t\t<Difference value=\"%.63f\"></Difference>\n", difference);
+	fprintf(fp_network_data, "\t\t<Derivative value=\"%.63f\"></Derivative>\n", error_derivative);
+	fprintf(fp_network_data, "\t</LossFunction>\n");
+}

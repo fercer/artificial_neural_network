@@ -591,10 +591,16 @@ void ArtificialNeuralNetwork::saveNetworkState()
 		(*(network_neurons + neuron_index))->dumpNodeData(fp_log);
 	}
 
-	// Print the inputs of the network:
+	// Print the output nodes of the network:
 	for (unsigned int output_index = 0; output_index < outputs_count; output_index++)
 	{
 		fprintf(fp_log, "\t<Output input_position=\"%i\"></Output>\n", (*(network_output_nodes + output_index))->getGlobalNodeIndex());
+	}
+
+	// Print the loss functions of the network:
+	for (unsigned int output_index = 0; output_index < outputs_count; output_index++)
+	{
+		(*(loss_functions_array + output_index))->dumpLossFunctionData(fp_log);
 	}
 
 	fprintf(fp_log, "</NeuralNetwork>");

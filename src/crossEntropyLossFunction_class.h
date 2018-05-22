@@ -20,6 +20,8 @@ public:
 	// Computes the error using the L1 loss function
 	double computeLoss(const unsigned long long current_time);
 	double computeLossWithDerivatives(const unsigned long long current_time);
+
+	void dumpLossFunctionData(FILE * fp_network_data);
 };
 
 #endif //CROSSENTROPYLOSSFUNCTION_CLASS_H_INCLUDED

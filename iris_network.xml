@@ -10,7 +10,7 @@
 		<Weight value = "0.0" input_connection = "Pattern" input_position = "1"></Weight>
 		<Weight value = "0.0" input_connection = "Pattern" input_position = "2"></Weight>
 		<Weight value = "0.0" input_connection = "Pattern" input_position = "3"></Weight>
-		<ActivationFunction type = "ACT_HYPERBOLIC_TANGENT
+		<ActivationFunction type = "ACT_HYPERBOLIC_TANGENT">
             <Parameter value = "1.0"></Parameter>
 		</ActivationFunction>
 	</Neuron>

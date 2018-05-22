@@ -64,7 +64,8 @@ double activationSigmoid::evaluateFunction(double input_value, const unsigned lo
 {
 	if (src_current_network_time > current_activation_function_time)
 	{
-		current_evaluation = 1.0 / (1.0 + exp(-*parameters * input_value));
+		current_input_value = input_value;
+		current_evaluation = 1.0 / (1.0 + exp(-*parameters * current_input_value));
 		current_activation_function_time = src_current_network_time;
 		function_was_reevaluated = true;
 	}
@@ -90,5 +91,8 @@ void activationSigmoid::dumpActivationFunctionData(FILE * fp_network_data)
 {
 	fprintf(fp_network_data, "\t\t<ActivationFunction type = \"ACT_SIGMOID\">\n");
 	fprintf(fp_network_data, "\t\t\t<Parameter value = \"%.63f\"></Parameter>\n", *parameters);
+	fprintf(fp_network_data, "\t\t\t<Input value=\"%.63f\"></Input>", current_input_value);
+	fprintf(fp_network_data, "\t\t\t<Output value=\"%.63f\"></Output>", current_evaluation);
+	fprintf(fp_network_data, "\t\t\t<Derivative value=\"%.63f\"></Derivative>", current_evaluation_derivative);
 	fprintf(fp_network_data, "\t\t</ActivationFunction>\n");
 }

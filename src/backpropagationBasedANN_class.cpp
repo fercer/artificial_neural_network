@@ -162,19 +162,11 @@ int backpropagationBasedANN::allocateLevenbergMarquardtParallel()
 {	
 	// Allocate memory for the weights update directions:
 	hessian_matrix_threads = (double**)malloc(available_threads * sizeof(double*));
-	previous_hessian_matrix_threads = (double**)malloc(available_threads * sizeof(double*));
 	jacobian_error_derivative_product_threads = (double**)malloc(available_threads * sizeof(double*));
-	previous_jacobian_error_derivative_product_threads = (double**)malloc(available_threads * sizeof(double*));
-	previous_weights_values_threads = (double**)malloc(available_threads * sizeof(double*));
-
 	for (unsigned int thread_id = 0; thread_id < available_threads; thread_id++)
 	{
 		*(hessian_matrix_threads + thread_id) = (double*)malloc(weights_count * (weights_count + 1) / 2 * sizeof(double));
-		*(previous_hessian_matrix_threads + thread_id) = (double*)malloc(weights_count * (weights_count + 1) / 2 * sizeof(double));
-
 		*(jacobian_error_derivative_product_threads + thread_id) = (double*)malloc(weights_count * sizeof(double));
-		*(previous_jacobian_error_derivative_product_threads + thread_id) = (double*)malloc(weights_count * sizeof(double));
-		*(previous_weights_values_threads + thread_id) = (double*)malloc(weights_count * sizeof(double));
 	}
 
 	return 1;
@@ -239,17 +231,11 @@ void backpropagationBasedANN::deallocateLevenbergMarquardtParallel()
 	for (unsigned int thread_id = 0; thread_id < available_threads; thread_id++)
 	{
 		free(*(hessian_matrix_threads + thread_id));
-		free(*(previous_hessian_matrix_threads + thread_id));
 		free(*(jacobian_error_derivative_product_threads + thread_id));
-		free(*(previous_jacobian_error_derivative_product_threads + thread_id));
-		free(*(previous_weights_values_threads + thread_id));
 	}
 
 	free(hessian_matrix_threads);
-	free(previous_hessian_matrix_threads);
 	free(jacobian_error_derivative_product_threads);
-	free(previous_jacobian_error_derivative_product_threads);
-	free(previous_weights_values_threads);
 }
 #endif //_OPENMP
 
@@ -300,7 +286,7 @@ int backpropagationBasedANN::allocateMethodMemory()
 		&network_weights_derivatives_pointers_manager, false);
 
 #ifdef _OPENMP
-	batch_size_per_thread = (training_data_size + 1) / available_threads;
+	batch_size_per_thread = (unsigned int)ceil((double)training_data_size / (double)available_threads);
 	allocateTrainingDataParallel();
 	allocateNetworkArchitectureParallel();
 #endif //_OPENMP
@@ -394,7 +380,7 @@ bool backpropagationBasedANN::computeEpoch_levenberg_marquardt()
 	// Set the hessian and jacobian arrays to 0, to perform a cummulated sum of their values:
 	memset(hessian_matrix, 0, weights_count * (weights_count + 1) / 2 * sizeof(double));
 	memset(jacobian_error_derivative_product, 0, weights_count * sizeof(double));
-
+	
 	// Perform the feed-forward process for each pattern in the training set:
 	for (unsigned int pattern_index = 0; pattern_index < training_data_size; pattern_index++)
 	{
@@ -443,7 +429,7 @@ bool backpropagationBasedANN::computeEpoch_levenberg_marquardt()
 			}
 		}
 	}
-
+		
 	current_loss = total_epoch_loss / (double)training_data_size;
 
 	// Save the current computed hessian matrix in case that it is singular:
@@ -641,13 +627,10 @@ hessian_matrix_thread_shared\
 			(training_data_size_thread_private - current_thread_id * batch_size_per_thread_thread_private) :
 			batch_size_per_thread_thread_private;
 
-
-
 		// Set the hessian and jacobian arrays to 0, to perform a cummulated sum of their values:
 		memset(current_thread_hessian_matrix, 0, weights_count_thread_private * (weights_count_thread_private + 1) / 2 * sizeof(double));
 		memset(current_thread_jacobian_error_derivative_product, 0, weights_count_thread_private * sizeof(double));
-
-
+		
 		double current_thread_total_epoch_loss = 0.0;
 
 		// Perform the feed-forward process for each pattern in the training set:
@@ -726,7 +709,7 @@ hessian_matrix_thread_shared\
 			*(hessian_matrix + weight_index) = *(hessian_matrix + weight_index) + *(*(hessian_matrix_threads + thread_id) + weight_index);
 		}
 	}
-
+	
 	current_loss = total_epoch_loss / (double)training_data_size;
 
 	// Save the current computed hessian matrix in case that it is singular:
