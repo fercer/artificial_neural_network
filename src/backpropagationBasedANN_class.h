@@ -18,7 +18,10 @@ class backpropagationBasedANN :
 public:
 	typedef enum BACKPROPAGATION_METHOD {
 		BPM_GRADIENT_DESCENT = 0,
-		BPM_LEVENBERG_MARQUARDT = 1
+		BPM_LEVENBERG_MARQUARDT = 1,
+		BPM_MINI_BACTH_GRADIENT_DESCENT = 2,
+		BPM_STOCHASTIC_GRADIENT_DESCENT = 3,
+		BPM_MINI_BATCH_STOCHASTIC_GRADIENT_DESCENT = 4
 	} BACKPROPAGATION_METHOD;
 	
 	backpropagationBasedANN();
@@ -29,7 +32,7 @@ public:
 
 	void saveState();
 
-	void setBackpropagationMethod(BACKPROPAGATION_METHOD src_weights_update_method);
+	void setBackpropagationMethod(const BACKPROPAGATION_METHOD src_weights_update_method);
 
 private:
 	typedef bool (backpropagationBasedANN::*COMPUTE_EPOCH_METHOD) ();
@@ -80,6 +83,9 @@ private:
 
 	COMPUTE_EPOCH_METHOD computeEpoch;
 
+	int * indices_order;
+	bool randomize_training_indices;
+
 #ifdef _OPENMP
 	int allocateNetworkArchitectureParallel();
 	int allocateTrainingDataParallel();
@@ -94,6 +100,9 @@ private:
 
 	bool computeEpoch_gradient_descent();
 	bool computeEpoch_levenberg_marquardt();
+	bool computeEpoch_mini_batch_gradient_descent();
+
+	void randomizeTrainingIndices();
 };
 
 #endif //BACKPROPAGATIONBASEDANN_CLASS_H_INCLUDED

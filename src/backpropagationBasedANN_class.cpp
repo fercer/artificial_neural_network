@@ -35,6 +35,9 @@ backpropagationBasedANN::backpropagationBasedANN()
 
 	random_number_generator_seed = initSeed(778);
 
+	indices_order = NULL;
+	randomize_training_indices = false;
+
 #ifdef _OPENMP
 #pragma omp parallel
 	{
@@ -73,6 +76,12 @@ backpropagationBasedANN::~backpropagationBasedANN()
 		}
 	}
 	
+	if (indices_order)
+	{
+		free(indices_order);
+	}
+
+
 	free(random_number_generator_seed);
 }
 
@@ -901,8 +910,68 @@ ann_thread_shared\
 
 
 
+#ifndef _OPENMP
+bool backpropagationBasedANN::computeEpoch_mini_batch_gradient_descent()
+{
+	double squared_gradient_norm;
+
+	// Reset the weights and bias delta values to 0:
+	memset(weights_deltas, 0, weights_count * sizeof(double));
+
+	TIMERS;
+	GETTIME_INI;
+	double total_epoch_loss = 0.0;
+	for (unsigned int pattern_index = 0; pattern_index < training_data_size; pattern_index++)
+	{
+		// Use the current pattern to feed the network:
+		my_ann->assignInputPatternPointer(*(training_data + pattern_index));
+		my_ann->assignGroundtruthPointer(*(groundtruth_data + pattern_index));
+
+		// Perform the Feed forward:
+		total_epoch_loss += my_ann->computeNetworkLossWithDerivatives();
+		my_ann->backPropagateErrors();
+
+		squared_gradient_norm = 0.0;
+		for (unsigned int weight_index = 0; weight_index < weights_count; weight_index++)
+		{
+			double weight_error_contribution = 0.0;
+			for (unsigned int output_index = 0; output_index < outputs_count; output_index++)
+			{
+				weight_error_contribution += *(*(network_weights_derivatives_values + weight_index) + output_index);
+			}
+
+			*(weights_deltas + weight_index) = *(weights_deltas + weight_index) * momentums + learning_rates * weight_error_contribution;
+
+			// update the weights and bias values:
+			*(network_weights_values + weight_index) = *(network_weights_values + weight_index) - *(weights_deltas + weight_index);
+
+			squared_gradient_norm += *(weights_deltas + weight_index) * *(weights_deltas + weight_index);
+		}
+	}
+	GETTIME_FIN;
+	printf("Pattern processed in %f s\n", DIFTIME);
+
+	current_loss = total_epoch_loss / (double)training_data_size;
+	printf("Epoch computed successfully, gradient norm = %f, first weight = %f\n", squared_gradient_norm, *network_weights_values);
+
+	if ((current_loss < target_loss) || (squared_gradient_norm < target_loss*target_loss))
+	{
+		return false;
+	}
+
+	return true;
+}
+
+#else // _OPENMP
+
+#endif // _OPENMP
+
+
+
+
 double backpropagationBasedANN::trainNetwork(const int save_each_n_epochs, const int restart_time_each_n_epochs)
 {
+	randomizeTrainingIndices();
 	allocateMethodMemory();
 	TIMERS;
 	double elapsed_time = 0.0;
@@ -944,7 +1013,7 @@ void backpropagationBasedANN::saveState()
 
 
 
-void backpropagationBasedANN::setBackpropagationMethod(BACKPROPAGATION_METHOD src_weights_update_method)
+void backpropagationBasedANN::setBackpropagationMethod(const BACKPROPAGATION_METHOD src_weights_update_method)
 {
 	switch (src_weights_update_method)
 	{
@@ -956,5 +1025,30 @@ void backpropagationBasedANN::setBackpropagationMethod(BACKPROPAGATION_METHOD sr
 			computeEpoch = &backpropagationBasedANN::computeEpoch_levenberg_marquardt;
 			hessian_matrix_was_required = true;
 			break;
+
+		case BPM_MINI_BACTH_GRADIENT_DESCENT:
+			computeEpoch = &backpropagationBasedANN::computeEpoch_mini_batch_gradient_descent;
+			randomize_training_indices = true;
+			break;		
+	}
+}
+
+
+
+void backpropagationBasedANN::randomizeTrainingIndices()
+{
+	if (randomize_training_indices) 
+	{
+		indices_order = (int*)malloc(training_data_size * sizeof(int));
+
+		for (unsigned int pattern_idx = 0; pattern_idx < (training_data_size - 1); pattern_idx++)
+		{
+			const unsigned int swap_index = (unsigned int)floor(HybTaus(pattern_idx, training_data_size, random_number_generator_seed));
+			const unsigned int swap_index_value = *(indices_order + pattern_idx);
+			*(indices_order + pattern_idx) = *(indices_order + swap_index);
+			*(indices_order + swap_index) = swap_index_value;
+		}
+
+		randomize_training_indices = false;
 	}
 }
