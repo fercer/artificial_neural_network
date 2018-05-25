@@ -432,6 +432,9 @@ bool backpropagationBasedANN::computeEpoch_levenberg_marquardt()
 		
 	current_loss = total_epoch_loss / (double)training_data_size;
 
+
+	printf("Evaluaiton of the current network current loss = %f\n", current_loss);
+
 	// Save the current computed hessian matrix in case that it is singular:
 	memcpy(previous_hessian_matrix, hessian_matrix, weights_count * (weights_count + 1) / 2 * sizeof(double));
 	memcpy(previous_jacobian_error_derivative_product, jacobian_error_derivative_product, weights_count * sizeof(double));
@@ -888,7 +891,7 @@ ann_thread_shared\
 		memcpy(*(network_weights_values_threads + thread_id), network_weights_values, weights_count * sizeof(double));
 	}
 
-	printf("Epoch computed successfully, gradient norm = %f, first weight = %f\n", squared_gradient_norm, *network_weights_values);
+	/// printf("Epoch computed successfully, gradient norm = %f, first weight = %f\n", squared_gradient_norm, *network_weights_values);
 
 	if ((mu_value > max_mu_value) || (current_loss < target_loss) || (squared_gradient_norm < target_loss*target_loss))
 	{
@@ -928,7 +931,7 @@ double backpropagationBasedANN::trainNetwork(const int save_each_n_epochs, const
 			saveState();
 		}
 		elapsed_time += DIFTIME;
-		printf("Epochs: %i, average error = %.18f, epoch computation time = %f s, elapsed time = %f\n", current_epoch, current_loss, DIFTIME, elapsed_time);
+		/// printf("Epochs: %i, average error = %.18f, epoch computation time = %f s, elapsed time = %f\n", current_epoch, current_loss, DIFTIME, elapsed_time);
 	}
 
 
