@@ -63,6 +63,8 @@ private:
 	double *** training_data_threads;
 	int *** groundtruth_data_threads;
 
+	double ** weights_deltas_threads;
+
 	ArtificialNeuralNetwork ** ann_threads;
 #endif
 

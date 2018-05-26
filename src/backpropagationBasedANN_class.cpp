@@ -38,6 +38,8 @@ backpropagationBasedANN::backpropagationBasedANN()
 	indices_order = NULL;
 	randomize_training_indices = false;
 
+	omp_set_num_threads(1);
+
 #ifdef _OPENMP
 #pragma omp parallel
 	{
@@ -61,7 +63,13 @@ backpropagationBasedANN::~backpropagationBasedANN()
 		}
 		free(network_weights_derivatives_values);
 		free(network_weights_values);
-		
+	
+
+#ifdef _OPENMP
+		deallocateNetworkArchitectureParallel();
+		deallocateTrainingDataParallel();
+#endif // _OPENMP
+
 		if (hessian_matrix_was_required)
 		{
 			free(previous_weights_values);
@@ -69,10 +77,21 @@ backpropagationBasedANN::~backpropagationBasedANN()
 			free(hessian_matrix);
 			free(previous_jacobian_error_derivative_product);
 			free(previous_hessian_matrix);
+
+#ifdef _OPENMP
+			deallocateLevenbergMarquardtParallel();
+#endif // _OPENMP
 		}
 		else
 		{
 			free(weights_deltas);
+#ifdef _OPENMP
+			for (unsigned int thread_id = 0; thread_id < available_threads; thread_id++)
+			{
+				free(*(weights_deltas_threads + thread_id));
+			}
+			free(weights_deltas_threads);
+#endif // _OPENMP
 		}
 	}
 	
@@ -194,9 +213,6 @@ void backpropagationBasedANN::deallocateNetworkArchitectureParallel()
 			{
 				free(*(*(network_weights_derivatives_values_threads + thread_id) + weight_index_base));
 			}
-
-			free(*(*(network_weights_derivatives_pointers_manager_threads + thread_id) + neuron_index));
-			free(*(*(network_weights_pointers_manager_threads + thread_id) + neuron_index));
 		}
 		free(*(network_weights_derivatives_pointers_manager_threads + thread_id));
 		free(*(network_weights_pointers_manager_threads + thread_id));
@@ -318,6 +334,15 @@ int backpropagationBasedANN::allocateMethodMemory()
 	{
 		// Allocate memory for the weights update directions:
 		weights_deltas = (double*)malloc(weights_count * sizeof(double));
+
+#ifdef _OPENMP
+		weights_deltas_threads = (double**)malloc(available_threads * sizeof(double*));
+
+		for (unsigned int thread_id = 0; thread_id < available_threads; thread_id++)
+		{
+			*(weights_deltas_threads + thread_id) = (double*)malloc(weights_count * sizeof(double));
+		}
+#endif //_OPENMP
 	}
 
 	memory_already_allocated = true;
@@ -325,11 +350,9 @@ int backpropagationBasedANN::allocateMethodMemory()
 }
 
 
-
+#ifndef _OPENMP
 bool backpropagationBasedANN::computeEpoch_gradient_descent()
 {
-	double squared_gradient_norm;
-
 	// Reset the weights and bias delta values to 0:
 	memset(weights_deltas, 0, weights_count * sizeof(double));
 
@@ -346,7 +369,6 @@ bool backpropagationBasedANN::computeEpoch_gradient_descent()
 		total_epoch_loss += my_ann->computeNetworkLossWithDerivatives();
 		my_ann->backPropagateErrors();
 
-		squared_gradient_norm = 0.0;
 		for (unsigned int weight_index = 0; weight_index < weights_count; weight_index++)
 		{
 			double weight_error_contribution = 0.0;
@@ -355,16 +377,20 @@ bool backpropagationBasedANN::computeEpoch_gradient_descent()
 				weight_error_contribution += *(*(network_weights_derivatives_values + weight_index) + output_index);
 			}
 
-			*(weights_deltas + weight_index) = *(weights_deltas + weight_index) * momentums + learning_rates * weight_error_contribution;
-
-			// update the weights and bias values:
-			*(network_weights_values + weight_index) = *(network_weights_values + weight_index) - *(weights_deltas + weight_index);
-
-			squared_gradient_norm += *(weights_deltas + weight_index) * *(weights_deltas + weight_index);
+			*(weights_deltas + weight_index) = *(weights_deltas + weight_index) * momentums + learning_rates * weight_error_contribution / (double)training_data_size;
 		}
 	}
 	GETTIME_FIN;
 	printf("Pattern processed in %f s\n", DIFTIME);
+
+	double squared_gradient_norm = 0.0;
+	for (unsigned int weight_index = 0; weight_index < weights_count; weight_index++)
+	{
+		// update the weights and bias values:
+		*(network_weights_values + weight_index) = *(network_weights_values + weight_index) - *(weights_deltas + weight_index);
+
+		squared_gradient_norm += *(weights_deltas + weight_index) * *(weights_deltas + weight_index);
+	}
 
 	current_loss = total_epoch_loss / (double)training_data_size;
 	printf("Epoch computed successfully, gradient norm = %f, first weight = %f\n", squared_gradient_norm, *network_weights_values);
@@ -376,7 +402,119 @@ bool backpropagationBasedANN::computeEpoch_gradient_descent()
 
 	return true;
 }
+#else // _OPENMP
+bool backpropagationBasedANN::computeEpoch_gradient_descent()
+{
+	double total_epoch_loss = 0.0;
 
+	const double momentums_thread_private = momentums;
+	const double learning_rates_thread_private = learning_rates;
+	const unsigned int training_data_size_thread_private = training_data_size;
+	const unsigned int batch_size_per_thread_thread_private = batch_size_per_thread;
+	const unsigned int weights_count_thread_private = weights_count;
+	const unsigned int outputs_count_thread_private = outputs_count;
+
+	double *** training_data_thread_shared = training_data_threads;
+	int *** groundtruth_data_thread_shared = groundtruth_data_threads;
+	ArtificialNeuralNetwork ** ann_thread_shared = ann_threads;
+
+	double ** weights_deltas_thread_shared = weights_deltas_threads;
+	double *** network_weights_derivatives_values_thread_shared = network_weights_derivatives_values_threads;
+
+#pragma omp parallel default(none)\
+firstprivate(\
+training_data_size_thread_private,\
+batch_size_per_thread_thread_private,\
+weights_count_thread_private,\
+outputs_count_thread_private,\
+momentums_thread_private,\
+learning_rates_thread_private\
+)\
+shared(\
+total_epoch_loss,\
+training_data_thread_shared,\
+groundtruth_data_thread_shared,\
+ann_thread_shared,\
+weights_deltas_thread_shared,\
+network_weights_derivatives_values_thread_shared\
+)
+	{
+		/// Set the thread pointers to a simpler way to handle:
+		const unsigned int current_thread_id = omp_get_thread_num();
+		double ** current_thread_training_data = *(training_data_thread_shared + current_thread_id);
+		int ** current_thread_groundtruth_data = *(groundtruth_data_thread_shared + current_thread_id);
+		ArtificialNeuralNetwork * current_thread_ann = *(ann_thread_shared + current_thread_id);
+
+		double * current_thread_weights_deltas = *(weights_deltas_thread_shared + current_thread_id);
+		double ** current_thread_network_weights_derivatives_values =
+			*(network_weights_derivatives_values_thread_shared + current_thread_id);
+
+		const unsigned int current_thread_batch_size =
+			(((current_thread_id + 1) * batch_size_per_thread_thread_private) > training_data_size_thread_private) ?
+			(training_data_size_thread_private - current_thread_id * batch_size_per_thread_thread_private) :
+			batch_size_per_thread_thread_private;
+
+		// Set the weights deltas array to 0, to perform a cummulated sum of their values:
+		memset(current_thread_weights_deltas, 0, weights_count_thread_private * sizeof(double));
+
+		double current_thread_total_epoch_loss = 0.0;
+
+		for (unsigned int pattern_index = 0; pattern_index < current_thread_batch_size; pattern_index++)
+		{
+			// Use the current pattern to feed the network:
+			current_thread_ann->assignInputPatternPointer(*(current_thread_training_data + pattern_index));
+			current_thread_ann->assignGroundtruthPointer(*(current_thread_groundtruth_data + pattern_index));
+
+			// Perform the Feed forward:
+			current_thread_total_epoch_loss += current_thread_ann->computeNetworkLossWithDerivatives();
+			current_thread_ann->backPropagateErrors();
+
+			for (unsigned int weight_index = 0; weight_index < weights_count_thread_private; weight_index++)
+			{
+				double weight_error_contribution = 0.0;
+				for (unsigned int output_index = 0; output_index < outputs_count_thread_private; output_index++)
+				{
+					weight_error_contribution += *(*(current_thread_network_weights_derivatives_values + weight_index) + output_index);
+				}
+
+				*(current_thread_weights_deltas + weight_index) = *(current_thread_weights_deltas + weight_index) * momentums_thread_private + learning_rates_thread_private * weight_error_contribution;// / (double)training_data_size_thread_private;
+			}
+		}
+#pragma omp critical
+		{
+			total_epoch_loss = total_epoch_loss + current_thread_total_epoch_loss;
+		}
+	}
+
+	memset(weights_deltas, 0, weights_count * sizeof(double));
+	for (unsigned int thread_id = 0; thread_id < available_threads; thread_id++)
+	{
+		for (unsigned int weight_index = 0; weight_index < weights_count; weight_index++)
+		{
+			*(weights_deltas + weight_index) = *(weights_deltas + weight_index) + *(*(weights_deltas_threads + thread_id) + weight_index);
+		}
+	}
+
+	double squared_gradient_norm = 0.0;
+	for (unsigned int weight_index = 0; weight_index < weights_count; weight_index++)
+	{
+		// update the weights and bias values:
+		*(network_weights_values + weight_index) = *(network_weights_values + weight_index) - *(weights_deltas + weight_index);
+
+		squared_gradient_norm += *(weights_deltas + weight_index) * *(weights_deltas + weight_index);
+	}
+
+	current_loss = total_epoch_loss / (double)training_data_size;
+	printf("Epoch computed successfully, gradient norm = %f, first weight = %f\n", squared_gradient_norm, *network_weights_values);
+
+	if ((current_loss < target_loss) || (squared_gradient_norm < target_loss*target_loss))
+	{
+		return false;
+	}
+
+	return true;
+}
+#endif // _OPENMP
 
 #ifndef _OPENMP
 bool backpropagationBasedANN::computeEpoch_levenberg_marquardt()
@@ -966,7 +1104,10 @@ bool backpropagationBasedANN::computeEpoch_mini_batch_gradient_descent()
 }
 
 #else // _OPENMP
-
+bool backpropagationBasedANN::computeEpoch_mini_batch_gradient_descent()
+{
+	return false;
+}
 #endif // _OPENMP
 
 

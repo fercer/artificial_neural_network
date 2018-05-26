@@ -37,69 +37,145 @@ void data_handler::loadData()
 
 void data_handler::loadDataTXT()
 {
+	DATA_LIST_NODE inputs_list_head;
+	inputs_list_head.next_entry = NULL;
+	DATA_LIST_NODE * inputs_list_tail = &inputs_list_head;
+
+	DATA_LIST_NODE outputs_list_head;
+	outputs_list_head.next_entry = NULL;
+	DATA_LIST_NODE * outputs_list_tail = &outputs_list_head;
+
+	number_of_variables = 0;
+	data_size = 0;
+	number_of_outputs = 0;
+
 	using namespace std;
-	ifstream fp_data_file;
-	fp_data_file.open(data_filename);
+	FILE * fp_data_file = fopen(data_filename, "r");
 
-	vector<double> input_values, groundtruth_values;
-
+	// Read the first input to define the number of variables:
 	/* Look for the input varibles */
-	string line;
-	string data_kind("");
-	while (data_kind.compare("in:") != 0)
+	char line[1024];
+	char * current_character;
+	char * next_character;
+	char read_value[1024];
+	while (!strstr(line, "in:"))
 	{
-		getline(fp_data_file, line);
-		stringstream read_string(line);
-		read_string >> data_kind;
+		current_character = fgets(line, 1024, fp_data_file);
+	}
+
+	current_character = strpbrk(line, "\t");
+	next_character = strpbrk(current_character + 1, "\t\n");
+	do
+	{
+		current_character = next_character;
+		next_character = strpbrk(current_character + 1, "\t\n");
+
+		number_of_variables++;
+	} while (next_character);
+
+	while (!strstr(line, "out:"))
+	{
+		current_character = fgets(line, 1024, fp_data_file);
+	}
+
+	current_character = strpbrk(line, "\t");
+	next_character = strpbrk(current_character + 1, "\t\n");
+	do
+	{
+		current_character = next_character;
+		next_character = strpbrk(current_character + 1, "\t\n");
+
+		number_of_outputs++;
+	} while (next_character);
+
+	rewind(fp_data_file);
+
+	current_character = fgets(line, 1024, fp_data_file);
+	/* Look for the input varibles */
+	while (!strstr(line, "in:"))
+	{
+		current_character = fgets(line, 1024, fp_data_file);
 	}
 
 	do
 	{
-		stringstream read_string(line);
-
-		read_string >> data_kind;
-		if (data_kind.compare("in:") == 0)
+		if (strstr(line, "in:"))
 		{
 			data_size++;
-			number_of_variables = 0;
-			double current_input_value;
-			while (read_string >> current_input_value) {
-				input_values.push_back(current_input_value);
-				number_of_variables++;
-			}
-		}
+			
+			inputs_list_tail->next_entry = new DATA_LIST_NODE;
+			inputs_list_tail = inputs_list_tail->next_entry;
+			inputs_list_tail->next_entry = NULL;
+			inputs_list_tail->variable_value.input = (double*)malloc(number_of_variables * sizeof(double));
 
-		if (data_kind.compare("out:") == 0)
-		{
-			number_of_outputs = 0;
-			double current_output_value;
-			while (read_string >> current_output_value) {
-				groundtruth_values.push_back(current_output_value);
-				number_of_outputs++;
-			}
+			unsigned int current_input_index = 0;
+			current_character = strpbrk(line, "\t");
+			next_character = strpbrk(current_character + 1, "\t\n");
+			do
+			{
+				strncpy(read_value, current_character + 1, next_character - current_character);
+
+				current_character = next_character;
+				next_character = strpbrk(current_character + 1, "\t\n");
+
+				*(inputs_list_tail->variable_value.input + current_input_index) = atof(read_value);
+
+				current_input_index++;
+			} while (next_character);
 		}
-		getline(fp_data_file, line);
-	} while (!fp_data_file.eof());
-	fp_data_file.close();
+		
+		if (strstr(line, "out:"))
+		{
+			outputs_list_tail->next_entry = new DATA_LIST_NODE;
+			outputs_list_tail = outputs_list_tail->next_entry;
+			outputs_list_tail->next_entry = NULL;
+			outputs_list_tail->variable_value.output = (int*)malloc(number_of_outputs * sizeof(int));
+
+			unsigned int current_output_index = 0;
+			current_character = strpbrk(line, "\t");
+			next_character = strpbrk(current_character + 1, "\t\n");
+			do
+			{
+				strncpy(read_value, current_character + 1, next_character - current_character);
+
+				current_character = next_character;
+				next_character = strpbrk(current_character + 1, "\t\n");
+
+				*(outputs_list_tail->variable_value.output + current_output_index) = atoi(read_value);
+
+				current_output_index++;
+			} while (next_character);
+		}
+		current_character = fgets(line, 1024, fp_data_file);
+	} while (!feof(fp_data_file));
+
+	fclose(fp_data_file);
 
 	output_data = (int**)malloc(data_size * sizeof(int*));
 	input_data = (double**)malloc(data_size * sizeof(double*));
-	vector<double>::iterator output_values_it = groundtruth_values.begin();
-	vector<double>::iterator input_values_it = input_values.begin();
-	for (unsigned int i = 0; i < data_size; i++)
+	
+	DATA_LIST_NODE * current_input_node;
+	DATA_LIST_NODE * next_input_node = inputs_list_head.next_entry;
+
+	DATA_LIST_NODE * current_output_node;
+	DATA_LIST_NODE * next_output_node = outputs_list_head.next_entry;
+
+	unsigned int current_pattern = 0;
+	while (next_output_node)
 	{
-		*(output_data + i) = (int*)malloc(number_of_outputs * sizeof(int));
-		*(input_data + i) = (double*)malloc(number_of_variables * sizeof(double));
+		current_input_node = next_input_node;
+		next_input_node = current_input_node->next_entry;
 
-		for (unsigned int j = 0; j < number_of_variables; j++, input_values_it++)
-		{
-			*(*(input_data + i) + j) = *input_values_it;
-		}
+		current_output_node = next_output_node;
+		next_output_node = current_output_node->next_entry;
 
-		for (unsigned int j = 0; j < number_of_outputs; j++, output_values_it++)
-		{
-			*(*(output_data + i) + j) = (int)(*output_values_it);
-		}
+		*(input_data + current_pattern) = current_input_node->variable_value.input;
+		*(output_data + current_pattern) = current_output_node->variable_value.output;
+
+		delete current_input_node;
+		delete current_output_node;
+
+		current_pattern++;
 	}
 }
 
