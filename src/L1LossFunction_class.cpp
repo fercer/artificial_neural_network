@@ -19,10 +19,9 @@ L1LossFunction:: L1LossFunction(const L1LossFunction & src_loss_function)
 	the output nodes pointers must be changed later using the "setOutputNode" method.
 	The pointer to the groundtruth must be changed as well using the method "setGroundtruth".
 	*/
-
 	this->groundtruth_pointer = src_loss_function.groundtruth_pointer;
 	this->network_output_pointer = src_loss_function.network_output_pointer;
-	this->difference = src_loss_function.difference;
+	*(this->difference_pointer_manager + this->ed_index) = *(src_loss_function.difference_pointer_manager + src_loss_function.ed_index);
 	this->error = src_loss_function.error;
 	this->error_derivative = src_loss_function.error_derivative;
 	this->global_output_index = src_loss_function.global_output_index;
@@ -45,7 +44,7 @@ L1LossFunction & L1LossFunction::operator= (const L1LossFunction & src_loss_func
 
 		this->groundtruth_pointer = src_loss_function.groundtruth_pointer;
 		this->network_output_pointer = src_loss_function.network_output_pointer;
-		this->difference = src_loss_function.difference;
+		*(this->difference_pointer_manager + this->ed_index) = *(src_loss_function.difference_pointer_manager + src_loss_function.ed_index);
 		this->error = src_loss_function.error;
 		this->error_derivative = src_loss_function.error_derivative;
 		this->global_output_index = src_loss_function.global_output_index;
@@ -69,8 +68,8 @@ double L1LossFunction::computeLoss(const unsigned long long current_time)
 	if (current_time > error_current_time)
 	{
 		const double network_output_value = network_output_pointer->getInput(current_time);
-		difference = *(*groundtruth_pointer + global_output_index)-network_output_value;
-		error = fabs(difference);
+		*(difference_pointer_manager + ed_index) = *(*groundtruth_pointer + global_output_index)-network_output_value;
+		error = fabs(*(difference_pointer_manager + ed_index));
 		error_current_time = current_time;
 	}
 
@@ -83,8 +82,8 @@ double L1LossFunction::computeLossWithDerivatives(const unsigned long long curre
 	if (current_time > error_current_time)
 	{
 		const double network_output_value = network_output_pointer->getInputWithDerivatives(current_time);
-		difference = *(*groundtruth_pointer + global_output_index) - network_output_value;
-		error = fabs(difference);
+		*(difference_pointer_manager + ed_index) = *(*groundtruth_pointer + global_output_index) - network_output_value;
+		error = fabs(*(difference_pointer_manager + ed_index));
 		error_derivative = -1.0;
 		error_current_time = current_time;
 	}

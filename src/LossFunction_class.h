@@ -29,6 +29,9 @@ public:
 		error = 0.0;
 		error_current_time = 0;
 		global_output_index = 0;
+		ed_index = 0;
+
+		difference_pointer_manager = &difference;
 	}
 
 	~LossFunction()
@@ -96,16 +99,34 @@ public:
 
 	virtual void dumpLossFunctionData(FILE * fp_network_data) = 0;
 
+	void makeDifferenceExternal(double * src_difference_pointer_manager)
+	{
+		ed_index = global_output_index;
+		difference_pointer_manager = src_difference_pointer_manager;
+	}
+
+	void makeDifferenceInternal()
+	{
+		ed_index = 0;
+		difference_pointer_manager = &difference;
+	}
+
 protected:
 	int ** groundtruth_pointer;
 	Input_node * network_output_pointer;
-	double difference;
+	double * difference_pointer_manager;
 	double error;
 	double error_derivative;
 	unsigned int global_output_index;
+	/* [e]xternal [d]ifference output [index]: */
+	unsigned int ed_index;
+
 	unsigned long long error_current_time;
 
 	LOSS_FUNCTION_TYPE my_loss_function_type;
+
+private:
+	double difference;
 };
 
 #endif //LOSSFUNCTION_CLASS_H_INCLUDED

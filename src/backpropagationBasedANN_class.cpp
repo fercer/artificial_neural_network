@@ -19,7 +19,7 @@ backpropagationBasedANN::backpropagationBasedANN()
 	memory_already_allocated = false;
 	hessian_matrix_was_required = false;
 
-	previous_weights_values = NULL;
+	previous_variables_values = NULL;
 	jacobian_error_derivative_product = NULL;
 	hessian_matrix = NULL;
 	previous_jacobian_error_derivative_product = NULL;
@@ -72,7 +72,7 @@ backpropagationBasedANN::~backpropagationBasedANN()
 
 		if (hessian_matrix_was_required)
 		{
-			free(previous_weights_values);
+			free(previous_variables_values);
 			free(jacobian_error_derivative_product);
 			free(hessian_matrix);
 			free(previous_jacobian_error_derivative_product);
@@ -324,7 +324,7 @@ int backpropagationBasedANN::allocateMethodMemory()
 
 		jacobian_error_derivative_product = (double*)malloc(weights_count * sizeof(double));
 		previous_jacobian_error_derivative_product = (double*)malloc(weights_count * sizeof(double));
-		previous_weights_values = (double*)malloc(weights_count * sizeof(double));
+		previous_variables_values = (double*)malloc(weights_count * sizeof(double));
 
 #ifdef _OPENMP
 		allocateLevenbergMarquardtParallel();
@@ -585,7 +585,7 @@ bool backpropagationBasedANN::computeEpoch_levenberg_marquardt()
 	// Save the current computed hessian matrix in case that it is singular:
 	memcpy(previous_hessian_matrix, hessian_matrix, weights_count * (weights_count + 1) / 2 * sizeof(double));
 	memcpy(previous_jacobian_error_derivative_product, jacobian_error_derivative_product, weights_count * sizeof(double));
-	memcpy(previous_weights_values, network_weights_values, weights_count * sizeof(double));
+	memcpy(previous_variables_values, network_weights_values, weights_count * sizeof(double));
 	do
 	{
 		do
@@ -705,7 +705,7 @@ bool backpropagationBasedANN::computeEpoch_levenberg_marquardt()
 				/* If the error has not decreased,
 				the diagonal of the hessian matrix is modified in order to change the descent direction
 				*/
-				memcpy(network_weights_values, previous_weights_values, weights_count * sizeof(double));
+				memcpy(network_weights_values, previous_variables_values, weights_count * sizeof(double));
 
 				memcpy(hessian_matrix, previous_hessian_matrix, weights_count * (weights_count  + 1) / 2 * sizeof(double));
 
@@ -865,7 +865,7 @@ hessian_matrix_thread_shared\
 	// Save the current computed hessian matrix in case that it is singular:
 	memcpy(previous_hessian_matrix, hessian_matrix, weights_count * (weights_count + 1) / 2 * sizeof(double));
 	memcpy(previous_jacobian_error_derivative_product, jacobian_error_derivative_product, weights_count * sizeof(double));
-	memcpy(previous_weights_values, network_weights_values, weights_count * sizeof(double));
+	memcpy(previous_variables_values, network_weights_values, weights_count * sizeof(double));
 
 	double training_epoch_loss;
 	double squared_gradient_norm;
@@ -1023,7 +1023,7 @@ ann_thread_shared\
 				/* If the error has not decreased,
 				the diagonal of the hessian matrix is modified in order to change the descent direction
 				*/
-				memcpy(network_weights_values, previous_weights_values, weights_count * sizeof(double));
+				memcpy(network_weights_values, previous_variables_values, weights_count * sizeof(double));
 
 				memcpy(hessian_matrix, previous_hessian_matrix, weights_count * (weights_count + 1) / 2 * sizeof(double));
 

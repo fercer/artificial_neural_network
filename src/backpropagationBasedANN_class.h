@@ -72,7 +72,7 @@ private:
 	
 	double * jacobian_error_derivative_product;
 	double * hessian_matrix;
-	double * previous_weights_values;
+	double * previous_variables_values;
 	double * previous_jacobian_error_derivative_product;
 	double * previous_hessian_matrix;
 
