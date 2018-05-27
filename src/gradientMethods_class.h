@@ -31,7 +31,7 @@ public:
 
 	void setVariablesValuesPointerManager(double * src_variables_values_pointer_manager);
 	void setVariablesDerivativesPointersManager(double ** src_variables_derivatives_pointer_manager);
-	void setOutputsDifferencePointerManager(double * src_outputs_difference_pointer_manager);
+	void setOutputsDerivativesPointerManager(double * src_outputs_derivatives_pointer_manager);
 
 	void setTrainingDataSize(const unsigned int src_training_data_size);
 	void setOutputsCount(const unsigned int src_outputs_count);
@@ -40,7 +40,7 @@ public:
 	void setMaxMuValue(const double src_max_mu_value);
 	void setMuIncreasingFactor(const double src_mu_increasing_factor);
 	void setMuDecreasingFactor(const double src_mu_decreasing_factor);
-	void setMaxWorseningCount(const double src_max_worsening_count);
+	void setMaxWorseningCount(const  unsigned int src_max_worsening_count);
 
 	void setMomentum(const double src_momentum);
 	void setLearningRate(const double src_learning_rate);
@@ -61,8 +61,9 @@ private:
 
 	double * variables_values_pointer_manager;
 	double ** variables_derivatives_pointers_manager;
-	double * outputs_difference_pointer_manager;
+	double * outputs_derivatives_pointer_manager;
 	double * deltas_values;
+	double * previous_deltas_values;
 	
 	double * jacobian_error_derivative_product;
 	double * hessian_matrix;

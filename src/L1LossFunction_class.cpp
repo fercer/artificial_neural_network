@@ -21,9 +21,9 @@ L1LossFunction:: L1LossFunction(const L1LossFunction & src_loss_function)
 	*/
 	this->groundtruth_pointer = src_loss_function.groundtruth_pointer;
 	this->network_output_pointer = src_loss_function.network_output_pointer;
-	*(this->difference_pointer_manager + this->ed_index) = *(src_loss_function.difference_pointer_manager + src_loss_function.ed_index);
+	this->difference = src_loss_function.difference;
 	this->error = src_loss_function.error;
-	this->error_derivative = src_loss_function.error_derivative;
+	*(this->derivative_pointer_manager + this->ede_index) = *(src_loss_function.derivative_pointer_manager + src_loss_function.ede_index);
 	this->global_output_index = src_loss_function.global_output_index;
 
 	// The time is reseted:
@@ -44,9 +44,9 @@ L1LossFunction & L1LossFunction::operator= (const L1LossFunction & src_loss_func
 
 		this->groundtruth_pointer = src_loss_function.groundtruth_pointer;
 		this->network_output_pointer = src_loss_function.network_output_pointer;
-		*(this->difference_pointer_manager + this->ed_index) = *(src_loss_function.difference_pointer_manager + src_loss_function.ed_index);
+		this->difference = src_loss_function.difference;
 		this->error = src_loss_function.error;
-		this->error_derivative = src_loss_function.error_derivative;
+		*(this->derivative_pointer_manager + this->ede_index) = *(src_loss_function.derivative_pointer_manager + src_loss_function.ede_index);
 		this->global_output_index = src_loss_function.global_output_index;
 
 		// The time is reseted:
@@ -62,14 +62,15 @@ L1LossFunction::~L1LossFunction()
 	/* Nothing to deallocate */
 }
 
+
 // Computes the error using the L1 loss function
 double L1LossFunction::computeLoss(const unsigned long long current_time)
 {
 	if (current_time > error_current_time)
 	{
 		const double network_output_value = network_output_pointer->getInput(current_time);
-		*(difference_pointer_manager + ed_index) = *(*groundtruth_pointer + global_output_index)-network_output_value;
-		error = fabs(*(difference_pointer_manager + ed_index));
+		difference = *(*groundtruth_pointer + global_output_index)-network_output_value;
+		error = fabs(difference);
 		error_current_time = current_time;
 	}
 
@@ -82,9 +83,9 @@ double L1LossFunction::computeLossWithDerivatives(const unsigned long long curre
 	if (current_time > error_current_time)
 	{
 		const double network_output_value = network_output_pointer->getInputWithDerivatives(current_time);
-		*(difference_pointer_manager + ed_index) = *(*groundtruth_pointer + global_output_index) - network_output_value;
-		error = fabs(*(difference_pointer_manager + ed_index));
-		error_derivative = -1.0;
+		difference = *(*groundtruth_pointer + global_output_index) - network_output_value;
+		error = fabs(difference);
+		*(derivative_pointer_manager + ede_index) = -1.0;
 		error_current_time = current_time;
 	}
 
@@ -96,6 +97,6 @@ void L1LossFunction::dumpLossFunctionData(FILE * fp_network_data)
 	fprintf(fp_network_data, "\t<LossFunction type=\"LF_L1_NORM\" output_position=\"%i\">\n", global_output_index);
 	fprintf(fp_network_data, "\t\t<Output value=\"%.63f\"></Output>\n", error);
 	fprintf(fp_network_data, "\t\t<Difference value=\"%.63f\"></Difference>\n", difference);
-	fprintf(fp_network_data, "\t\t<Derivative value=\"%.63f\"></Derivative>\n", error_derivative);
+	fprintf(fp_network_data, "\t\t<Derivative value=\"%.63f\"></Derivative>\n", *(derivative_pointer_manager + ede_index));
 	fprintf(fp_network_data, "\t</LossFunction>\n");
 }

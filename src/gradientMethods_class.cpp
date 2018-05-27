@@ -14,9 +14,9 @@ gradientMethods::gradientMethods()
 	confirm_descent_method = &gradientMethods::confirm_descent_gradient_descent;
 
 	deltas_values = NULL;
+	previous_deltas_values = NULL;
 	variables_values_pointer_manager = NULL;
 	variables_derivatives_pointers_manager = NULL;
-	outputs_difference_pointer_manager = NULL;
 	
 	memory_already_allocated = false;
 	hessian_matrix_was_required = false;
@@ -63,6 +63,7 @@ gradientMethods::~gradientMethods()
 		else
 		{
 			free(deltas_values);
+			free(previous_deltas_values);
 		}
 	}
 }
@@ -97,6 +98,7 @@ int gradientMethods::allocateMethodMemory()
 	{
 		// Allocate memory for the weights update directions:
 		deltas_values = (double*)calloc(variables_count, sizeof(double));
+		previous_deltas_values = (double*)calloc(variables_count, sizeof(double));
 	}
 
 	memory_already_allocated = true;
@@ -108,10 +110,15 @@ int gradientMethods::allocateMethodMemory()
 double gradientMethods::updateVariablesValuesBase()
 {
 	double squared_gradient_norm = 0.0;
-	for (unsigned int variable_index = 0; variable_index < variables_count; variable_index)
+	for (unsigned int variable_index = 0; variable_index < variables_count; variable_index++)
 	{
-		*(variables_values_pointer_manager + variable_index) = *(variables_values_pointer_manager + variable_index) - *(deltas_values + variable_index);
-		squared_gradient_norm += *(deltas_values + variable_index) * *(deltas_values + variable_index);
+		const double current_variable_delta = *(previous_deltas_values + variable_index) * momentum + 
+			*(deltas_values + variable_index) * learning_rate;
+
+		*(variables_values_pointer_manager + variable_index) = *(variables_values_pointer_manager + variable_index) - current_variable_delta;
+		squared_gradient_norm += current_variable_delta * current_variable_delta;
+		*(previous_deltas_values + variable_index) = current_variable_delta;
+		*(deltas_values + variable_index) = 0.0;
 	}
 	return squared_gradient_norm;
 }
@@ -122,12 +129,13 @@ void gradientMethods::updateDeltasValuesBase(const double src_factor_value)
 {
 	for (unsigned int variable_index = 0; variable_index < variables_count; variable_index++)
 	{
-		double weight_error_contribution = 0.0;
+		double error_contribution = 0.0;
 		for (unsigned int output_index = 0; output_index < outputs_count; output_index++)
 		{
-			weight_error_contribution += *(*(variables_derivatives_pointers_manager + variable_index) + output_index);
+			error_contribution += *(outputs_derivatives_pointer_manager + output_index) *
+				*(*(variables_derivatives_pointers_manager + variable_index) + output_index);
 		}
-		*(deltas_values + variable_index) = *(deltas_values + variable_index) * momentum + learning_rate * weight_error_contribution / src_factor_value;
+		*(deltas_values + variable_index) = *(deltas_values + variable_index) + error_contribution * src_factor_value;
 	}
 }
 
@@ -135,7 +143,7 @@ void gradientMethods::updateDeltasValuesBase(const double src_factor_value)
 
 void gradientMethods::update_deltas_values_gradient_descent()
 {
-	updateDeltasValuesBase(1.0 / training_data_size);
+	updateDeltasValuesBase(1.0 / (double)training_data_size);
 }
 
 
@@ -163,12 +171,13 @@ void gradientMethods::update_deltas_values_levenberg_marquardt()
 			*(jacobian_error_derivative_product + variable_index_i) =
 				*(jacobian_error_derivative_product + variable_index_i) +
 				*(*(variables_derivatives_pointers_manager + variable_index_i) + output_index) *
-				*(outputs_difference_pointer_manager + output_index);
+				*(outputs_derivatives_pointer_manager + output_index);
 
 			/* Compute the hessian matrix entry that corresponds to
 			the product of the current weight and the first weight of the network:
 			*/
-			error_contribution_product += *(*(variables_derivatives_pointers_manager + variable_index_i) + output_index) *
+			error_contribution_product +=
+				*(*(variables_derivatives_pointers_manager + variable_index_i) + output_index) *
 				*(*variables_derivatives_pointers_manager + output_index);
 		}
 
@@ -214,11 +223,11 @@ double gradientMethods::update_variables_values_levenberg_marquardt()
 			{
 				const unsigned int variable_index_base_j = variable_index_j * (variable_index_j + 1) / 2;
 				double row_product_sum = 0.0;
-				for (unsigned int weight_index_k = 0; weight_index_k < variable_index_j; weight_index_k++)
+				for (unsigned int variable_index_k = 0; variable_index_k < variable_index_j; variable_index_k++)
 				{
 					row_product_sum +=
-						*(hessian_matrix + variable_index_base_j + weight_index_k) *
-						*(hessian_matrix + variable_index_base_i + weight_index_k);
+						*(hessian_matrix + variable_index_base_j + variable_index_k) *
+						*(hessian_matrix + variable_index_base_i + variable_index_k);
 				}
 
 				*(hessian_matrix + variable_index_base_i + variable_index_j) =
@@ -262,22 +271,23 @@ double gradientMethods::update_variables_values_levenberg_marquardt()
 
 	// Solve L^T * w = z to determine the new weights delta values:
 	double squared_gradient_norm = 0.0;
-	for (int weight_index_i = (variables_count - 1); weight_index_i >= 0; weight_index_i--)
+	for (int variable_index_i = (variables_count - 1); variable_index_i >= 0; variable_index_i--)
 	{
 		double jacobian_factorized_hessian_product = 0.0;
-		const unsigned int weight_index_base_i = weight_index_i * (weight_index_i + 1) / 2;
-		for (int weight_index_j = (weights_count - 1); weight_index_j > weight_index_i; weight_index_j--)
+		const unsigned int variable_index_base_i = variable_index_i * (variable_index_i + 1) / 2;
+		for (int variable_index_j = (variables_count - 1); variable_index_j > variable_index_i; variable_index_j--)
 		{
-			const unsigned int weight_index_base_j = weight_index_j * (weight_index_j + 1) / 2;
-			jacobian_factorized_hessian_product += *(jacobian_error_derivative_product + weight_index_j) * *(hessian_matrix + weight_index_base_j + weight_index_i);
+			const unsigned int weight_index_base_j = variable_index_j * (variable_index_j + 1) / 2;
+			jacobian_factorized_hessian_product += *(jacobian_error_derivative_product + variable_index_j) * *(hessian_matrix + weight_index_base_j + variable_index_i);
 		}
 
-		*(jacobian_error_derivative_product + weight_index_i) = (*(jacobian_error_derivative_product + weight_index_i) - jacobian_factorized_hessian_product) / *(hessian_matrix + weight_index_base_i + weight_index_i);
+		*(jacobian_error_derivative_product + variable_index_i) = (*(jacobian_error_derivative_product + variable_index_i) - jacobian_factorized_hessian_product) / *(hessian_matrix + variable_index_base_i + variable_index_i);
 
 		// Update the weights:
-		*(variables_values_pointer_manager + weight_index_i) = *(variables_values_pointer_manager + weight_index_i) - *(jacobian_error_derivative_product + weight_index_i);
-		squared_gradient_norm += *(jacobian_error_derivative_product + weight_index_i) *
-			*(jacobian_error_derivative_product + weight_index_i);
+		*(variables_values_pointer_manager + variable_index_i) = 
+			*(variables_values_pointer_manager + variable_index_i) - *(jacobian_error_derivative_product + variable_index_i);
+		squared_gradient_norm += *(jacobian_error_derivative_product + variable_index_i) *
+			*(jacobian_error_derivative_product + variable_index_i);
 	}
 
 	return squared_gradient_norm;
@@ -412,9 +422,10 @@ void gradientMethods::setVariablesDerivativesPointersManager(double ** src_varia
 }
 
 
-void gradientMethods::setOutputsDifferencePointerManager(double * src_outputs_difference_pointer_manager)
+
+void gradientMethods::setOutputsDerivativesPointerManager(double * src_outputs_derivatives_pointer_manager)
 {
-	outputs_difference_pointer_manager = src_outputs_difference_pointer_manager;
+	outputs_derivatives_pointer_manager = src_outputs_derivatives_pointer_manager;
 }
 
 
@@ -455,7 +466,7 @@ void gradientMethods::setMuDecreasingFactor(const double src_mu_decreasing_facto
 }
 
 
-void gradientMethods::setMaxWorseningCount(const double src_max_worsening_count)
+void gradientMethods::setMaxWorseningCount(const unsigned int src_max_worsening_count)
 {
 	max_worsening_count = src_max_worsening_count;
 }

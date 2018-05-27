@@ -20,9 +20,9 @@ crossEntropyLossFunction::crossEntropyLossFunction(const crossEntropyLossFunctio
 
 	this->groundtruth_pointer = src_loss_function.groundtruth_pointer;
 	this->network_output_pointer = src_loss_function.network_output_pointer;
-	*(this->difference_pointer_manager + this->ed_index) = *(src_loss_function.difference_pointer_manager + src_loss_function.ed_index);
+	this->difference = src_loss_function.difference;
 	this->error = src_loss_function.error;
-	this->error_derivative = src_loss_function.error_derivative;
+	*(this->derivative_pointer_manager + this->ede_index) = *(src_loss_function.derivative_pointer_manager + src_loss_function.ede_index);
 	this->global_output_index = src_loss_function.global_output_index;
 
 	// The time is reseted:
@@ -43,9 +43,9 @@ crossEntropyLossFunction & crossEntropyLossFunction::operator=(const crossEntrop
 
 		this->groundtruth_pointer = src_loss_function.groundtruth_pointer;
 		this->network_output_pointer = src_loss_function.network_output_pointer;
-		*(this->difference_pointer_manager + this->ed_index) = *(src_loss_function.difference_pointer_manager + src_loss_function.ed_index);
+		this->difference = src_loss_function.difference;
 		this->error = src_loss_function.error;
-		this->error_derivative = src_loss_function.error_derivative;
+		*(this->derivative_pointer_manager + this->ede_index) = *(src_loss_function.derivative_pointer_manager + src_loss_function.ede_index);
 		this->global_output_index = src_loss_function.global_output_index;
 
 		// The time is reseted:
@@ -67,9 +67,9 @@ double crossEntropyLossFunction::computeLoss(const unsigned long long current_ti
 	if (current_time > error_current_time)
 	{
 		const double network_output_value = network_output_pointer->getInput(current_time);
-		*(difference_pointer_manager + ed_index) = -*(*groundtruth_pointer + global_output_index) * log(network_output_value) -
+		difference = -*(*groundtruth_pointer + global_output_index) * log(network_output_value) -
 			(1 - *(*groundtruth_pointer + global_output_index)) * log(1.0 - network_output_value);
-		error = *(difference_pointer_manager + ed_index);
+		error = difference;
 		error_current_time = current_time;
 	}
 
@@ -82,11 +82,11 @@ double crossEntropyLossFunction::computeLossWithDerivatives(const unsigned long 
 	if (current_time > error_current_time)
 	{
 		const double network_output_value = network_output_pointer->getInputWithDerivatives(current_time);
-		*(difference_pointer_manager + ed_index) = -*(*groundtruth_pointer + global_output_index) * log(network_output_value) -
+		difference = -*(*groundtruth_pointer + global_output_index) * log(network_output_value) -
 			(1 - *(*groundtruth_pointer + global_output_index)) * log(1.0 - network_output_value);
-		error = *(difference_pointer_manager + ed_index);
+		error = difference;
 
-		error_derivative = (1 - *(*groundtruth_pointer + global_output_index)) / (1.0 - network_output_value) - *(*groundtruth_pointer + global_output_index) / network_output_value;
+		*(derivative_pointer_manager + ede_index) = (1 - *(*groundtruth_pointer + global_output_index)) / (1.0 - network_output_value) - *(*groundtruth_pointer + global_output_index) / network_output_value;
 		error_current_time = current_time;
 	}
 
@@ -101,6 +101,6 @@ void crossEntropyLossFunction::dumpLossFunctionData(FILE * fp_network_data)
 	fprintf(fp_network_data, "\t<LossFunction type=\"LF_CROSS_ENTROPY\" output_position=\"%i\">\n", global_output_index);
 	fprintf(fp_network_data, "\t\t<Output value=\"%.63f\"></Output>\n", error);
 	fprintf(fp_network_data, "\t\t<Difference value=\"%.63f\"></Difference>\n", difference);
-	fprintf(fp_network_data, "\t\t<Derivative value=\"%.63f\"></Derivative>\n", error_derivative);
+	fprintf(fp_network_data, "\t\t<Derivative value=\"%.63f\"></Derivative>\n", *(derivative_pointer_manager + ede_index));
 	fprintf(fp_network_data, "\t</LossFunction>\n");
 }
