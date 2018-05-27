@@ -19,7 +19,7 @@ public:
 	typedef enum GRADIENT_METHOD {
 		GRADIENT_DESCENT = 0,
 		LEVENBERG_MARQUARDT = 1,
-		MINI_BACTH_GRADIENT_DESCENT = 2,
+		MINI_BATCH_GRADIENT_DESCENT = 2,
 		STOCHASTIC_GRADIENT_DESCENT = 3,
 		MINI_BATCH_STOCHASTIC_GRADIENT_DESCENT = 4
 	} GRADIENT_METHOD;
@@ -83,19 +83,22 @@ private:
 
 	unsigned int batch_count;
 	unsigned int batch_size;
-	unsigned int global_count;
+	unsigned int mini_batch_selected_index;
+
+	double squared_gradient_norm;
+
+	STAUS * random_number_generator_seed;
 
 	int allocateMethodMemory();
 
-	double updateVariablesValuesBase();
+	void updateVariablesValuesBase();
 	void updateDeltasValuesBase(const double src_factor_value);
-
-
+	
 	void (gradientMethods::*update_deltas_values_method_iteration) ();
 	void allocateMemoryAndUpdateDeltasValues();
 
-	double (gradientMethods::*update_variables_values_method) ();
 	void (gradientMethods::*update_deltas_values_method) ();
+	double (gradientMethods::*update_variables_values_method) ();
 	bool (gradientMethods::*confirm_descent_method)(const double);
 
 	void update_deltas_values_gradient_descent();
@@ -106,7 +109,17 @@ private:
 	double update_variables_values_levenberg_marquardt();
 	bool confirm_descent_levenberg_marquardt(const double src_error_difference);
 
-	void update_mini_batch_gradient_descent();
+	void update_deltas_values_mini_batch_gradient_descent();
+	double update_variables_values_mini_batch_gradient_descent();
+	bool confirm_descent_mini_batch_gradient_descent(const double src_error_difference);
+	
+	void update_deltas_values_stochastic_gradient_descent();
+	double update_variables_values_stochastic_gradient_descent();
+	bool confirm_descent_stochastic_gradient_descent(const double src_error_difference);
+
+	void update_deltas_values_mini_batch_stochastic_gradient_descent();
+	double update_variables_values_mini_batch_stochastic_gradient_descent();
+	bool confirm_descent_mini_batch_stochastic_gradient_descent(const double src_error_difference);
 };
 
 #endif //BACKPROPAGATIONBASEDANN_CLASS_H_INCLUDED

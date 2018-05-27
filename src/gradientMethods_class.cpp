@@ -38,12 +38,14 @@ gradientMethods::gradientMethods()
 	max_worsening_count = 5;
 		
 	batch_count = 0;
-	global_count = 0;
+	mini_batch_selected_index = 0;
 	batch_size = 0;
 
 	variables_count = 0;
 	outputs_count = 0;
 	training_data_size = 0;
+
+	random_number_generator_seed = initSeed(0);
 }
 
 
@@ -66,6 +68,8 @@ gradientMethods::~gradientMethods()
 			free(previous_deltas_values);
 		}
 	}
+
+	free(random_number_generator_seed);
 }
 
 
@@ -107,9 +111,8 @@ int gradientMethods::allocateMethodMemory()
 
 
 
-double gradientMethods::updateVariablesValuesBase()
+void gradientMethods::updateVariablesValuesBase()
 {
-	double squared_gradient_norm = 0.0;
 	for (unsigned int variable_index = 0; variable_index < variables_count; variable_index++)
 	{
 		const double current_variable_delta = *(previous_deltas_values + variable_index) * momentum + 
@@ -120,7 +123,6 @@ double gradientMethods::updateVariablesValuesBase()
 		*(previous_deltas_values + variable_index) = current_variable_delta;
 		*(deltas_values + variable_index) = 0.0;
 	}
-	return squared_gradient_norm;
 }
 
 
@@ -149,7 +151,9 @@ void gradientMethods::update_deltas_values_gradient_descent()
 
 double gradientMethods::update_variables_values_gradient_descent()
 {
-	return updateVariablesValuesBase();
+	squared_gradient_norm = 0.0;
+	updateVariablesValuesBase();
+	return squared_gradient_norm;
 }
 
 
@@ -270,7 +274,7 @@ double gradientMethods::update_variables_values_levenberg_marquardt()
 	} while (1);
 
 	// Solve L^T * w = z to determine the new weights delta values:
-	double squared_gradient_norm = 0.0;
+	squared_gradient_norm = 0.0;
 	for (int variable_index_i = (variables_count - 1); variable_index_i >= 0; variable_index_i--)
 	{
 		double jacobian_factorized_hessian_product = 0.0;
@@ -297,11 +301,11 @@ double gradientMethods::update_variables_values_levenberg_marquardt()
 
 bool gradientMethods::confirm_descent_levenberg_marquardt(const double src_error_difference)
 {
-	if (src_error_difference < 0.0)
+	if (src_error_difference > 0.0)
 	{
 		mu_value *= mu_decreasing_factor;
 		return true;
-	}	
+	}
 
 	worsening_count++;
 	if (worsening_count > max_worsening_count)
@@ -331,57 +335,84 @@ bool gradientMethods::confirm_descent_levenberg_marquardt(const double src_error
 
 
 
-void gradientMethods::update_mini_batch_gradient_descent()
+void gradientMethods::update_deltas_values_mini_batch_gradient_descent()
 {
-	/*
-	double squared_gradient_norm;
-
-	// Reset the weights and bias delta values to 0:
-	memset(weights_deltas, 0, weights_count * sizeof(double));
-
-	TIMERS;
-	GETTIME_INI;
-	double total_epoch_loss = 0.0;
-	for (unsigned int pattern_index = 0; pattern_index < training_data_size; pattern_index++)
+	updateDeltasValuesBase(1.0/(double)batch_size);
+	batch_count++;
+	if ((batch_count % batch_size) == 0 || (batch_count >= training_data_size))
 	{
-		// Use the current pattern to feed the network:
-		my_ann->assignInputPatternPointer(*(training_data + pattern_index));
-		my_ann->assignGroundtruthPointer(*(groundtruth_data + pattern_index));
-
-		// Perform the Feed forward:
-		total_epoch_loss += my_ann->computeNetworkLossWithDerivatives();
-		my_ann->backPropagateErrors();
-
 		squared_gradient_norm = 0.0;
-		for (unsigned int weight_index = 0; weight_index < weights_count; weight_index++)
-		{
-			double weight_error_contribution = 0.0;
-			for (unsigned int output_index = 0; output_index < outputs_count; output_index++)
-			{
-				weight_error_contribution += *(*(network_weights_derivatives_values + weight_index) + output_index);
-			}
-
-			*(weights_deltas + weight_index) = *(weights_deltas + weight_index) * momentums + learning_rates * weight_error_contribution;
-
-			// update the weights and bias values:
-			*(network_weights_values + weight_index) = *(network_weights_values + weight_index) - *(weights_deltas + weight_index);
-
-			squared_gradient_norm += *(weights_deltas + weight_index) * *(weights_deltas + weight_index);
-		}
+		updateVariablesValuesBase();
 	}
-	GETTIME_FIN;
-	printf("Pattern processed in %f s\n", DIFTIME);
+}
 
-	current_loss = total_epoch_loss / (double)training_data_size;
-	printf("Epoch computed successfully, gradient norm = %f, first weight = %f\n", squared_gradient_norm, *network_weights_values);
 
-	if ((current_loss < target_loss) || (squared_gradient_norm < target_loss*target_loss))
-	{
-		return false;
-	}
+double gradientMethods::update_variables_values_mini_batch_gradient_descent()
+{
+	return squared_gradient_norm;
+}
 
+
+bool gradientMethods::confirm_descent_mini_batch_gradient_descent(const double src_error_difference)
+{
+	batch_count = 0;
 	return true;
-	*/
+}
+
+
+
+
+void gradientMethods::update_deltas_values_stochastic_gradient_descent()
+{
+	updateDeltasValuesBase(1.0);
+	squared_gradient_norm = 0.0;
+	updateVariablesValuesBase();
+}
+
+
+double gradientMethods::update_variables_values_stochastic_gradient_descent()
+{
+	return squared_gradient_norm;
+}
+
+
+bool gradientMethods::confirm_descent_stochastic_gradient_descent(const double src_error_difference)
+{
+	return true;
+}
+
+
+void gradientMethods::update_deltas_values_mini_batch_stochastic_gradient_descent()
+{
+	batch_count++;	
+	if ((batch_count % batch_size) == 0)
+	{
+		const unsigned int selected_index = (unsigned int)floor(HybTaus(0.0,
+			(((batch_count + batch_size) >= training_data_size) ? (training_data_size - batch_count) : batch_size) - 1e-12, random_number_generator_seed));
+
+		mini_batch_selected_index = batch_count + selected_index;
+	}
+
+	if (batch_count == mini_batch_selected_index)
+	{
+		updateDeltasValuesBase(1.0);
+		squared_gradient_norm = 0.0;
+		updateVariablesValuesBase();
+	}
+}
+
+
+double gradientMethods::update_variables_values_mini_batch_stochastic_gradient_descent()
+{
+	return squared_gradient_norm;
+}
+
+
+bool gradientMethods::confirm_descent_mini_batch_stochastic_gradient_descent(const double src_error_difference)
+{
+	batch_count = 0;
+	mini_batch_selected_index = (unsigned int)floor(HybTaus(0.0, (double)batch_size - 1e-12, random_number_generator_seed));
+	return true;
 }
 
 
@@ -403,8 +434,28 @@ void gradientMethods::setGradientMethod(const GRADIENT_METHOD src_gradient_metho
 			hessian_matrix_was_required = true;
 			break;
 
-		case MINI_BACTH_GRADIENT_DESCENT:
-			update_deltas_values_method = &gradientMethods::update_mini_batch_gradient_descent;
+		case MINI_BATCH_GRADIENT_DESCENT:
+			update_deltas_values_method = &gradientMethods::update_deltas_values_mini_batch_gradient_descent;
+			update_variables_values_method = 
+				&gradientMethods::update_variables_values_mini_batch_gradient_descent;
+			confirm_descent_method = &gradientMethods::confirm_descent_mini_batch_gradient_descent;
+			break;
+
+		case STOCHASTIC_GRADIENT_DESCENT:
+			update_deltas_values_method = &gradientMethods::update_deltas_values_stochastic_gradient_descent;
+			update_variables_values_method = 
+				&gradientMethods::update_variables_values_stochastic_gradient_descent;
+			confirm_descent_method = &gradientMethods::confirm_descent_stochastic_gradient_descent;
+			break;
+
+		case MINI_BATCH_STOCHASTIC_GRADIENT_DESCENT:
+			update_deltas_values_method = &gradientMethods::update_deltas_values_mini_batch_stochastic_gradient_descent;
+			update_variables_values_method =
+				&gradientMethods::update_variables_values_mini_batch_stochastic_gradient_descent;
+			confirm_descent_method = &gradientMethods::confirm_descent_mini_batch_stochastic_gradient_descent;
+
+			mini_batch_selected_index = (unsigned int)floor(HybTaus(0.0, (double)batch_size - 1e-12, random_number_generator_seed));
+
 			break;
 	}
 }
@@ -488,7 +539,6 @@ void gradientMethods::setBatchSize(const unsigned int src_batch_size)
 {
 	batch_size = src_batch_size;
 }
-
 
 
 void gradientMethods::allocateMemoryAndUpdateDeltasValues()
