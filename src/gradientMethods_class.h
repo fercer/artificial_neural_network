@@ -25,6 +25,8 @@ public:
 	} GRADIENT_METHOD;
 	
 	gradientMethods();
+	gradientMethods(const gradientMethods& src_gradient_method);
+	gradientMethods operator=(const gradientMethods& src_gradient_method);
 	~gradientMethods();
 	
 	void setGradientMethod(const GRADIENT_METHOD src_gradient_method);

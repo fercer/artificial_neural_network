@@ -48,6 +48,154 @@ gradientMethods::gradientMethods()
 	random_number_generator_seed = initSeed(0);
 }
 
+gradientMethods::gradientMethods(const gradientMethods & src_gradient_method)
+{
+	this->update_deltas_values_method_iteration = src_gradient_method.update_deltas_values_method_iteration;
+	this->update_deltas_values_method = src_gradient_method.update_deltas_values_method;
+	this->update_variables_values_method = src_gradient_method.update_variables_values_method;
+	this->confirm_descent_method = src_gradient_method.confirm_descent_method;
+
+	this->momentum = src_gradient_method.momentum;
+	this->learning_rate = src_gradient_method.learning_rate;
+
+	this->mu_value = src_gradient_method.mu_value;
+	this->max_mu_value = src_gradient_method.max_mu_value;
+	this->mu_increasing_factor = src_gradient_method.mu_increasing_factor;
+	this->mu_decreasing_factor = src_gradient_method.mu_decreasing_factor;
+	this->worsening_count = src_gradient_method.worsening_count;
+	this->max_worsening_count = src_gradient_method.max_worsening_count;
+
+	this->batch_count = src_gradient_method.batch_count;
+	this->mini_batch_selected_index = src_gradient_method.mini_batch_selected_index;
+	this->batch_size = src_gradient_method.batch_count;
+
+	this->variables_count = src_gradient_method.variables_count;
+	this->outputs_count = src_gradient_method.outputs_count;
+	this->training_data_size = src_gradient_method.training_data_size;
+
+	this->deltas_values = NULL;
+	this->previous_deltas_values = NULL;
+	this->variables_values_pointer_manager = NULL;
+	this->variables_derivatives_pointers_manager = NULL;
+
+	this->memory_already_allocated = false;
+	this->hessian_matrix_was_required = src_gradient_method.hessian_matrix_was_required;
+
+	this->previous_variables_values = NULL;
+	this->jacobian_error_derivative_product = NULL;
+	this->hessian_matrix = NULL;
+	this->previous_jacobian_error_derivative_product = NULL;
+	this->previous_hessian_matrix = NULL;
+
+	this->random_number_generator_seed = (STAUS*)malloc(sizeof(STAUS));
+	this->random_number_generator_seed->lcg_seed = src_gradient_method.random_number_generator_seed->lcg_seed;
+	this->random_number_generator_seed->z1 = src_gradient_method.random_number_generator_seed->z1;
+	this->random_number_generator_seed->z2 = src_gradient_method.random_number_generator_seed->z2;
+	this->random_number_generator_seed->z3 = src_gradient_method.random_number_generator_seed->z3;
+
+	this->allocateMethodMemory();
+
+	if (this->hessian_matrix_was_required)
+	{
+		memcpy(this->previous_variables_values,
+			src_gradient_method.previous_variables_values,
+			variables_count * sizeof(double));
+
+		memcpy(this->jacobian_error_derivative_product,
+			src_gradient_method.jacobian_error_derivative_product,
+			variables_count * sizeof(double));
+
+		memcpy(this->previous_jacobian_error_derivative_product,
+			src_gradient_method.previous_jacobian_error_derivative_product,
+			variables_count * sizeof(double));
+
+		memcpy(this->hessian_matrix,
+			src_gradient_method.hessian_matrix,
+			variables_count * (variables_count + 1) / 2 * sizeof(double));
+
+		memcpy(this->previous_hessian_matrix,
+			src_gradient_method.previous_hessian_matrix,
+			variables_count * (variables_count + 1) / 2 * sizeof(double));
+	}
+}
+
+
+
+gradientMethods gradientMethods::operator=(const gradientMethods & src_gradient_method)
+{
+	if (this != &src_gradient_method)
+	{
+		this->update_deltas_values_method_iteration = src_gradient_method.update_deltas_values_method_iteration;
+		this->update_deltas_values_method = src_gradient_method.update_deltas_values_method;
+		this->update_variables_values_method = src_gradient_method.update_variables_values_method;
+		this->confirm_descent_method = src_gradient_method.confirm_descent_method;
+
+		this->momentum = src_gradient_method.momentum;
+		this->learning_rate = src_gradient_method.learning_rate;
+
+		this->mu_value = src_gradient_method.mu_value;
+		this->max_mu_value = src_gradient_method.max_mu_value;
+		this->mu_increasing_factor = src_gradient_method.mu_increasing_factor;
+		this->mu_decreasing_factor = src_gradient_method.mu_decreasing_factor;
+		this->worsening_count = src_gradient_method.worsening_count;
+		this->max_worsening_count = src_gradient_method.max_worsening_count;
+
+		this->batch_count = src_gradient_method.batch_count;
+		this->mini_batch_selected_index = src_gradient_method.mini_batch_selected_index;
+		this->batch_size = src_gradient_method.batch_count;
+
+		this->variables_count = src_gradient_method.variables_count;
+		this->outputs_count = src_gradient_method.outputs_count;
+		this->training_data_size = src_gradient_method.training_data_size;
+
+		this->deltas_values = NULL;
+		this->previous_deltas_values = NULL;
+		this->variables_values_pointer_manager = NULL;
+		this->variables_derivatives_pointers_manager = NULL;
+
+		this->memory_already_allocated = false;
+		this->hessian_matrix_was_required = src_gradient_method.hessian_matrix_was_required;
+
+		this->previous_variables_values = NULL;
+		this->jacobian_error_derivative_product = NULL;
+		this->hessian_matrix = NULL;
+		this->previous_jacobian_error_derivative_product = NULL;
+		this->previous_hessian_matrix = NULL;
+
+		this->random_number_generator_seed = (STAUS*) malloc(sizeof(STAUS));
+		this->random_number_generator_seed->lcg_seed = src_gradient_method.random_number_generator_seed->lcg_seed;
+		this->random_number_generator_seed->z1 = src_gradient_method.random_number_generator_seed->z1;
+		this->random_number_generator_seed->z2 = src_gradient_method.random_number_generator_seed->z2;
+		this->random_number_generator_seed->z3 = src_gradient_method.random_number_generator_seed->z3;
+
+		this->allocateMethodMemory();
+
+		if (this->hessian_matrix_was_required)
+		{
+			memcpy(this->previous_variables_values,
+				src_gradient_method.previous_variables_values,
+				variables_count * sizeof(double));
+
+			memcpy(this->jacobian_error_derivative_product,
+				src_gradient_method.jacobian_error_derivative_product,
+				variables_count * sizeof(double));
+
+			memcpy(this->previous_jacobian_error_derivative_product,
+				src_gradient_method.previous_jacobian_error_derivative_product,
+				variables_count * sizeof(double));
+
+			memcpy(this->hessian_matrix,
+				src_gradient_method.hessian_matrix,
+				variables_count * (variables_count + 1) / 2 * sizeof(double));
+
+			memcpy(this->previous_hessian_matrix,
+				src_gradient_method.previous_hessian_matrix,
+				variables_count * (variables_count + 1) / 2 * sizeof(double));
+		}
+	}
+	return *this;
+}
+
 
 
 gradientMethods::~gradientMethods()
@@ -304,16 +452,20 @@ bool gradientMethods::confirm_descent_levenberg_marquardt(const double src_error
 	if (src_error_difference > 0.0)
 	{
 		mu_value *= mu_decreasing_factor;
+		memset(jacobian_error_derivative_product, 0, variables_count * sizeof(double));
+		memset(hessian_matrix, 0, variables_count * (variables_count + 1) / 2 * sizeof(double));
 		return true;
 	}
 
 	worsening_count++;
-	if (worsening_count > max_worsening_count)
+	if (worsening_count > max_worsening_count || mu_value > max_mu_value)
 	{
 		/*  If the error has not decreased after 5 cycles,
 		the current weights are passed to the following epoch to recompute the hessian matrix
 		*/
 		worsening_count = 0;
+		memset(jacobian_error_derivative_product, 0, variables_count * sizeof(double));
+		memset(hessian_matrix, 0, variables_count * (variables_count + 1) / 2 * sizeof(double));
 		return true;;
 	}	
 	
@@ -321,13 +473,13 @@ bool gradientMethods::confirm_descent_levenberg_marquardt(const double src_error
 	the diagonal of the hessian matrix is modified in order to change the descent direction
 	*/
 	memcpy(variables_values_pointer_manager, previous_variables_values, variables_count * sizeof(double));
-
 	memcpy(hessian_matrix, previous_hessian_matrix, variables_count * (variables_count + 1) / 2 * sizeof(double));
-
 	memcpy(jacobian_error_derivative_product, previous_jacobian_error_derivative_product,
 		variables_count * sizeof(double));
 
 	mu_value *= mu_increasing_factor;
+	
+	update_variables_values_levenberg_marquardt();
 
 	return false;
 }

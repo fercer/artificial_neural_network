@@ -171,7 +171,7 @@ void Neuron::addWeightedInput(Weight_node::WEIGHT_INPUT_TYPE src_input_type, Inp
 		neuron_outputs_count, /*Pass the number of outputs of the network */
 		src_input_type, /* Define the first weight as the bias */
 		src_input_node_pointer, /* The bias does not have an input node to be connected */
-		src_weight_value, /* The bias is intialized with 0 value */
+		src_weight_value, /* If the weights values are externally defined, this value is not used */
 		global_node_index, /* Pass this neuron position in the network */
 		neuron_inputs_count, /* This is the first weight in the list */
 		weight_values_master_pointer, /* Use either, the external weight value, or the self allocated */

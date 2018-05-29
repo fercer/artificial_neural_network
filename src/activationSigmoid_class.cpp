@@ -19,7 +19,14 @@ activationSigmoid::activationSigmoid(double * src_function_parameters)
 
 	parameters_count = 1;
 	parameters = (double*)malloc(sizeof(double));
-	*parameters = *(src_function_parameters);
+	if (src_function_parameters)
+	{
+		*parameters = *(src_function_parameters);
+	}
+	else
+	{
+		*parameters = 1.0;
+	}
 }
 
 

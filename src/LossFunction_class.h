@@ -72,12 +72,12 @@ public:
 
 	void backpropagateErrorDerivative()
 	{
-		network_output_pointer->addNodeErrorContribution(error_derivative, global_output_index);
+		network_output_pointer->addNodeErrorContribution(*(derivative_pointer_manager + ede_index), global_output_index);
 	}
 
 	double getErrorDerivative()
 	{
-		return error_derivative;
+		return *(derivative_pointer_manager + ede_index);
 	}
 
 	double getDifference()
@@ -99,7 +99,7 @@ public:
 
 	virtual void dumpLossFunctionData(FILE * fp_network_data) = 0;
 
-	void makeDifferenceAndDerivativeExternal(double * src_derivative_pointer_manager = NULL)
+	void makeDerivativeExternal(double * src_derivative_pointer_manager = NULL)
 	{
 		if (src_derivative_pointer_manager)
 		{

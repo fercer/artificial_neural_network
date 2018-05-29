@@ -61,6 +61,9 @@ Weight_node::Weight_node(const unsigned int src_outputs_count, const WEIGHT_INPU
 		/* If the weights are defined locally, it is not required the know neurons and input indices */
 		ewv_neuron_index = 0;
 		ewv_input_index = 0;
+
+		// Assign the weight value only if the external pointers were not defined:
+		setWeightValue(src_weight_value);
 	}
 
 	if (src_weight_derivatives_values_master_pointer)
@@ -87,9 +90,6 @@ Weight_node::Weight_node(const unsigned int src_outputs_count, const WEIGHT_INPU
 		ewdv_neuron_index = 0;
 		ewdv_input_index = 0;
 	}
-
-	// Assign the weight value:
-	setWeightValue(src_weight_value);
 
 	// Assign the input value:
 	input_node_pointer = src_input_node;
