@@ -33,7 +33,7 @@ backpropagationBasedANN::backpropagationBasedANN()
 	momentums = 0.9;
 	learning_rates = 0.05;
 
-	random_number_generator_seed = initSeed(778);
+	random_number_generator_seed = initSeed(0);
 
 #ifdef _OPENMP
 #pragma omp parallel
