@@ -361,7 +361,10 @@ double Weight_node::getBias()
 
 
 
-void Weight_node::makeExternalWeigthValue(double *** src_weight_values_master_pointer, double **** src_weight_derivatives_values_master_pointer, const bool src_copy_to_external)
+void Weight_node::makeExternalWeigthValue(
+	double *** src_weight_values_master_pointer,
+	double **** src_weight_derivatives_values_master_pointer, 
+	const bool src_copy_to_external)
 {
 	if (src_weight_values_master_pointer)
 	{

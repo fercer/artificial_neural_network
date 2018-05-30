@@ -384,7 +384,10 @@ double Neuron::getInputWithDerivatives(const unsigned long long src_current_netw
 
 
 
-void Neuron::makeExternalWeightValues(double *** src_weight_values_master_pointer, double **** src_weight_derivatives_values_master_pointer, const double src_copy_to_external)
+void Neuron::makeExternalWeightValues(
+	double *** src_weight_values_master_pointer,
+	double **** src_weight_derivatives_values_master_pointer,
+	const bool src_copy_to_external)
 {
 	this->dumpWeightsListIntoArray();
 

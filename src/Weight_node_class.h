@@ -42,7 +42,10 @@ public:
 
 	WEIGHT_INPUT_TYPE getWeigthedInputType();
 
-	void makeExternalWeigthValue(double *** src_weight_values_master_pointer = NULL, double **** src_weight_derivatives_values_master_pointer = NULL, const bool src_copy_to_external = true);
+	void makeExternalWeigthValue(
+		double *** src_weight_values_master_pointer = NULL,
+		double **** src_weight_derivatives_values_master_pointer = NULL,
+		const bool src_copy_to_external = true);
 
 	void makeInternalWeightValue(const bool make_weight_values_internal = true, const bool make_weight_derivatives_values_internal = true);
 
