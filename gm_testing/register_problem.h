@@ -8,20 +8,30 @@
 
 #define MY_PI 3.1415926535897932384626433832795028841971693993751058209749445923078164
 
-double * loadImagePGM(const char * filename);
+typedef struct IMG_DATA {
+	unsigned int width, height;
+	double min_value, max_value;
+	unsigned int UL_x, UL_y;
+	unsigned int UR_x, UR_y;
+	unsigned int LR_x, LR_y;
+	unsigned int LL_x, LL_y;
+	double * image_data;
+};
 
-void saveImagePGM(const char * filename, double * src_img);
+IMG_DATA * loadImagePGM(const char * filename);
 
-double * presetProblem(double * src_img, double * trg_img);
+void saveImagePGM(const char * filename, IMG_DATA * src_img);
 
-inline double bicubicInterpolation(const double *src_img, const double x, const double y);
+IMG_DATA * presetProblem(IMG_DATA * src_img, IMG_DATA * trg_img);
 
-void rotateBicubic(double* src_img, double* dst_img, const double theta, const double delta_x, const double delta_y);
+inline double bicubicInterpolation(IMG_DATA *src_img, const double x, const double y);
 
-double computeLoss(double * src_img, double * trg_img);
+void rotateBicubic(IMG_DATA * src_img, IMG_DATA * dst_img, const double theta);
 
-double computeLossPerPixel(const unsigned int pix_position, double * src_img, double * trg_img, const double theta, double * src_dx_img, double * src_dy_img, double * differences, double ** error_contributions);
+double computeLoss(IMG_DATA * src_img, IMG_DATA * trg_img);
 
-void computeDerivatives(double * src_img, double * dst_dx_img, double * dst_dy_img);
+double computeLossPerPixel(const unsigned int pix_position, IMG_DATA * src_img, IMG_DATA * trg_img, const double theta, IMG_DATA * src_dx_img, IMG_DATA * src_dy_img, double * differences, double ** error_contributions);
+
+void computeDerivatives(IMG_DATA * src_img, IMG_DATA * dst_dx_img, IMG_DATA * dst_dy_img);
 
 #endif //REGISTER_PROBLEM_INCLUDED
