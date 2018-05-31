@@ -26,7 +26,7 @@ IMG_DATA * presetProblem(IMG_DATA * src_img, IMG_DATA * trg_img);
 
 inline double bicubicInterpolation(IMG_DATA *src_img, const double x, const double y);
 
-IMG_DATA * rotateBicubic(IMG_DATA * src_img, const double theta_x1, const double theta_x2, const double theta_y1, const double theta_y2);
+IMG_DATA * rotateBicubic(IMG_DATA * src_img, const double theta_11, const double theta_21, const double theta_12, const double theta_22);
 
 double computeLoss(IMG_DATA * src_img, IMG_DATA * trg_img, const double delta_x, const double delta_y);
 

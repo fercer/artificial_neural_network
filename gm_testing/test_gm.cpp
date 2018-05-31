@@ -29,6 +29,29 @@ int main(int argc, char * argv[])
 	IMG_DATA * src_img = loadImagePGM(my_args.getArgumentCHAR("-dr"));
 	IMG_DATA * trg_img = loadImagePGM(my_args.getArgumentCHAR("-de"));
 
+	printf("width = %i, height = %i\n", src_img->width, src_img->height);
+	printf("UL = (%i, %i), UR = (%i, %i), LR = (%i, %i), LL = (%i, %i)\n", src_img->UL_x, src_img->UL_y, src_img->UR_x, src_img->UR_y, src_img->LR_x, src_img->LR_y, src_img->LL_x, src_img->LL_y);
+	
+	*(src_img->image_data + src_img->UL_y * src_img->width + src_img->UL_x) = src_img->max_value;
+	*(src_img->image_data + src_img->UR_y * src_img->width + src_img->UR_x) = src_img->max_value;
+	*(src_img->image_data + src_img->LR_y * src_img->width + src_img->LR_x) = src_img->max_value;
+	*(src_img->image_data + src_img->LL_y * src_img->width + src_img->LL_x) = src_img->max_value;
+	saveImagePGM("unrotated_temp.pgm", src_img);
+
+	const double degrees = 15.0;
+	IMG_DATA * dst_img = rotateBicubic(src_img, cos(MY_PI * degrees / 180.0), -sin(MY_PI * degrees / 180.0), sin(MY_PI * degrees / 180.0), cos(MY_PI * degrees / 180.0));
+	
+	printf("UL = (%i, %i), UR = (%i, %i), LR = (%i, %i), LL = (%i, %i)\n", dst_img->UL_x, dst_img->UL_y, dst_img->UR_x, dst_img->UR_y, dst_img->LR_x, dst_img->LR_y, dst_img->LL_x, dst_img->LL_y);
+
+	*(dst_img->image_data + dst_img->UL_y * dst_img->width + dst_img->UL_x) = dst_img->max_value;
+	*(dst_img->image_data + dst_img->UR_y * dst_img->width + dst_img->UR_x) = dst_img->max_value;
+	*(dst_img->image_data + dst_img->LR_y * dst_img->width + dst_img->LR_x) = dst_img->max_value;
+	*(dst_img->image_data + dst_img->LL_y * dst_img->width + dst_img->LL_x) = dst_img->max_value;
+
+	saveImagePGM("rotated_temp.pgm", dst_img);
+
+	return 0;
+
 	const unsigned int width = src_img->width;
 	const unsigned int height = src_img->height;
 	const unsigned int inputs_count = (unsigned int)(width * height);

@@ -23,7 +23,7 @@ IMG_DATA * loadImagePGM(const char * filename)
 	unsigned int pix_intensity;
 	for (unsigned int pix_position = 0; pix_position < (width*height); pix_position++)
 	{
-		fscanf(fp_img, "%i", &pix_intensity);
+		fscanf(fp_img, "%u", &pix_intensity);
 		*(new_img->image_data + pix_position) = (double)(unsigned int)pix_intensity / (double)max_intensity;
 	}
 
@@ -50,14 +50,14 @@ void saveImagePGM(const char * filename, IMG_DATA * src_img)
 	// Print the width and height:
 	fprintf(fp_img, "%i %i\n", width, height);
 	
-	const double min_intensity = src_img->max_value;
-	const double max_intensity = src_img->min_value;
+	const double min_intensity = src_img->min_value;
+	const double max_intensity = src_img->max_value;
 	fprintf(fp_img, "255\n");
 
 	unsigned char pix_intensity;
 	for (unsigned int pix_position = 0; pix_position < (width*height); pix_position++)
 	{
-		fprintf(fp_img, "%i\n", (unsigned int)(255.0 * (*(src_img->image_data + pix_position) - min_intensity) / (max_intensity - min_intensity)));
+		fprintf(fp_img, "%u\n", (unsigned int)(255.0 * (*(src_img->image_data + pix_position) - min_intensity) / (max_intensity - min_intensity)));
 	}
 
 	fclose(fp_img);
@@ -160,7 +160,7 @@ double bicubicInterpolation(IMG_DATA *src_img, const double x, const double y)
 
 
 
-IMG_DATA * rotateBicubic(IMG_DATA * src_img, const double theta_x1, const double theta_x2, const double theta_y1, const double theta_y2)
+IMG_DATA * rotateBicubic(IMG_DATA * src_img, const double theta_11, const double theta_21, const double theta_12, const double theta_22)
 {
 	const unsigned int src_width = src_img->width;
 	const unsigned int src_height = src_img->height;
@@ -170,37 +170,71 @@ IMG_DATA * rotateBicubic(IMG_DATA * src_img, const double theta_x1, const double
 	half_src_width = (double)(src_width - 1) / 2.0;
 	
 	/* Rotate the ROI corners of the source image to figure out the size fo the destination image */
-	const double UL_x = theta_x1 * ((double)src_img->UL_x - half_src_width) + theta_x2 * ((double)src_img->UL_y - half_src_height) + half_src_width;
-	const double UL_y = theta_y1 * ((double)src_img->UL_x - half_src_width) + theta_y2 * ((double)src_img->UL_y - half_src_height) + half_src_height;
+	const double UL_x = theta_11 * ((double)src_img->UL_x - half_src_width) + theta_21 * ((double)src_img->UL_y - half_src_height) + half_src_width;
+	const double UL_y = theta_12 * ((double)src_img->UL_x - half_src_width) + theta_22 * ((double)src_img->UL_y - half_src_height) + half_src_height;
 
-	const double UR_x = theta_x1 * ((double)src_img->UR_x - half_src_width) + theta_x2 * ((double)src_img->UR_y - half_src_height) + half_src_width;
-	const double UR_y = theta_y1 * ((double)src_img->UR_x - half_src_width) + theta_y2 * ((double)src_img->UR_y - half_src_height) + half_src_height;
+	const double UR_x = theta_11 * ((double)src_img->UR_x - half_src_width) + theta_21 * ((double)src_img->UR_y - half_src_height) + half_src_width;
+	const double UR_y = theta_12 * ((double)src_img->UR_x - half_src_width) + theta_22 * ((double)src_img->UR_y - half_src_height) + half_src_height;
 
-	const double LR_x = theta_x1 * ((double)src_img->LR_x - half_src_width) + theta_x2 * ((double)src_img->LR_y - half_src_height) + half_src_width;
-	const double LR_y = theta_y1 * ((double)src_img->LR_x - half_src_width) + theta_y2 * ((double)src_img->LR_y - half_src_height) + half_src_height;
+	const double LR_x = theta_11 * ((double)src_img->LR_x - half_src_width) + theta_21 * ((double)src_img->LR_y - half_src_height) + half_src_width;
+	const double LR_y = theta_12 * ((double)src_img->LR_x - half_src_width) + theta_22 * ((double)src_img->LR_y - half_src_height) + half_src_height;
 
-	const double LL_x = theta_x1 * ((double)src_img->LL_x - half_src_width) + theta_x2 * ((double)src_img->LL_y - half_src_height) + half_src_width;
-	const double LL_y = theta_y1 * ((double)src_img->LL_x - half_src_width) + theta_y2 * ((double)src_img->LL_y - half_src_height) + half_src_height;
+	const double LL_x = theta_11 * ((double)src_img->LL_x - half_src_width) + theta_21 * ((double)src_img->LL_y - half_src_height) + half_src_width;
+	const double LL_y = theta_12 * ((double)src_img->LL_x - half_src_width) + theta_22 * ((double)src_img->LL_y - half_src_height) + half_src_height;
 
 	// Define bounding box size:
 	const unsigned int max_width = (fabs(UL_x - LR_x) > fabs(UR_x - LL_x) ? fabs(UL_x - LR_x) : fabs(UR_x - LL_x)) + 1;
+	double half_max_width = ((double)max_width - 1) / 2;
 	const unsigned int max_height = (fabs(UL_y - LR_y) > fabs(UR_y - LL_y) ? fabs(UL_y - LR_y) : fabs(UR_y - LL_y)) + 1;
+	double half_max_height = ((double)max_height - 1) / 2;
+
+	double leftmost_corner = UL_x;
+	if (leftmost_corner > UR_x)
+	{
+		leftmost_corner = UR_x;
+	}
+
+	if (leftmost_corner > LR_x)
+	{
+		leftmost_corner = LR_x;
+	}
+
+	if (leftmost_corner > LL_x)
+	{
+		leftmost_corner = LL_x;
+	}
+
+	double topmost_corner = UL_y;
+	if (topmost_corner > UR_y)
+	{
+		topmost_corner = UR_y;
+	}
+
+	if (topmost_corner > LR_y)
+	{
+		topmost_corner = LR_y;
+	}
+
+	if (topmost_corner > LL_y)
+	{
+		topmost_corner = LL_y;
+	}
 
 	IMG_DATA * dst_img = (IMG_DATA*)malloc(sizeof(IMG_DATA));
 	dst_img->width = max_width;
 	dst_img->height = max_height;
-	dst_img->UL_x = (unsigned int)UL_x;
-	dst_img->UL_y = (unsigned int)UL_y;
-	dst_img->UR_x = (unsigned int)UR_x;
-	dst_img->UR_y = (unsigned int)UR_y;
-	dst_img->LR_x = (unsigned int)LR_x;
-	dst_img->LR_y = (unsigned int)LR_y;
-	dst_img->LL_x = (unsigned int)LL_x;
-	dst_img->LL_y = (unsigned int)LL_y;
+	dst_img->UL_x = (unsigned int)(UL_x - leftmost_corner);
+	dst_img->UL_y = (unsigned int)(UL_y - topmost_corner);
+	dst_img->UR_x = (unsigned int)(UR_x - leftmost_corner);
+	dst_img->UR_y = (unsigned int)(UR_y - topmost_corner);
+	dst_img->LR_x = (unsigned int)(LR_x - leftmost_corner);
+	dst_img->LR_y = (unsigned int)(LR_y - topmost_corner);
+	dst_img->LL_x = (unsigned int)(LL_x - leftmost_corner);
+	dst_img->LL_y = (unsigned int)(LL_y - topmost_corner);
 	dst_img->image_data = (double*)calloc(max_height * max_width, sizeof(double));
 
-	half_src_height = (double)(max_height - 1) / 2.0;
-	half_src_width = (double)(max_width - 1) / 2.0;
+	//half_src_height = (double)(max_height - 1) / 2.0;
+	//half_src_width = (double)(max_width - 1) / 2.0;
 
 	/* Copy the source image to a temporal zero padded matrix. */
 	IMG_DATA * src_temp = (IMG_DATA*)malloc(sizeof(IMG_DATA));
@@ -218,14 +252,14 @@ IMG_DATA * rotateBicubic(IMG_DATA * src_img, const double theta_x1, const double
 	}
 
 	double interpolation_result;
-	double max_value =  - 2.0 * src_img->max_value;
-	double min_value = - 2.0 * src_img->max_value;
+	double max_value = -1000.0;
+	double min_value = 1000.0;
 	for (int i = 0; i < max_height; i++)
 	{
 		for (int j = 0; j < max_width; j++)
 		{
-			const double src_x = theta_x1 * ((double)j - half_src_width) + theta_x2 * ((double)i - half_src_height) + half_src_width;
-			const double src_y = theta_y1 * ((double)j - half_src_width) + theta_y2 * ((double)i - half_src_height) + half_src_height;
+			const double src_x = theta_11 * ((double)j - half_max_width) + theta_12 * ((double)i - half_max_height) + half_src_width;
+			const double src_y = theta_21 * ((double)j - half_max_width) + theta_22 * ((double)i - half_max_height) + half_src_height;
 
 			if (src_x < 1 || src_x >= src_width || src_y < 1 || src_y >= src_height)
 			{
@@ -489,8 +523,10 @@ IMG_DATA * createVoidImage(const unsigned int src_width, const unsigned int src_
 
 	new_img->width = src_width;
 	new_img->height = src_height;
+
 	new_img->max_value = 1.0;
 	new_img->min_value = 0.0;
+
 	new_img->UL_x = 0;
 	new_img->UL_y = 0;
 	new_img->UR_x = src_width - 1;
