@@ -22,30 +22,19 @@ int main(int argc, char * argv[])
 
 	my_args.newArgument("Training data filename", "dr", "dataset-training", "NULL", false);
 	my_args.newArgument("Testing data filename", "de", "dataset-testing", "NULL", false);
-	my_args.newArgument("Iterations", "i", "iterations", 5, true);
+	my_args.newArgument("Iterations", "i", "iterations", 20, true);
 	
 	my_args.showHelp();
 
-	double * org_img = loadImagePGM(my_args.getArgumentCHAR("-dr"));
-	double * org_trg_img = loadImagePGM(my_args.getArgumentCHAR("-de"));
+	IMG_DATA * src_img = loadImagePGM(my_args.getArgumentCHAR("-dr"));
+	IMG_DATA * trg_img = loadImagePGM(my_args.getArgumentCHAR("-de"));
 
-	double * org_temp = (double*)malloc(2*sizeof(double));
-	*(org_temp) = *(org_trg_img) * 8;
-	*(org_temp + 1) = *(org_trg_img + 1) * 8;
-
-	double * trg_img = presetProblem(org_trg_img, org_temp);
-	free(org_trg_img);
-	free(org_temp);
-
-	double * src_img = presetProblem(org_img, trg_img);
-	free(org_img);
-
-	const unsigned int width = *(src_img);
-	const unsigned int height = *(src_img + 1);
+	const unsigned int width = src_img->width;
+	const unsigned int height = src_img->height;
 	const unsigned int inputs_count = (unsigned int)(width * height);
 	const unsigned int outputs_count = 1;
 
-	const unsigned int variables_count = 3;
+	const unsigned int variables_count = 6;
 
 	gradientMethods gradient_method;
 	//gradient_method.setGradientMethod(gradientMethods::GRADIENT_DESCENT);
@@ -66,9 +55,14 @@ int main(int argc, char * argv[])
 
 	for (unsigned int var_i = 0; var_i < variables_count; var_i++)
 	{
-		*(variables + var_i) = 0.0;
 		*(derivatives + var_i) = (double*)malloc(outputs_count*sizeof(double));
 	}
+	*(variables) = 1.0;
+	*(variables + 1) = 0.0;
+	*(variables + 2) = 0.0;
+	*(variables + 3) = 0.0;
+	*(variables + 4) = 1.0;
+	*(variables + 5) = 0.0;
 
 	const unsigned int max_iterations = my_args.getArgumentINT("-i");
 
@@ -82,31 +76,90 @@ int main(int argc, char * argv[])
 		
 	double previous_error = inputs_count;
 	
-	double * tmp_img = (double*)malloc((width * height + 4) * sizeof(double));
-	double * dx_img = (double*)malloc((width * height + 4) * sizeof(double));
-	double * dy_img = (double*)malloc((width * height + 4) * sizeof(double));
-
-	*(tmp_img) = width;
-	*(tmp_img + 1) = height;
-
-	*(dx_img) = width;
-	*(dx_img + 1) = height;
-
-	*(dy_img) = width;
-	*(dy_img + 1) = height;
-
 	char filename[512];
 	for (unsigned int iteration = 0; iteration < max_iterations; iteration++)
 	{
 		// Compute the derivatives and transform the source image:
-		rotateBicubic(src_img, tmp_img, *(variables), *(variables + 1), *(variables + 2));
-		computeDerivatives(tmp_img, dx_img, dy_img);
+		IMG_DATA * tmp_img = rotateBicubic(src_img, *(variables), *(variables + 1), *(variables + 3), *(variables + 4));
+		IMG_DATA * dx_img = computeDerivativesX(tmp_img);
+		IMG_DATA * dy_img = computeDerivativesY(tmp_img);
 
 		double mean_error = 0.0;
-		for (unsigned int pix_position = 0; pix_position < inputs_count; pix_position++)
-		{			
-			mean_error += computeLossPerPixel(pix_position, tmp_img, trg_img, *(variables), dx_img, dy_img, outputs_derivatives, derivatives);
-			gradient_method.updateDeltasValues();
+
+		// Compute the loss only on the intersection of the both images:
+		const unsigned int src_width = tmp_img->width;
+		const unsigned int src_height = tmp_img->height;
+		const unsigned int trg_width = trg_img->width;
+		const unsigned int trg_height = trg_img->height;
+
+		const unsigned int src_half_width_left = (unsigned int)floor((double)src_width / 2.0);
+		const unsigned int src_half_height_upper = (unsigned int)floor((double)src_height / 2.0);
+
+		const unsigned int ULs_x = -src_half_width_left + (unsigned int)floor(*(variables + 2));
+		const unsigned int ULs_y = -src_half_height_upper + (unsigned int)floor(*(variables + 5));
+		const unsigned int LRs_x = ULs_x + src_width;
+		const unsigned int LRs_y = ULs_y + src_height;
+
+		const unsigned int ULt_x = -(unsigned int)floor((double)trg_width / 2.0);
+		const unsigned int ULt_y = -(unsigned int)floor((double)trg_height / 2.0);
+		const unsigned int LRt_x = ULt_x + trg_width;
+		const unsigned int LRt_y = ULt_y + trg_height;
+
+		unsigned int xs_ini, xs_end;
+		unsigned int ys_ini, ys_end;
+		unsigned int xt_ini, yt_ini;
+
+		if (ULs_x > ULt_x)
+		{
+			xs_ini = 0;
+			xt_ini = ULs_x - ULt_x;
+		}
+		else
+		{
+			xs_ini = ULt_x - ULs_x;
+			xt_ini = 0;
+		}
+
+		if (ULs_y > ULt_y)
+		{
+			ys_ini = 0;
+			yt_ini = ULs_y - ULt_y;
+		}
+		else
+		{
+			ys_ini = ULt_y - ULs_y;
+			yt_ini = 0;
+		}
+
+		if (LRs_x < LRt_x)
+		{
+			xs_end = src_width - 1; // To make it inclusive
+		}
+		else
+		{
+			xs_end = LRt_x - ULs_x - 1;
+		}
+
+		if (LRs_y < LRt_y)
+		{
+			ys_end = src_height - 1; // To make it inclusive
+		}
+		else
+		{
+			ys_end = LRt_y - ULs_y - 1;
+		}
+
+		const unsigned int computable_width = xs_end - xs_ini;
+		const unsigned int computable_height = ys_end - ys_ini;
+		const double out_limit_penalty = src_width * src_height - computable_width * computable_height;
+
+		for (unsigned int y = 0; y <= computable_height; y++)
+		{
+			for (unsigned int x = 0; x <= computable_width; x++)
+			{
+				mean_error += computeLossPerPixel(x, y, tmp_img, trg_img, *(variables + 2), *(variables + 5), dx_img, dy_img, outputs_derivatives, derivatives, xs_ini, ys_ini, xt_ini, yt_ini);
+				gradient_method.updateDeltasValues();
+			}
 		}
 		const double squared_gradient_norm = gradient_method.updateVariablesValues();
 
@@ -114,11 +167,12 @@ int main(int argc, char * argv[])
 		while (!gradient_method.confirmDescent(previous_error - mean_error))
 		{			
 			// Compute the derivatives and transform the source image:
-			rotateBicubic(src_img, tmp_img, *(variables), *(variables + 1), *(variables + 2));
-			computeDerivatives(tmp_img, dx_img, dy_img);
+			IMG_DATA * tmp_img_LM = rotateBicubic(src_img, *(variables), *(variables + 1), *(variables + 3), *(variables + 4));
+			mean_error = computeLoss(tmp_img_LM, trg_img, *(variables + 2), *(variables + 5)) / (double)inputs_count;
 
-			mean_error = computeLoss(tmp_img, trg_img) / (double)inputs_count;
 			printf("MSE = %f\n", mean_error);
+			free(tmp_img_LM->image_data);
+			free(tmp_img_LM);
 		}
 		previous_error = mean_error;
 		for (unsigned int variable_index = 0; variable_index < variables_count; variable_index++)
@@ -135,6 +189,13 @@ int main(int argc, char * argv[])
 
 		sprintf(filename, "dy_res_%i.pgm", iteration);
 		saveImagePGM(filename, dy_img);
+
+		free(tmp_img->image_data);
+		free(tmp_img);
+		free(dx_img->image_data);
+		free(dx_img);
+		free(dy_img->image_data);
+		free(dy_img);
 	}
 
 	for (unsigned int var_i = 0; var_i < 3; var_i++)
@@ -147,11 +208,10 @@ int main(int argc, char * argv[])
 	free(outputs_derivatives);
 	free(my_seed);
 
+	free(src_img->image_data);
 	free(src_img);
+	free(trg_img->image_data);
 	free(trg_img);
-	free(tmp_img);
-	free(dx_img);
-	free(dy_img);
 
 	return 0;
 }
