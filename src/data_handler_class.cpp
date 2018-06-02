@@ -20,10 +20,12 @@ data_handler::~data_handler()
 		{
 			free(*(input_data + i));
 			free(*(output_data + i));
+			free(*(output_float_data + i));
 		}
 
 		free(input_data);
 		free(output_data);
+		free(output_float_data);
 	}
 }
 
@@ -44,6 +46,11 @@ void data_handler::loadDataTXT()
 	DATA_LIST_NODE outputs_list_head;
 	outputs_list_head.next_entry = NULL;
 	DATA_LIST_NODE * outputs_list_tail = &outputs_list_head;
+
+	DATA_LIST_NODE outputs_float_list_head;
+	outputs_float_list_head.next_entry = NULL;
+	DATA_LIST_NODE * outputs_float_list_tail = &outputs_float_list_head;
+
 
 	number_of_variables = 0;
 	data_size = 0;
@@ -131,6 +138,11 @@ void data_handler::loadDataTXT()
 			outputs_list_tail->next_entry = NULL;
 			outputs_list_tail->variable_value.output = (int*)malloc(number_of_outputs * sizeof(int));
 
+			outputs_float_list_tail->next_entry = new DATA_LIST_NODE;
+			outputs_float_list_tail = outputs_float_list_tail->next_entry;
+			outputs_float_list_tail->next_entry = NULL;
+			outputs_float_list_tail->variable_value.output_float = (double*)malloc(number_of_outputs * sizeof(double));
+
 			unsigned int current_output_index = 0;
 			current_character = strpbrk(line, "\t");
 			next_character = strpbrk(current_character + 1, "\t\n");
@@ -142,6 +154,7 @@ void data_handler::loadDataTXT()
 				next_character = strpbrk(current_character + 1, "\t\n");
 
 				*(outputs_list_tail->variable_value.output + current_output_index) = atoi(read_value);
+				*(outputs_float_list_tail->variable_value.output_float + current_output_index) = atof(read_value);
 
 				current_output_index++;
 			} while (next_character);
@@ -152,13 +165,17 @@ void data_handler::loadDataTXT()
 	fclose(fp_data_file);
 
 	output_data = (int**)malloc(data_size * sizeof(int*));
+	output_float_data = (double**)malloc(data_size * sizeof(double*));
 	input_data = (double**)malloc(data_size * sizeof(double*));
-	
+
 	DATA_LIST_NODE * current_input_node;
 	DATA_LIST_NODE * next_input_node = inputs_list_head.next_entry;
 
 	DATA_LIST_NODE * current_output_node;
 	DATA_LIST_NODE * next_output_node = outputs_list_head.next_entry;
+
+	DATA_LIST_NODE * current_output_float_node;
+	DATA_LIST_NODE * next_output_float_node = outputs_float_list_head.next_entry;
 
 	unsigned int current_pattern = 0;
 	while (next_output_node)
@@ -169,11 +186,16 @@ void data_handler::loadDataTXT()
 		current_output_node = next_output_node;
 		next_output_node = current_output_node->next_entry;
 
+		current_output_float_node = next_output_float_node;
+		next_output_float_node = current_output_float_node->next_entry;
+
 		*(input_data + current_pattern) = current_input_node->variable_value.input;
 		*(output_data + current_pattern) = current_output_node->variable_value.output;
+		*(output_float_data + current_pattern) = current_output_float_node->variable_value.output_float;
 
 		delete current_input_node;
 		delete current_output_node;
+		delete current_output_float_node;
 
 		current_pattern++;
 	}
@@ -191,6 +213,10 @@ void data_handler::loadDataXML()
 	DATA_LIST_NODE outputs_list_head;
 	outputs_list_head.next_entry = NULL;
 	DATA_LIST_NODE * outputs_list_tail = &outputs_list_head;
+
+	DATA_LIST_NODE outputs_float_list_head;
+	outputs_float_list_head.next_entry = NULL;
+	DATA_LIST_NODE * outputs_float_list_tail = &outputs_float_list_head;
 
 	number_of_variables = 0;
 	data_size = 0;
@@ -249,7 +275,7 @@ void data_handler::loadDataXML()
 		}
 	}
 
-	// Iterate over the first Input to known the number of variables:
+	// Iterate over the first output to known the number of expected outputs:
 	for (xml_node<> * output_node = root_node->first_node("OutputData"); output_node; output_node = output_node->next_sibling())
 	{
 		xml_node<> * output_pattern_node = output_node->first_node("Output");
@@ -260,7 +286,7 @@ void data_handler::loadDataXML()
 	}
 
 
-	// Iterate over the Inputs:
+	// Iterate over the Outputs:
 	for (xml_node<> * output_node = root_node->first_node("OutputData"); output_node; output_node = output_node->next_sibling())
 	{
 		for (xml_node<> * output_pattern_node = output_node->first_node("Output"); output_pattern_node; output_pattern_node = output_pattern_node->next_sibling())
@@ -275,12 +301,19 @@ void data_handler::loadDataXML()
 			outputs_list_tail->next_entry = NULL;
 			outputs_list_tail->variable_value.output = (int*)malloc(number_of_variables * sizeof(int));
 
+
+			outputs_float_list_tail->next_entry = new DATA_LIST_NODE;
+			outputs_float_list_tail = outputs_float_list_tail->next_entry;
+			outputs_float_list_tail->next_entry = NULL;
+			outputs_float_list_tail->variable_value.output_float = (double*)malloc(number_of_variables * sizeof(double));
+
 			unsigned int current_label = 0;
 			for (xml_node<> * label_node = output_pattern_node->first_node("Label"); label_node; label_node = label_node->next_sibling(), current_label++)
 			{
 				char * label_node_character_value = label_node->first_attribute("value")->value();
-				int label_node_numeric_value = atoi(label_node_character_value);
-				*(outputs_list_tail->variable_value.output + current_label) = label_node_numeric_value;
+
+				*(outputs_list_tail->variable_value.output + current_label) = atoi(label_node_character_value);
+				*(outputs_float_list_tail->variable_value.output + current_label) = atof(label_node_character_value);
 			}
 		}
 	}
@@ -288,6 +321,7 @@ void data_handler::loadDataXML()
 
 
 	output_data = (int**)malloc(data_size * sizeof(int*));
+	output_float_data = (double**)malloc(data_size * sizeof(double*));
 	input_data = (double**)malloc(data_size * sizeof(double*));
 
 	DATA_LIST_NODE * current_input_node;
@@ -295,6 +329,9 @@ void data_handler::loadDataXML()
 
 	DATA_LIST_NODE * current_output_node;
 	DATA_LIST_NODE * next_output_node = outputs_list_head.next_entry;
+
+	DATA_LIST_NODE * current_output_float_node;
+	DATA_LIST_NODE * next_output_float_node = outputs_float_list_head.next_entry;
 
 	unsigned int current_pattern = 0;
 	while (next_output_node)
@@ -304,12 +341,17 @@ void data_handler::loadDataXML()
 
 		current_output_node = next_output_node;
 		next_output_node = current_output_node->next_entry;
+		
+		current_output_float_node = next_output_float_node;
+		next_output_float_node = current_output_float_node->next_entry;
 
 		*(input_data + current_pattern) = current_input_node->variable_value.input;
 		*(output_data + current_pattern) = current_output_node->variable_value.output;
+		*(output_float_data + current_pattern) = current_output_node->variable_value.output_float;
 
 		delete current_input_node;
 		delete current_output_node;
+		delete current_output_float_node;
 
 		current_pattern++;
 	}
@@ -355,3 +397,9 @@ int ** data_handler::getOutputData()
 {
 	return output_data;
 }
+
+double ** data_handler::getOutputFloatData()
+{
+	return output_float_data;
+}
+

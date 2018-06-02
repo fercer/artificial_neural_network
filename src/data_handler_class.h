@@ -30,10 +30,12 @@ public:
 
 	double ** getInputData();
 	int ** getOutputData();
+	double ** getOutputFloatData();
 
 private:
 	typedef union VARIABLE_TYPE { 
 		double * input;
+		double * output_float;
 		int * output;
 	} VARIABLE_TYPE;
 
@@ -48,6 +50,7 @@ private:
 	unsigned int number_of_outputs;
 
 	double ** input_data;
+	double ** output_float_data;
 	int ** output_data;
 
 	void (data_handler::*load_data_method)();

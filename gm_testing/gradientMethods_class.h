@@ -34,6 +34,7 @@ public:
 	void setVariablesValuesPointerManager(double * src_variables_values_pointer_manager);
 	void setVariablesDerivativesPointersManager(double ** src_variables_derivatives_pointer_manager);
 	void setOutputsDerivativesPointerManager(double * src_outputs_derivatives_pointer_manager);
+	void setOutputsDifferencesPointerManager(double * src_outputs_differences_pointer_manager);
 
 	void setTrainingDataSize(const unsigned int src_training_data_size);
 	void setOutputsCount(const unsigned int src_outputs_count);
@@ -64,6 +65,8 @@ private:
 	double * variables_values_pointer_manager;
 	double ** variables_derivatives_pointers_manager;
 	double * outputs_derivatives_pointer_manager;
+	double * outputs_differences_pointer_manager;
+
 	double * deltas_values;
 	double * previous_deltas_values;
 	

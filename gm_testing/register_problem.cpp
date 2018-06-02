@@ -160,7 +160,7 @@ double bicubicInterpolation(IMG_DATA *src_img, const double x, const double y)
 
 
 
-IMG_DATA * rotateBicubic(IMG_DATA * src_img, const double theta_11, const double theta_21, const double theta_12, const double theta_22)
+IMG_DATA * rotateBicubic(IMG_DATA * src_img, const double theta_11, const double theta_12, const double theta_21, const double theta_22)
 {
 	const unsigned int src_width = src_img->width;
 	const unsigned int src_height = src_img->height;
@@ -169,18 +169,24 @@ IMG_DATA * rotateBicubic(IMG_DATA * src_img, const double theta_11, const double
 	half_src_height = (double)(src_height - 1) / 2.0;
 	half_src_width = (double)(src_width - 1) / 2.0;
 	
+	const double rotation_matrix_determinant = theta_11*theta_22 - theta_12*theta_21;
+	const double inv_theta_11 = theta_22 / rotation_matrix_determinant;
+	const double inv_theta_12 = -theta_21 / rotation_matrix_determinant;
+	const double inv_theta_21 = -theta_12 / rotation_matrix_determinant;
+	const double inv_theta_22 = theta_11 / rotation_matrix_determinant;
+
 	/* Rotate the ROI corners of the source image to figure out the size fo the destination image */
-	const double UL_x = theta_11 * ((double)src_img->UL_x - half_src_width) + theta_21 * ((double)src_img->UL_y - half_src_height) + half_src_width;
-	const double UL_y = theta_12 * ((double)src_img->UL_x - half_src_width) + theta_22 * ((double)src_img->UL_y - half_src_height) + half_src_height;
+	const double UL_x = inv_theta_11 * ((double)src_img->UL_x - half_src_width) + inv_theta_21 * ((double)src_img->UL_y - half_src_height) + half_src_width;
+	const double UL_y = inv_theta_12 * ((double)src_img->UL_x - half_src_width) + inv_theta_22 * ((double)src_img->UL_y - half_src_height) + half_src_height;
 
-	const double UR_x = theta_11 * ((double)src_img->UR_x - half_src_width) + theta_21 * ((double)src_img->UR_y - half_src_height) + half_src_width;
-	const double UR_y = theta_12 * ((double)src_img->UR_x - half_src_width) + theta_22 * ((double)src_img->UR_y - half_src_height) + half_src_height;
+	const double UR_x = inv_theta_11 * ((double)src_img->UR_x - half_src_width) + inv_theta_21 * ((double)src_img->UR_y - half_src_height) + half_src_width;
+	const double UR_y = inv_theta_12 * ((double)src_img->UR_x - half_src_width) + inv_theta_22 * ((double)src_img->UR_y - half_src_height) + half_src_height;
 
-	const double LR_x = theta_11 * ((double)src_img->LR_x - half_src_width) + theta_21 * ((double)src_img->LR_y - half_src_height) + half_src_width;
-	const double LR_y = theta_12 * ((double)src_img->LR_x - half_src_width) + theta_22 * ((double)src_img->LR_y - half_src_height) + half_src_height;
+	const double LR_x = inv_theta_11 * ((double)src_img->LR_x - half_src_width) + inv_theta_21 * ((double)src_img->LR_y - half_src_height) + half_src_width;
+	const double LR_y = inv_theta_12 * ((double)src_img->LR_x - half_src_width) + inv_theta_22 * ((double)src_img->LR_y - half_src_height) + half_src_height;
 
-	const double LL_x = theta_11 * ((double)src_img->LL_x - half_src_width) + theta_21 * ((double)src_img->LL_y - half_src_height) + half_src_width;
-	const double LL_y = theta_12 * ((double)src_img->LL_x - half_src_width) + theta_22 * ((double)src_img->LL_y - half_src_height) + half_src_height;
+	const double LL_x = inv_theta_11 * ((double)src_img->LL_x - half_src_width) + inv_theta_21 * ((double)src_img->LL_y - half_src_height) + half_src_width;
+	const double LL_y = inv_theta_12 * ((double)src_img->LL_x - half_src_width) + inv_theta_22 * ((double)src_img->LL_y - half_src_height) + half_src_height;
 
 	// Define bounding box size:
 	const unsigned int max_width = (fabs(UL_x - LR_x) > fabs(UR_x - LL_x) ? fabs(UL_x - LR_x) : fabs(UR_x - LL_x)) + 1;
@@ -258,8 +264,8 @@ IMG_DATA * rotateBicubic(IMG_DATA * src_img, const double theta_11, const double
 	{
 		for (int j = 0; j < max_width; j++)
 		{
-			const double src_x = theta_11 * ((double)j - half_max_width) + theta_12 * ((double)i - half_max_height) + half_src_width;
-			const double src_y = theta_21 * ((double)j - half_max_width) + theta_22 * ((double)i - half_max_height) + half_src_height;
+			const double src_x = theta_11 * ((double)j - half_max_width) + theta_21 * ((double)i - half_max_height) + half_src_width;
+			const double src_y = theta_12 * ((double)j - half_max_width) + theta_22 * ((double)i - half_max_height) + half_src_height;
 
 			if (src_x < 1 || src_x >= src_width || src_y < 1 || src_y >= src_height)
 			{
@@ -359,7 +365,6 @@ double computeLoss(IMG_DATA * src_img, IMG_DATA * trg_img, const double delta_x,
 
 	const unsigned int computable_width = xs_end - xs_ini;
 	const unsigned int computable_height = ys_end - ys_ini;
-	const double out_limit_penalty = src_width * src_height - computable_width * computable_height;
 
 	double cost = 0.0;
 	for (unsigned int y = 0; y <= computable_height; y++)
@@ -372,30 +377,6 @@ double computeLoss(IMG_DATA * src_img, IMG_DATA * trg_img, const double delta_x,
 			cost += differences *  differences;
 		}
 	}
-
-	return cost / 2.0;
-}
-
-
-
-double computeLossPerPixel(const unsigned int x, const unsigned int y, IMG_DATA * src_img, IMG_DATA * trg_img, const double delta_x, const double delta_y, IMG_DATA * src_dx_img, IMG_DATA * src_dy_img, double * error_derivatives, double ** error_contributions, const unsigned int xs_ini, const unsigned int ys_ini, const unsigned int xt_ini, const unsigned int yt_ini)
-{	
-	const double s_intensity = *(src_img->image_data + (y + ys_ini) * src_img->width + x + xs_ini);
-	const double t_intensity = *(trg_img->image_data + (y + yt_ini) * trg_img->width + x + xt_ini);
-	const double differences = t_intensity - s_intensity;
-	const double cost = differences *  differences;
-
-	return cost / 2.0;
-	
-	*(error_derivatives) = differences;
-
-	// Contribution to the error corresponding to the theta parameters:
-	**(error_contributions) = -*(src_dx_img->image_data + (y + ys_ini) * src_img->width + x + xs_ini) * x;
-	**(error_contributions+1) = -*(src_dx_img->image_data + (y + ys_ini) * src_img->width + x + xs_ini) * y;
-	**(error_contributions+2) = -*(src_dx_img->image_data + (y + ys_ini) * src_img->width + x + xs_ini);
-	**(error_contributions+3) = -*(src_dy_img->image_data + (y + ys_ini) * src_img->width + x + xs_ini) * x;
-	**(error_contributions+4) = -*(src_dy_img->image_data + (y + ys_ini) * src_img->width + x + xs_ini) * y;
-	**(error_contributions+5) = -*(src_dy_img->image_data + (y + ys_ini) * src_img->width + x + xs_ini);
 
 	return cost / 2.0;
 }
@@ -539,4 +520,122 @@ IMG_DATA * createVoidImage(const unsigned int src_width, const unsigned int src_
 	new_img->image_data = (double*)calloc(src_height * src_width, sizeof(double));
 	
 	return new_img;
+}
+
+
+
+IMG_DATA * diffImage(IMG_DATA * src_img, IMG_DATA * trg_img, const double delta_x, const double delta_y)
+{
+	// Compute the differebce only on the intersection of the both images:
+	const unsigned int src_width = src_img->width;
+	const unsigned int src_height = src_img->height;
+	const unsigned int trg_width = trg_img->width;
+	const unsigned int trg_height = trg_img->height;
+
+	const unsigned int src_half_width_left = (unsigned int)floor((double)src_width / 2.0);
+	const unsigned int src_half_height_upper = (unsigned int)floor((double)src_height / 2.0);
+
+	const int ULs_x = -src_half_width_left + (unsigned int)floor(delta_x);
+	const int ULs_y = -src_half_height_upper + (unsigned int)floor(delta_y);
+	const int LRs_x = ULs_x + src_width;
+	const int LRs_y = ULs_y + src_height;
+
+	const int ULt_x = -(unsigned int)floor((double)trg_width / 2.0);
+	const int ULt_y = -(unsigned int)floor((double)trg_height / 2.0);
+	const int LRt_x = ULt_x + trg_width;
+	const int LRt_y = ULt_y + trg_height;
+
+	unsigned int xs_ini, xs_end;
+	unsigned int ys_ini, ys_end;
+	unsigned int xt_ini, yt_ini;
+
+	if (ULs_x > ULt_x)
+	{
+		xs_ini = 0;
+		xt_ini = ULs_x - ULt_x;
+	}
+	else
+	{
+		xs_ini = ULt_x - ULs_x;
+		xt_ini = 0;
+	}
+
+	if (ULs_y > ULt_y)
+	{
+		ys_ini = 0;
+		yt_ini = ULs_y - ULt_y;
+	}
+	else
+	{
+		ys_ini = ULt_y - ULs_y;
+		yt_ini = 0;
+	}
+
+	if (LRs_x < LRt_x)
+	{
+		xs_end = src_width - 1; // To make it inclusive
+	}
+	else
+	{
+		xs_end = LRt_x - ULs_x - 1;
+	}
+
+	if (LRs_y < LRt_y)
+	{
+		ys_end = src_height - 1; // To make it inclusive
+	}
+	else
+	{
+		ys_end = LRt_y - ULs_y - 1;
+	}
+
+	const unsigned int computable_width = xs_end - xs_ini + 1;
+	const unsigned int computable_height = ys_end - ys_ini + 1;
+
+	IMG_DATA * diff_img = (IMG_DATA*)malloc(sizeof(IMG_DATA));
+
+	diff_img->width = computable_width;
+	diff_img->height = computable_height;
+
+	diff_img->image_data = (double*)calloc(computable_width * computable_height, sizeof(double));
+
+	double min_value = 1e3;
+	double max_value = -1e3;
+
+	for (unsigned int y = 0; y < computable_height; y++)
+	{
+		for (unsigned int x = 0; x < computable_width; x++)
+		{
+			const double s_intensity = *(src_img->image_data + (y + ys_ini) * src_img->width + x + xs_ini);
+			const double t_intensity = *(trg_img->image_data + (y + yt_ini) * trg_img->width + x + xt_ini);
+			const double differences = t_intensity - s_intensity;
+
+			*(diff_img->image_data + y * computable_width + x) = differences;
+
+			if (min_value > differences)
+			{
+				min_value = differences;
+			}
+
+			if (max_value < differences)
+			{
+				max_value = differences;
+			}
+		}
+	}
+
+
+	diff_img->max_value = max_value;
+	diff_img->min_value = min_value;
+	
+	diff_img->UL_x = xs_ini;
+	diff_img->UL_y = ys_ini;
+	diff_img->UR_x = 0;
+	diff_img->UR_y = 0;
+	diff_img->LR_x = 0;
+	diff_img->LR_y = 0;
+	diff_img->LL_x = 0;
+	diff_img->LL_y = 0;
+
+	return diff_img;
 }

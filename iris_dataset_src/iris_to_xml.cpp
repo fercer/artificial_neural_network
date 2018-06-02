@@ -40,7 +40,7 @@ int main(int argc, char* argv[])
 
 	double * vars = (double*)malloc(n_vars * sizeof(double));
 	char label_string[512];
-	int labels;
+	double labels;
 
 	unsigned int training_count = 0;
 	unsigned int testing_count = 0;
@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
 			fscanf(fp_iris, "%lf", vars + var_i);
 		}
 
-		fscanf(fp_iris, "%i", &labels);
+		fscanf(fp_iris, "%lf", &labels);
 		
 		if (training_count >= training_size)
 		{
@@ -89,12 +89,13 @@ int main(int argc, char* argv[])
 			fprintf(fp_pattern, "\t%f", *(vars + var_i));
 		}
 
+		// Print the expected output:
 		fprintf(fp_pattern, "\nout:");
 		if (n_classes > 2)
 		{
 			for (unsigned int label_i = 0; label_i < n_classes; label_i++)
 			{
-				if (labels == label_i)
+				if ((unsigned int)labels == label_i)
 				{
 					fprintf(fp_pattern, "\t1");
 				}
@@ -106,10 +107,9 @@ int main(int argc, char* argv[])
 		}
 		else
 		{
-			fprintf(fp_pattern, "\t%i", labels);
+			fprintf(fp_pattern, "\t%f", labels);
 		}
 		fprintf(fp_pattern, "\n");
-
 	}
 	fclose(fp_iris);
 	fclose(fp_training);
