@@ -323,7 +323,7 @@ void gradientMethods::update_deltas_values_levenberg_marquardt()
 			*(jacobian_error_derivative_product + variable_index_i) =
 				*(jacobian_error_derivative_product + variable_index_i) +
 				*(*(variables_derivatives_pointers_manager + variable_index_i) + output_index) *
-				*(outputs_differences_pointer_manager + output_index);
+				*(outputs_derivatives_pointer_manager + output_index);
 
 			/* Compute the hessian matrix entry that corresponds to
 			the product of the current weight and the first weight of the network:
@@ -631,11 +631,6 @@ void gradientMethods::setVariablesDerivativesPointersManager(double ** src_varia
 void gradientMethods::setOutputsDerivativesPointerManager(double * src_outputs_derivatives_pointer_manager)
 {
 	outputs_derivatives_pointer_manager = src_outputs_derivatives_pointer_manager;
-}
-
-void gradientMethods::setOutputsDifferencesPointerManager(double * src_outputs_differences_pointer_manager)
-{
-	outputs_differences_pointer_manager = src_outputs_differences_pointer_manager;
 }
 
 

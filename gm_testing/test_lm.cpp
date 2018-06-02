@@ -43,7 +43,6 @@ int main(int argc, char * argv[])
 	
 	double * variables = (double*)malloc(variables_count * sizeof(double));
 	double * outputs_derivatives = (double*)malloc(outputs_count*sizeof(double));
-	double * outputs_differences = (double*)malloc(outputs_count * sizeof(double));
 	double ** derivatives = (double**)malloc(variables_count * sizeof(double*));
 
 	STAUS * my_seed = initSeed(0);
@@ -52,9 +51,9 @@ int main(int argc, char * argv[])
 	{
 		*(derivatives + var_i) = (double*)malloc(outputs_count*sizeof(double));
 	}
-	*(variables) = 1.5 + anorm(0.0, 1.0, my_seed);
-	*(variables + 1) = 0.5 + anorm(0.0, 1.0, my_seed);
-	*(variables + 2) = -1.5 + anorm(0.0, 1.0, my_seed);
+	*(variables) = 1.4 + anorm(0.0, 0.5, my_seed);
+	*(variables + 1) = 1.9 + anorm(0.0, 0.5, my_seed);
+	*(variables + 2) = 0.0 + anorm(0.0, 1.0, my_seed);
 
 	const unsigned int max_iterations = my_args.getArgumentINT("-i");
 
@@ -64,7 +63,6 @@ int main(int argc, char * argv[])
 	gradient_method.setVariablesDerivativesPointersManager(derivatives);
 	gradient_method.setVariablesValuesPointerManager(variables);
 	gradient_method.setOutputsDerivativesPointerManager(outputs_derivatives);
-	gradient_method.setOutputsDifferencesPointerManager(outputs_differences);
 	gradient_method.setBatchSize(10);
 		
 	double previous_error = patterns_count*patterns_count;
@@ -77,18 +75,16 @@ int main(int argc, char * argv[])
 			const double current_input = **(training_data.getInputData() + pattern_index);
 
 			const double prediction = 
-				*(variables) * cos(current_input) +	*(variables + 1) * sin(current_input) + *(variables + 2);
+				cos(*(variables) * current_input) + sin(*(variables + 1) * current_input) + *(variables + 2);
 
 			const double expected_output = **(training_data.getOutputFloatData() + pattern_index);
 			const double difference = expected_output - prediction;
 			const double pattern_error = difference * difference / 2.0;
 
 			*(outputs_derivatives) = difference;
-			*(outputs_differences) = difference;
 
-
-			**(derivatives) = - cos(current_input);
-			**(derivatives + 1) = - sin(current_input);
+			**(derivatives) = sin(*(variables) * current_input) * current_input;
+			**(derivatives + 1) = - cos(*(variables+1) * current_input) * current_input;
 			**(derivatives + 2) = -1.0;
 
 			gradient_method.updateDeltasValues();
@@ -106,7 +102,7 @@ int main(int argc, char * argv[])
 			{
 				const double current_input = **(training_data.getInputData() + pattern_index);
 				const double prediction =
-					*(variables)* cos(current_input) + *(variables + 1) * sin(current_input) + *(variables + 2);
+					cos(*(variables)* current_input) + sin(*(variables + 1) * current_input) + *(variables + 2);
 
 				const double expected_output = **(training_data.getOutputFloatData() + pattern_index);
 				const double difference = expected_output - prediction;
@@ -135,7 +131,6 @@ int main(int argc, char * argv[])
 
 	free(variables);
 	free(outputs_derivatives);
-	free(outputs_differences);
 	free(derivatives);
 
 	return 0;

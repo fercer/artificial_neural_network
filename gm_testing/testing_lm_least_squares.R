@@ -15,10 +15,10 @@ write.table(x = cbind(x, y), file = "D:/Apps/artificial_neural_network/gm_testin
 
 
 # Non-linear - simple
-fact.a <- 1.5
-fact.b <- 2.5
-fact.c <- 0.5
-fact.d <- 1.0
+fact.a <- 1.0
+fact.b <- 1.4
+fact.c <- 1.0
+fact.d <- 1.9
 intercept <- -1.5
 n.data <- 10000
 
@@ -31,11 +31,11 @@ write.table(x = cbind(x, y), file = "D:/Apps/artificial_neural_network/gm_testin
 
 
 # Non-linear - test results
-fact.a <- 1.499952
-fact.b <- 2.500239
-fact.c <- 0.008709
-fact.d <- -4.625870
-intercept <- -1.500464
-y.tst <- fact.a.tst * cos(fact.b.tst * x) + fact.b.tst * sin(fact.a.tst * x) + intercept.tst
+fact.a.tst <- 1.0
+fact.b.tst <-  0.571005
+fact.c.tst <- 1.0
+fact.d.tst <- 1.903021
+intercept.tst <- -1.330659
+y.tst <- fact.a.tst * cos(fact.b.tst * x) + fact.c.tst * sin(fact.d.tst * x) + intercept.tst
 
 lines(x, y.tst, lty=3)
