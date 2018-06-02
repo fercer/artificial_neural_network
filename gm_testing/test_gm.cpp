@@ -22,7 +22,7 @@ int main(int argc, char * argv[])
 
 	my_args.newArgument("Training data filename", "dr", "dataset-training", "NULL", false);
 	my_args.newArgument("Testing data filename", "de", "dataset-testing", "NULL", false);
-	my_args.newArgument("Iterations", "i", "iterations", 2000, true);
+	my_args.newArgument("Iterations", "i", "iterations", 500, true);
 	
 	my_args.showHelp();
 
@@ -33,7 +33,7 @@ int main(int argc, char * argv[])
 	const unsigned int height = src_img->height;
 	const unsigned int inputs_count = (unsigned int)(width * height);
 	const unsigned int outputs_count = 1;
-	const unsigned int variables_count = 1;
+	const unsigned int variables_count = 6;
 
 
 	gradientMethods gradient_method;
@@ -47,7 +47,8 @@ int main(int argc, char * argv[])
 	gradient_method.setOutputsCount(outputs_count);
 	gradient_method.setTrainingDataSize(1);
 	gradient_method.setVariablesCount(variables_count);
-	
+
+	double * best_variables = (double*)malloc(variables_count * sizeof(double));
 	double * variables = (double*)malloc(variables_count * sizeof(double));
 	double * outputs_derivatives = (double*)malloc(outputs_count*sizeof(double));
 	double ** derivatives = (double**)malloc(variables_count * sizeof(double*));
@@ -56,9 +57,15 @@ int main(int argc, char * argv[])
 
 	for (unsigned int var_i = 0; var_i < variables_count; var_i++)
 	{
+		*(variables + var_i) = 0.0;
 		*(derivatives + var_i) = (double*)malloc(outputs_count*sizeof(double));
 	}
-	*(variables) = 90.0 * MY_PI / 180.0;
+	*(variables) = cos(50.0*MY_PI / 180.0);
+	*(variables + 1) = -sin(50.0*MY_PI / 180.0);
+	*(variables + 2) = 0.0;
+	*(variables + 3) = sin(58.0*MY_PI / 180.0);
+	*(variables + 4) = cos(58.0*MY_PI / 180.0);;
+	*(variables + 5) = 0.0;
 
 	const unsigned int max_iterations = my_args.getArgumentINT("-i");
 
@@ -71,24 +78,22 @@ int main(int argc, char * argv[])
 	gradient_method.setBatchSize(width);
 		
 	double previous_error = inputs_count;
+	double best_fit = previous_error;
 	
 	char filename[512];
 	for (unsigned int iteration = 0; iteration < max_iterations; iteration++)
 	{
 		// Compute the derivatives and transform the source image:
-		const double ctheta = cos(*(variables));
-		const double stheta = sin(*(variables));
-		IMG_DATA * tmp_img = rotateBicubic(src_img, ctheta, stheta, -stheta, ctheta);
-
-		if (iteration == 0)
-		saveImagePGM("first_resp.pgm", tmp_img);
-
-
+		IMG_DATA * tmp_img = rotateBicubic(src_img, *(variables), *(variables + 3), *(variables + 1), *(variables + 4));
 		IMG_DATA * dx_img = computeDerivativesX(tmp_img);
 		IMG_DATA * dy_img = computeDerivativesY(tmp_img);
 
-		IMG_DATA * diff_img = diffImage(tmp_img, trg_img, 0.0, 0.0);
+
+		IMG_DATA * diff_img = diffImage(tmp_img, trg_img, *(variables+2), *(variables + 5));
 		
+		if (iteration == 0)
+			saveImagePGM("first_resp.pgm", diff_img);
+
 		const unsigned int computable_width = diff_img->width;
 		const unsigned int computable_height = diff_img->height;
 		const unsigned int xs_ini = diff_img->UL_x;
@@ -104,44 +109,34 @@ int main(int argc, char * argv[])
 				*(outputs_derivatives) = difference;
 
 				// Contribution to the error corresponding to the theta parameters:
-				**(derivatives) = 
-					-*(dx_img->image_data + (y + ys_ini)*dx_img->width + x + xs_ini) * (-stheta * (x + xs_ini) - ctheta * (y + ys_ini)) -
-					-*(dy_img->image_data + (y + ys_ini)*dy_img->width + x + xs_ini) * (ctheta * (x + xs_ini) - stheta * (y + ys_ini));
-
+				**(derivatives) = -*(dx_img->image_data + (y + ys_ini)*dx_img->width + x + xs_ini) * (x + xs_ini);
+				**(derivatives + 1) = -*(dx_img->image_data + (y + ys_ini)*dx_img->width + x + xs_ini) * (y + ys_ini);
+				**(derivatives + 2) = -*(dx_img->image_data + (y + ys_ini)*dx_img->width + x + xs_ini);
+				**(derivatives + 3) = -*(dy_img->image_data + (y + ys_ini)*dy_img->width + x + xs_ini) * (x + xs_ini);
+				**(derivatives + 4) = -*(dy_img->image_data + (y + ys_ini)*dy_img->width + x + xs_ini) * (y + ys_ini);
+				**(derivatives + 5) = -*(dy_img->image_data + (y + ys_ini)*dy_img->width + x + xs_ini);
 				gradient_method.updateDeltasValues();
 			}
 		}
 		const double squared_gradient_norm = gradient_method.updateVariablesValues();
-
-		for (unsigned int variable_index = 0; variable_index < variables_count; variable_index++)
-		{
-			printf("%f\n", *(variables + variable_index));
-		}
-		printf("\n");
 		printf("[%i/%i] MSE = %f, previous MSE = %f, squared gradient = %f\n", iteration, max_iterations, mean_error, previous_error, squared_gradient_norm);
 		while (!gradient_method.confirmDescent(previous_error - mean_error))
 		{	
-			for (unsigned int variable_index = 0; variable_index < variables_count; variable_index++)
-			{
-				printf("%f\n", *(variables + variable_index));
-			}
-			printf("\n");
 
+			IMG_DATA * tmp_img_LM = rotateBicubic(src_img, *(variables), *(variables + 3), *(variables + 1), *(variables + 4));
 			// Compute the derivatives and transform the source image:
-			const double ctheta = cos(*(variables));
-			const double stheta = sin(*(variables));
-			IMG_DATA * tmp_img_LM = rotateBicubic(src_img, ctheta, stheta, -stheta, ctheta);
-			mean_error = computeLoss(tmp_img_LM, trg_img,0.0, 0.0);
-			printf("MSE = %f\n", mean_error);
+			mean_error = computeLoss(tmp_img_LM, trg_img, *(variables+2), *(variables+5));
+
 			free(tmp_img_LM->image_data);
 			free(tmp_img_LM);
 		}
+
 		previous_error = mean_error;
-		for (unsigned int variable_index = 0; variable_index < variables_count; variable_index++)
+		if (best_fit > mean_error)
 		{
-			printf("%f\n", *(variables + variable_index));
+			best_fit = mean_error;
+			memcpy(best_variables, variables, variables_count * sizeof(double));
 		}
-		printf("\n");
 
 		free(tmp_img->image_data);
 		free(tmp_img);
@@ -153,19 +148,32 @@ int main(int argc, char * argv[])
 		free(diff_img);
 	}
 
-	const double ctheta = cos(*(variables));
-	const double stheta = sin(*(variables));
-	IMG_DATA * tmp_img = rotateBicubic(src_img, ctheta, stheta, -stheta, ctheta);
+	IMG_DATA * tmp_img = rotateBicubic(src_img, *(variables), *(variables + 3), *(variables + 1), *(variables + 4));
+	IMG_DATA * diff_img = diffImage(tmp_img, trg_img, *(variables + 2), *(variables + 5));
 
-	saveImagePGM("final_resp.pgm", tmp_img);
+	saveImagePGM("final_resp.pgm", diff_img);
 
 	for (unsigned int var_i = 0; var_i < variables_count; var_i++)
 	{
 		printf("var[%i] = %f\n", var_i, *(variables + var_i));
 		free(*(derivatives + var_i));
 	}
+
+
+	IMG_DATA * best_tmp_img = rotateBicubic(src_img, *(best_variables), *(best_variables + 3), *(best_variables + 1), *(best_variables + 4));
+	IMG_DATA * best_diff_img = diffImage(best_tmp_img, trg_img, *(best_variables + 2), *(best_variables + 5));
+
+	saveImagePGM("best_resp.pgm", best_diff_img);
+
+	printf("Best set:\n");
+	for (unsigned int var_i = 0; var_i < variables_count; var_i++)
+	{
+		printf("var[%i] = %f\n", var_i, *(best_variables + var_i));
+	}
+	
 	free(derivatives);
 	free(variables);
+	free(best_variables);
 	free(outputs_derivatives);
 	free(my_seed);
 
@@ -174,5 +182,14 @@ int main(int argc, char * argv[])
 	free(trg_img->image_data);
 	free(trg_img);
 
+	free(tmp_img->image_data);
+	free(tmp_img);
+	free(diff_img->image_data);
+	free(diff_img);
+
+	free(best_tmp_img->image_data);
+	free(best_tmp_img);
+	free(best_diff_img->image_data);
+	free(best_diff_img);
 	return 0;
 }
