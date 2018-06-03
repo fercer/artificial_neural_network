@@ -309,15 +309,15 @@ double computeLoss(IMG_DATA * src_img, IMG_DATA * trg_img, const double delta_x,
 	const unsigned int src_half_width_left = (unsigned int)floor((double)src_width / 2.0);
 	const unsigned int src_half_height_upper = (unsigned int)floor((double)src_height / 2.0);
 
-	const unsigned int ULs_x = -src_half_width_left - (unsigned int)floor(delta_x);
-	const unsigned int ULs_y = -src_half_height_upper - (unsigned int)floor(delta_y);
-	const unsigned int LRs_x = ULs_x + src_width;
-	const unsigned int LRs_y = ULs_y + src_height;
+	const int ULs_x = -src_half_width_left - (unsigned int)floor(delta_x);
+	const int ULs_y = -src_half_height_upper - (unsigned int)floor(delta_y);
+	const int LRs_x = ULs_x + src_width;
+	const int LRs_y = ULs_y + src_height;
 
-	const unsigned int ULt_x = -(unsigned int)floor((double)trg_width / 2.0);
-	const unsigned int ULt_y = -(unsigned int)floor((double)trg_height / 2.0);
-	const unsigned int LRt_x = ULt_x + trg_width;
-	const unsigned int LRt_y = ULt_y + trg_height;
+	const int ULt_x = -(unsigned int)floor((double)trg_width / 2.0);
+	const int ULt_y = -(unsigned int)floor((double)trg_height / 2.0);
+	const int LRt_x = ULt_x + trg_width;
+	const int LRt_y = ULt_y + trg_height;
 
 	unsigned int xs_ini, xs_end;
 	unsigned int ys_ini, ys_end;
