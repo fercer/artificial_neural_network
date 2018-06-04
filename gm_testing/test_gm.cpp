@@ -23,6 +23,7 @@ int main(int argc, char * argv[])
 	my_args.newArgument("Training data filename", "dr", "dataset-training", "NULL", false);
 	my_args.newArgument("Testing data filename", "de", "dataset-testing", "NULL", false);
 	my_args.newArgument("Iterations", "i", "iterations", 100, true);
+	my_args.newArgument("SAve each i iterations", "si", "save-iterations", 10, true);
 	
 	my_args.showHelp();
 
@@ -35,14 +36,12 @@ int main(int argc, char * argv[])
 	const unsigned int outputs_count = 1;
 	const unsigned int variables_count = 8;
 
-
 	gradientMethods gradient_method;
 	//gradient_method.setGradientMethod(gradientMethods::GRADIENT_DESCENT);
 	gradient_method.setGradientMethod(gradientMethods::LEVENBERG_MARQUARDT);
 	//gradient_method.setGradientMethod(gradientMethods::MINI_BATCH_GRADIENT_DESCENT);
 	//gradient_method.setGradientMethod(gradientMethods::STOCHASTIC_GRADIENT_DESCENT);
 	//gradient_method.setGradientMethod(gradientMethods::MINI_BATCH_STOCHASTIC_GRADIENT_DESCENT);
-
 
 	gradient_method.setOutputsCount(outputs_count);
 	gradient_method.setTrainingDataSize(1);
@@ -60,18 +59,19 @@ int main(int argc, char * argv[])
 		*(variables + var_i) = 0.0;
 		*(derivatives + var_i) = (double*)malloc(outputs_count*sizeof(double));
 	}
-	*(variables) = 0.5;
-	*(variables + 1) = 0.5;
+	*(variables) = 1.0;
+	*(variables + 1) = 1.0;
 
-	*(variables + 2) = cos(0.0*MY_PI / 180.0);
-	*(variables + 3) = -sin(0.0*MY_PI / 180.0);
-	*(variables + 4) = sin(0.0*MY_PI / 180.0);
-	*(variables + 5) = cos(0.0*MY_PI / 180.0);
+	*(variables + 2) = cos(0.0);
+	*(variables + 3) = -sin(0.0);
+	*(variables + 4) = sin(0.0);
+	*(variables + 5) = cos(0.0);
 
 	*(variables + 6) = 0.0;
 	*(variables + 7) = 0.0;
 
 	const unsigned int max_iterations = my_args.getArgumentINT("-i");
+	const unsigned int save_iterations = my_args.getArgumentINT("-si");
 
 	gradient_method.setLearningRate(0.05);
 	gradient_method.setMomentum(0.9);
@@ -94,42 +94,113 @@ int main(int argc, char * argv[])
 	
 		IMG_DATA * diff_img = diffImage(tmp_img, trg_img, *(variables + 6), *(variables + 7));
 		
-		if (iteration == 0)
-			saveImagePGM("first_resp.pgm", diff_img);
+		if (iteration % save_iterations == 0)
+		{
+			sprintf(filename, "resp_%i.pgm", iteration);
+			saveImagePGM(filename, diff_img);
+		}
 
-		const unsigned int computable_width = diff_img->width;
-		const unsigned int computable_height = diff_img->height;
+		unsigned int xs_ini = diff_img->tail_roi->UL_x;
+		unsigned int ys_ini = diff_img->tail_roi->UL_y;
+
+		ROI_BBOX * next_roi = diff_img->head_roi.next_roi;
+		ROI_BBOX * current_roi;
 
 		double mean_error = 0.0;
-		for (unsigned int y = 0; y < computable_height; y++)
+
+		while (next_roi)
 		{
-			for (unsigned int x = 0; x < computable_width; x++)
+			current_roi = next_roi;
+			next_roi = current_roi->next_roi;
+
+			const unsigned int roi_x_ini = current_roi->UL_x;
+			const unsigned int roi_x_end = current_roi->LR_x;
+			const unsigned int roi_y_ini = current_roi->UL_y;
+			const unsigned int roi_y_end = current_roi->LR_y;
+
+			switch (current_roi->ROI_type)
 			{
-				const double difference = *(diff_img->image_data + y*computable_width + x);
-				mean_error += difference * difference / 2.0;
-				*(outputs_derivatives) = difference;
+			case RBT_INTERSECTION:
+				for (unsigned int y = roi_y_ini; y < roi_y_end; y++)
+				{
+					for (unsigned int x = roi_x_ini; x < roi_x_end; x++)
+					{
+						const double d_intensity = *(diff_img->image_data + y * diff_img->width + x);
+						mean_error += d_intensity*d_intensity;
+
+						*(outputs_derivatives) = -d_intensity;
+						
+						// Contribution to the error corresponding to the theta parameters:
+						**(derivatives) = -*(dx_img->image_data + (y - ys_ini)*dx_img->width + x - xs_ini) * ((x - xs_ini) * *(variables + 2) + (y - ys_ini) * *(variables + 3));
+
+						**(derivatives + 1) = -*(dy_img->image_data + (y - ys_ini)*dy_img->width + x - xs_ini) * ((x - xs_ini) * *(variables + 4) + (y - ys_ini) * *(variables + 5));
+
+						**(derivatives + 2) = -*(dx_img->image_data + (y - ys_ini)*dx_img->width + x - xs_ini) * *(variables) * (x - xs_ini);
+
+						**(derivatives + 3) = -*(dx_img->image_data + (y - ys_ini)*dx_img->width + x - xs_ini) * *(variables) * (y - ys_ini);
+
+						**(derivatives + 4) = -*(dy_img->image_data + (y - ys_ini)*dy_img->width + x - xs_ini) * *(variables + 1) * (x - xs_ini);
+
+						**(derivatives + 5) = -*(dy_img->image_data + (y - ys_ini)*dy_img->width + x - xs_ini) * *(variables + 1) * (y - ys_ini);
+
+						**(derivatives + 6) = -*(dx_img->image_data + (y - ys_ini)*dx_img->width + x - xs_ini);
+
+						**(derivatives + 7) = -*(dy_img->image_data + (y - ys_ini)*dy_img->width + x - xs_ini);
+
+						gradient_method.updateDeltasValues();
+					}
+				}
+				break;
+
+			case RBT_SOURCE:
+				for (unsigned int y = roi_y_ini; y < roi_y_end; y++)
+				{
+					for (unsigned int x = roi_x_ini; x < roi_x_end; x++)
+					{
+						const double d_intensity = *(diff_img->image_data + y * diff_img->width + x);
+						mean_error += d_intensity*d_intensity;
+
+						*(outputs_derivatives) = -d_intensity;
+
+						// Contribution to the error corresponding to the theta parameters:
+						**(derivatives) = -*(dx_img->image_data + (y - ys_ini)*dx_img->width + x - xs_ini) * ((x - xs_ini) * *(variables + 2) + (y - ys_ini) * *(variables + 3));
+
+						**(derivatives + 1) = -*(dy_img->image_data + (y - ys_ini)*dy_img->width + x - xs_ini) * ((x - xs_ini) * *(variables + 4) + (y - ys_ini) * *(variables + 5));
+
+						**(derivatives + 2) = -*(dx_img->image_data + (y - ys_ini)*dx_img->width + x - xs_ini) * *(variables) * (x - xs_ini);
+
+						**(derivatives + 3) = -*(dx_img->image_data + (y - ys_ini)*dx_img->width + x - xs_ini) * *(variables) * (y - ys_ini);
+
+						**(derivatives + 4) = -*(dy_img->image_data + (y - ys_ini)*dy_img->width + x - xs_ini) * *(variables + 1) * (x - xs_ini);
+
+						**(derivatives + 5) = -*(dy_img->image_data + (y - ys_ini)*dy_img->width + x - xs_ini) * *(variables + 1) * (y - ys_ini);
+
+						**(derivatives + 6) = -*(dx_img->image_data + (y - ys_ini)*dx_img->width + x - xs_ini);
+
+						**(derivatives + 7) = -*(dy_img->image_data + (y - ys_ini)*dy_img->width + x - xs_ini);
+
+						gradient_method.updateDeltasValues();
+					}
+				}
+				break;
+			case RBT_TARGET:
+				for (unsigned int y = roi_y_ini; y < roi_y_end; y++)
+				{
+					for (unsigned int x = roi_x_ini; x < roi_x_end; x++)
+					{
+						const double d_intensity = *(diff_img->image_data + y * diff_img->width + x);
+						mean_error += d_intensity*d_intensity;
+					}
+				}
+				break;
+			case RBT_AREA:
+			case RBT_ROTATED:
+			case RBT_UNCOMPUTED:
+				break;
 			}
 		}
-				// Contribution to the error corresponding to the theta parameters:
-				**(derivatives) = -*(dx_img->image_data + (y + ys_ini)*dx_img->width + x + xs_ini) *					((x + xs_ini) * *(variables + 2) + (y + ys_ini) * *(variables + 3));
+		mean_error /= 2.0;
 
-				**(derivatives + 1) = -*(dy_img->image_data + (y + ys_ini)*dy_img->width + x + xs_ini) *					((x + xs_ini) * *(variables + 4) + (y + ys_ini) * *(variables + 5));
-
-				**(derivatives + 2) = 0.0;//-*(dx_img->image_data + (y + ys_ini)*dx_img->width + x + xs_ini) *					*(variables) * (x + xs_ini);
-
-				**(derivatives + 3) = 0.0;//-*(dx_img->image_data + (y + ys_ini)*dx_img->width + x + xs_ini) *					*(variables) * (y + ys_ini);
-
-				**(derivatives + 4) = 0.0;//-*(dy_img->image_data + (y + ys_ini)*dy_img->width + x + xs_ini) *					*(variables + 1) * (x + xs_ini);
-
-				**(derivatives + 5) = 0.0;//-*(dy_img->image_data + (y + ys_ini)*dy_img->width + x + xs_ini) *					*(variables + 1) * (y + ys_ini);
-
-				**(derivatives + 6) = 0.0;// -*(dx_img->image_data + (y + ys_ini)*dx_img->width + x + xs_ini);
-
-				**(derivatives + 7) = 0.0;// -*(dy_img->image_data + (y + ys_ini)*dy_img->width + x + xs_ini);
-
-				gradient_method.updateDeltasValues();
-			}
-		}
 		const double squared_gradient_norm = gradient_method.updateVariablesValues();
 		printf("[%i] MSE = %f, prev. MSE = %f, sq. grad = %f (%f", iteration, mean_error, previous_error, squared_gradient_norm, *(variables));
 		for (unsigned int variables_index = 1; variables_index < variables_count; variables_index++)
@@ -142,11 +213,13 @@ int main(int argc, char * argv[])
 		{	
 
 			IMG_DATA * tmp_img_LM = rotateBicubic(src_img, *(variables + 2) / *(variables), *(variables + 4) / *(variables), *(variables + 3) / *(variables + 1), *(variables + 5) / *(variables + 1));
-			// Compute the derivatives and transform the source image:
-			mean_error = computeLoss(tmp_img_LM, trg_img, *(variables+6), *(variables+7));
+			IMG_DATA * diff_img_LM = diffImage(tmp_img_LM, trg_img, *(variables + 6), *(variables + 7));
 
-			free(tmp_img_LM->image_data);
-			free(tmp_img_LM);
+			// Compute the derivatives and transform the source image:
+			mean_error = computeLoss(diff_img_LM);
+
+			freeImageData(tmp_img_LM);
+			freeImageData(diff_img_LM);
 		}
 
 		previous_error = mean_error;
@@ -156,14 +229,10 @@ int main(int argc, char * argv[])
 			memcpy(best_variables, variables, variables_count * sizeof(double));
 		}
 
-		free(tmp_img->image_data);
-		free(tmp_img);
-		free(dx_img->image_data);
-		free(dx_img);
-		free(dy_img->image_data);
-		free(dy_img);
-		free(diff_img->image_data);
-		free(diff_img);
+		freeImageData(tmp_img);
+		freeImageData(dx_img);
+		freeImageData(dy_img);
+		freeImageData(diff_img);
 	}
 
 	IMG_DATA * tmp_img = rotateBicubic(src_img, *(variables + 2) / *(variables), *(variables + 4) / *(variables), *(variables + 3) / *(variables + 1), *(variables + 5) / *(variables + 1));
@@ -195,19 +264,14 @@ int main(int argc, char * argv[])
 	free(outputs_derivatives);
 	free(my_seed);
 
-	free(src_img->image_data);
-	free(src_img);
-	free(trg_img->image_data);
-	free(trg_img);
+	freeImageData(src_img);
+	freeImageData(trg_img);
 
-	free(tmp_img->image_data);
-	free(tmp_img);
-	free(diff_img->image_data);
-	free(diff_img);
+	freeImageData(tmp_img);
+	freeImageData(diff_img);
 
-	free(best_tmp_img->image_data);
-	free(best_tmp_img);
-	free(best_diff_img->image_data);
-	free(best_diff_img);
+	freeImageData(best_tmp_img);
+	freeImageData(best_diff_img);
 	return 0;
+	
 }

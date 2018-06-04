@@ -272,86 +272,45 @@ IMG_DATA * rotateBicubic(IMG_DATA * src_img, const double theta_11, const double
 }
 
 
-double computeLoss(IMG_DATA * src_img, IMG_DATA * trg_img, const double delta_x, const double delta_y)
+double computeLoss(IMG_DATA * src_diff_img)
 {
-	// Compute the loss only on the intersection of the both images:
-	const unsigned int src_width = src_img->width;
-	const unsigned int src_height = src_img->height;
-	const unsigned int trg_width = trg_img->width;
-	const unsigned int trg_height = trg_img->height;
-
-	const unsigned int src_half_width_left = (unsigned int)floor((double)src_width / 2.0);
-	const unsigned int src_half_height_upper = (unsigned int)floor((double)src_height / 2.0);
-
-	const int ULs_x = -src_half_width_left - (unsigned int)floor(delta_x);
-	const int ULs_y = -src_half_height_upper - (unsigned int)floor(delta_y);
-	const int LRs_x = ULs_x + src_width;
-	const int LRs_y = ULs_y + src_height;
-
-	const int ULt_x = -(unsigned int)floor((double)trg_width / 2.0);
-	const int ULt_y = -(unsigned int)floor((double)trg_height / 2.0);
-	const int LRt_x = ULt_x + trg_width;
-	const int LRt_y = ULt_y + trg_height;
-
-	unsigned int xs_ini, xs_end;
-	unsigned int ys_ini, ys_end;
-	unsigned int xt_ini, yt_ini;
-
-	if (ULs_x > ULt_x)
-	{
-		xs_ini = 0;
-		xt_ini = ULs_x - ULt_x;
-	}
-	else
-	{
-		xs_ini = ULt_x - ULs_x;
-		xt_ini = 0;
-	}
-
-	if (ULs_y > ULt_y)
-	{
-		ys_ini = 0;
-		yt_ini = ULs_y - ULt_y;
-	}
-	else
-	{
-		ys_ini = ULt_y - ULs_y;
-		yt_ini = 0;
-	}
-
-	if (LRs_x < LRt_x)
-	{
-		xs_end = src_width - 1; // To make it inclusive
-	}
-	else
-	{
-		xs_end = LRt_x - ULs_x - 1;
-	}
-
-	if (LRs_y < LRt_y)
-	{
-		ys_end = src_height - 1; // To make it inclusive
-	}
-	else
-	{
-		ys_end = LRt_y - ULs_y - 1;
-	}
-
-	const unsigned int computable_width = xs_end - xs_ini;
-	const unsigned int computable_height = ys_end - ys_ini;
+	ROI_BBOX * next_roi = src_diff_img->head_roi.next_roi;
+	ROI_BBOX * current_roi;
 
 	double cost = 0.0;
-	for (unsigned int y = 0; y <= computable_height; y++)
+
+	while (next_roi)
 	{
-		for (unsigned int x = 0; x <= computable_width; x++)
+		current_roi = next_roi;
+		next_roi = current_roi->next_roi;
+
+		const unsigned int roi_x_ini = current_roi->UL_x;
+		const unsigned int roi_x_end = current_roi->LR_x;
+		const unsigned int roi_y_ini = current_roi->UL_y;
+		const unsigned int roi_y_end = current_roi->LR_y;
+
+		switch (current_roi->ROI_type)
 		{
-			const double s_intensity = *(src_img->image_data + (y + ys_ini) * src_img->width + x + xs_ini);
-			const double t_intensity = *(trg_img->image_data + (y + yt_ini) * trg_img->width + x + xt_ini);
-			const double differences = t_intensity - s_intensity;
-			cost += differences *  differences;
+		case RBT_INTERSECTION:
+			for (unsigned int y = roi_y_ini; y < roi_y_end; y++)
+			{
+				for (unsigned int x = roi_x_ini; x < roi_x_end; x++)
+				{
+					const double d_intensity = *(src_diff_img->image_data + y * src_diff_img->width + x);
+					cost += d_intensity*d_intensity;
+				}
+			}
+			break;
+
+		case RBT_AREA:
+		case RBT_ROTATED:
+		case RBT_TARGET:
+		case RBT_SOURCE:
+		case RBT_UNCOMPUTED:
+			break;
 		}
 	}
-
+	
 	return cost / 2.0;
 }
 
@@ -510,16 +469,16 @@ IMG_DATA * diffImage(IMG_DATA * src_img, IMG_DATA * trg_img, const double delta_
 	const unsigned int trg_width = trg_img->width;
 	const unsigned int trg_height = trg_img->height;
 
-	const unsigned int src_half_width_left = (unsigned int)floor((double)src_width / 2.0);
-	const unsigned int src_half_height_upper = (unsigned int)floor((double)src_height / 2.0);
+	const int src_half_width_left = (int)floor((double)src_width / 2.0);
+	const int src_half_height_upper = (int)floor((double)src_height / 2.0);
 
-	int ULs_x = -src_half_width_left - (unsigned int)floor(delta_x);
-	int ULs_y = -src_half_height_upper - (unsigned int)floor(delta_y);
+	int ULs_x = -src_half_width_left - (int)floor(delta_x);
+	int ULs_y = -src_half_height_upper - (int)floor(delta_y);
 	const int LRs_x = ULs_x + src_width;
 	const int LRs_y = ULs_y + src_height;
 
-	int ULt_x = -(unsigned int)floor((double)trg_width / 2.0);
-	int ULt_y = -(unsigned int)floor((double)trg_height / 2.0);
+	int ULt_x = -(int)floor((double)trg_width / 2.0);
+	int ULt_y = -(int)floor((double)trg_height / 2.0);
 	const int LRt_x = ULt_x + trg_width;
 	const int LRt_y = ULt_y + trg_height;
 
@@ -549,7 +508,7 @@ IMG_DATA * diffImage(IMG_DATA * src_img, IMG_DATA * trg_img, const double delta_
 	freePositionsTree(y_posititons_root);
 	
 	const unsigned int computable_width = *(x_positions + x_positions_count-1) - *(x_positions);
-	const unsigned int computable_height = *(y_positions + y_positions_count - 1) - *(y_positions);
+	const unsigned int computable_height = *(y_positions + y_positions_count-1) - *(y_positions);
 
 	IMG_DATA * diff_img = createVoidImage(computable_width, computable_height);
 
@@ -567,24 +526,25 @@ IMG_DATA * diffImage(IMG_DATA * src_img, IMG_DATA * trg_img, const double delta_
 			const int LLroi_x = *(x_positions + x_positions_index);
 			const int LLroi_y = *(y_positions + y_positions_index + 1);
 
-			ROI_BBOX_TYPE current_roi_type = RBT_UNCOMPUTED;
-			if ((ULroi_x == ULs_x && ULroi_y == ULs_y) || (LRroi_x == LRs_x && LRroi_y == LRs_y))
+			const int center_x = (int)floor((double)(ULroi_x + LRroi_x) / 2.0);
+			const int center_y = (int)floor((double)(ULroi_y + LRroi_y) / 2.0);
+
+			int current_roi_type_int = (int)RBT_UNCOMPUTED;
+
+			// Verify if the current roi is inside the source image:
+			if (ULs_x < center_x && ULs_y < center_y && center_x < LRs_x && center_y < LRs_y)
 			{
-				current_roi_type = RBT_SOURCE;
+				current_roi_type_int += (int)RBT_SOURCE;
 			}
 
-			if ((ULroi_x == ULt_x && ULroi_y == ULt_y) || (LRroi_x == LRt_x && LRroi_y == LRs_y))
+			// Verify if the current roi is inside the target image:
+			if (ULt_x < center_x && ULt_y < center_y && center_x < LRt_x && center_y < LRt_y)
 			{
-				current_roi_type = RBT_TARGET;
-			}
-
-			if (ULroi_x == ULi_x && ULroi_y == ULi_y)
-			{
-				current_roi_type = RBT_INTERSECTION;
+				current_roi_type_int += (int)RBT_TARGET;
 			}
 
 			addImageROI(diff_img, 
-				current_roi_type, 
+				(ROI_BBOX_TYPE)current_roi_type_int, 
 				ULroi_x - *(x_positions),
 				ULroi_y - *(y_positions),
 				URroi_x - *(x_positions),
@@ -602,6 +562,18 @@ IMG_DATA * diffImage(IMG_DATA * src_img, IMG_DATA * trg_img, const double delta_
 	ULs_y -= *(y_positions);
 	ULt_y -= *(y_positions);
 
+
+	addImageROI(diff_img,
+		RBT_AREA,
+		ULs_x,
+		ULs_y,
+		ULs_x + src_width,
+		ULs_y,
+		ULs_x + src_width,
+		ULs_y + src_height,
+		ULs_x,
+		ULs_y + src_width);
+
 	free(x_positions);
 	free(y_positions);
 
@@ -617,16 +589,16 @@ IMG_DATA * diffImage(IMG_DATA * src_img, IMG_DATA * trg_img, const double delta_
 		next_roi = current_roi->next_roi;
 
 		const unsigned int roi_x_ini = current_roi->UL_x;
-		const unsigned int roi_x_end = current_roi->UR_y;
-		const unsigned int roi_y_ini = current_roi->LR_x;
+		const unsigned int roi_x_end = current_roi->LR_x;
+		const unsigned int roi_y_ini = current_roi->UL_y;
 		const unsigned int roi_y_end = current_roi->LR_y;
 
 		switch (current_roi->ROI_type)
 		{
 		case RBT_INTERSECTION:
-			for (unsigned int y = roi_y_ini; y <= roi_y_end; y++)
+			for (unsigned int y = roi_y_ini; y < roi_y_end; y++)
 			{
-				for (unsigned int x = roi_x_ini; x <= roi_x_end; x++)
+				for (unsigned int x = roi_x_ini; x < roi_x_end; x++)
 				{
 					const double t_intensity = *(trg_img->image_data + (y - ULt_y)* trg_width + x - ULt_x);
 					const double s_intensity = *(src_img->image_data + (y - ULs_y)* src_width + x - ULs_x);
@@ -647,9 +619,9 @@ IMG_DATA * diffImage(IMG_DATA * src_img, IMG_DATA * trg_img, const double delta_
 			break;
 
 		case RBT_TARGET:
-			for (unsigned int y = roi_y_ini; y <= roi_y_end; y++)
+			for (unsigned int y = roi_y_ini; y < roi_y_end; y++)
 			{
-				for (unsigned int x = roi_x_ini; x <= roi_x_end; x++)
+				for (unsigned int x = roi_x_ini; x < roi_x_end; x++)
 				{
 					const double t_intensity = *(trg_img->image_data + (y - ULt_y)* trg_width + x - ULt_x);
 					const double d_intensity = t_intensity;
@@ -669,9 +641,9 @@ IMG_DATA * diffImage(IMG_DATA * src_img, IMG_DATA * trg_img, const double delta_
 			break;
 
 		case RBT_SOURCE:
-			for (unsigned int y = roi_y_ini; y <= roi_y_end; y++)
+			for (unsigned int y = roi_y_ini; y < roi_y_end; y++)
 			{
-				for (unsigned int x = roi_x_ini; x <= roi_x_end; x++)
+				for (unsigned int x = roi_x_ini; x < roi_x_end; x++)
 				{
 					const double s_intensity = *(src_img->image_data + (y - ULs_y)* src_width + x - ULs_x);
 					const double d_intensity = -s_intensity;
@@ -690,6 +662,8 @@ IMG_DATA * diffImage(IMG_DATA * src_img, IMG_DATA * trg_img, const double delta_
 			}
 			break;
 
+		case RBT_AREA:
+		case RBT_ROTATED:
 		case RBT_UNCOMPUTED:
 			break;
 		}
@@ -752,38 +726,47 @@ void addImageROI(IMG_DATA * src_image_data_ptr,
 
 
 
-void addPositionLeaf(POSITION_NODE * src_current_leaf, const int src_new_position)
+int addPositionLeaf(POSITION_NODE * src_current_leaf, const int src_new_position)
 {
-	if (src_new_position == src_current_leaf->position)
+	int position_was_added = 0;
+	if (src_new_position < src_current_leaf->position)
 	{
-		// If the new position already exists, it is ommited:
-		return;
-	}
-	else if (src_new_position < src_current_leaf->position)
-	{
-		src_current_leaf->tree_depth = src_current_leaf->tree_depth + 1;
-		src_current_leaf->count_left_leaves = src_current_leaf->count_left_leaves + 1;
 		if (!src_current_leaf->left_leaf) // Left base case:
 		{
 			src_current_leaf->left_leaf = newPositionLeaf(src_new_position);
+			// The position was succesfully assigned to a leaf:
+			src_current_leaf->count_left_leaves = src_current_leaf->count_left_leaves + 1;
+			src_current_leaf->tree_depth = src_current_leaf->tree_depth + 1;
+			position_was_added = 1;
 		}
 		else // Recursion to the left nodes:
 		{
-			addPositionLeaf(src_current_leaf->left_leaf, src_new_position);
+			// Pass the position to the folliwing leaf to verify if the position is added:
+			position_was_added = addPositionLeaf(src_current_leaf->left_leaf, src_new_position);
+			src_current_leaf->count_left_leaves = src_current_leaf->count_left_leaves + position_was_added;
+			src_current_leaf->tree_depth = src_current_leaf->tree_depth + position_was_added;
 		}
 	}
-	else
+	else if(src_new_position > src_current_leaf->position)
 	{
-		src_current_leaf->tree_depth = src_current_leaf->tree_depth + 1;
 		if (!src_current_leaf->right_leaf) // Right base case:
 		{
 			src_current_leaf->right_leaf = newPositionLeaf(src_new_position);
+
+			// The position was succesfully assigned to a leaf:
+			src_current_leaf->tree_depth = src_current_leaf->tree_depth + 1;
+			position_was_added = 1;
 		}
 		else // Recursion to the left nodes:
 		{
-			addPositionLeaf(src_current_leaf->right_leaf, src_new_position);
+			// Pass the position to the folliwing leaf to verify if the position is added:
+			position_was_added = addPositionLeaf(src_current_leaf->right_leaf, src_new_position);
+			src_current_leaf->tree_depth = src_current_leaf->tree_depth + position_was_added;
 		}
 	}
+
+	// If the new position already exists, it is ommited:
+	return position_was_added;
 }
 
 
@@ -791,11 +774,13 @@ void addPositionLeaf(POSITION_NODE * src_current_leaf, const int src_new_positio
 POSITION_NODE * newPositionLeaf(const unsigned int src_new_position)
 {
 	POSITION_NODE* new_leaf = (POSITION_NODE*)malloc(sizeof(POSITION_NODE));
-	new_leaf->left_leaf->position = src_new_position;
-	new_leaf->left_leaf->left_leaf = NULL;
-	new_leaf->left_leaf->right_leaf = NULL;
+	new_leaf->position = src_new_position;
+	new_leaf->left_leaf = NULL;
+	new_leaf->right_leaf = NULL;
 	new_leaf->count_left_leaves = 0;
 	new_leaf->tree_depth = 1;
+
+	return new_leaf;
 }
 
 

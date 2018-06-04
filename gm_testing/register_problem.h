@@ -14,7 +14,7 @@ typedef enum ROI_BBOX_TYPE {
 	RBT_ROTATED = 2,
 	RBT_SOURCE = 4,
 	RBT_TARGET = 8,
-	RBT_INTERSECTION = 16
+	RBT_INTERSECTION = 12
 };
 
 typedef struct ROI_BBOX /* [R]egion [O]f [I]nterest [B]ounding [BOX]*/
@@ -52,7 +52,7 @@ inline double bicubicInterpolation(IMG_DATA *src_img, const double x, const doub
 
 IMG_DATA * rotateBicubic(IMG_DATA * src_img, const double theta_11, const double theta_12, const double theta_21, const double theta_22);
 
-double computeLoss(IMG_DATA * src_img, IMG_DATA * trg_img, const double delta_x, const double delta_y);
+double computeLoss(IMG_DATA * src_diff_img);
 
 IMG_DATA * computeDerivativesX(IMG_DATA * src_img);
 IMG_DATA * computeDerivativesY(IMG_DATA * src_img);
@@ -75,12 +75,14 @@ void addImageROI(IMG_DATA * src_image_data_ptr,
 	const unsigned int src_LL_y);
 
 
-void addPositionLeaf(POSITION_NODE * src_current_leaf, const int src_new_position);
+int addPositionLeaf(POSITION_NODE * src_current_leaf, const int src_new_position);
 
 POSITION_NODE * newPositionLeaf(const unsigned int src_new_position);
 
 int * dumpPositionsTree(POSITION_NODE * tree_root);
 
 void dumpPositionLeaf(POSITION_NODE * src_current_leaf, const unsigned int src_count_positions_left, int * dst_positions_array);
+
+void freePositionsTree(POSITION_NODE * src_tree_root);
 
 #endif //REGISTER_PROBLEM_INCLUDED
