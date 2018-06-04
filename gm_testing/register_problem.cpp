@@ -65,49 +65,6 @@ void saveImagePGM(const char * filename, IMG_DATA * src_img)
 
 
 
-IMG_DATA * presetProblem(IMG_DATA * src_img, IMG_DATA * trg_img)
-{
-	const unsigned int src_width = src_img->width;
-	const unsigned int src_height = src_img->height;
-
-	const unsigned int trg_width = trg_img->width;
-	const unsigned int trg_height = trg_img->height;
-
-	const unsigned int trg_width_2_left = (unsigned int)floor((double)trg_width / 2.0);
-	const unsigned int trg_height_2_upper = (unsigned int)floor((double)trg_height / 2.0);
-
-	const unsigned int src_width_2_left = (unsigned int)floor((double)src_width / 2.0);
-	const unsigned int src_height_2_upper = (unsigned int)floor((double)src_height / 2.0);
-
-	const unsigned int offset_left = trg_width_2_left - src_width_2_left;
-	const unsigned int offset_upper = trg_height_2_upper - src_height_2_upper;
-
-	IMG_DATA * dst_img = (IMG_DATA*)malloc(sizeof(IMG_DATA));
-	dst_img->image_data = (double*)calloc(trg_width * trg_height, sizeof(double));
-	dst_img->width = trg_width;
-	dst_img->height = trg_height;
-	dst_img->min_value = src_img->min_value;
-	dst_img->max_value = src_img->max_value;
-
-	dst_img->UL_x = 0;
-	dst_img->UL_y = 0;
-	dst_img->UR_x = trg_width - 1;
-	dst_img->UR_y = 0;
-	dst_img->LR_x = trg_width - 1;
-	dst_img->LR_y = trg_height - 1;
-	dst_img->LL_x = 0;
-	dst_img->LL_y = trg_height - 1;
-
-	for (unsigned int y = 0; y < src_height; y++)
-	{
-		memcpy(dst_img->image_data + (y + offset_upper)*trg_width + offset_left, src_img->image_data + y*src_width, src_width * sizeof(double));
-	}
-
-	return dst_img;
-}
-
-
-
 double bicubicInterpolation(IMG_DATA *src_img, const double x, const double y)
 {
 	const unsigned int src_width = src_img->width;
@@ -176,17 +133,38 @@ IMG_DATA * rotateBicubic(IMG_DATA * src_img, const double theta_11, const double
 	const double inv_theta_22 = theta_11 / rotation_matrix_determinant;
 
 	/* Rotate the ROI corners of the source image to figure out the size fo the destination image */
-	const double UL_x = inv_theta_11 * ((double)src_img->UL_x - half_src_width) + inv_theta_21 * ((double)src_img->UL_y - half_src_height) + half_src_width;
-	const double UL_y = inv_theta_12 * ((double)src_img->UL_x - half_src_width) + inv_theta_22 * ((double)src_img->UL_y - half_src_height) + half_src_height;
+	const double UL_x = half_src_width +
+		inv_theta_11 * ((double)src_img->head_roi.UL_x - half_src_width) +
+		inv_theta_21 * ((double)src_img->head_roi.UL_y - half_src_height);
 
-	const double UR_x = inv_theta_11 * ((double)src_img->UR_x - half_src_width) + inv_theta_21 * ((double)src_img->UR_y - half_src_height) + half_src_width;
-	const double UR_y = inv_theta_12 * ((double)src_img->UR_x - half_src_width) + inv_theta_22 * ((double)src_img->UR_y - half_src_height) + half_src_height;
+	const double UL_y = half_src_height +
+		inv_theta_12 * ((double)src_img->head_roi.UL_x - half_src_width) +
+		inv_theta_22 * ((double)src_img->head_roi.UL_y - half_src_height);
 
-	const double LR_x = inv_theta_11 * ((double)src_img->LR_x - half_src_width) + inv_theta_21 * ((double)src_img->LR_y - half_src_height) + half_src_width;
-	const double LR_y = inv_theta_12 * ((double)src_img->LR_x - half_src_width) + inv_theta_22 * ((double)src_img->LR_y - half_src_height) + half_src_height;
+	const double UR_x = half_src_width +
+		inv_theta_11 * ((double)src_img->head_roi.UR_x - half_src_width) +
+		inv_theta_21 * ((double)src_img->head_roi.UR_y - half_src_height);
 
-	const double LL_x = inv_theta_11 * ((double)src_img->LL_x - half_src_width) + inv_theta_21 * ((double)src_img->LL_y - half_src_height) + half_src_width;
-	const double LL_y = inv_theta_12 * ((double)src_img->LL_x - half_src_width) + inv_theta_22 * ((double)src_img->LL_y - half_src_height) + half_src_height;
+	const double UR_y = half_src_height +
+		inv_theta_12 * ((double)src_img->head_roi.UR_x - half_src_width) +
+		inv_theta_22 * ((double)src_img->head_roi.UR_y - half_src_height);
+
+	const double LR_x = half_src_width +
+		inv_theta_11 * ((double)src_img->head_roi.LR_x - half_src_width) +
+		inv_theta_21 * ((double)src_img->head_roi.LR_y - half_src_height);
+
+	const double LR_y = half_src_height +
+		inv_theta_12 * ((double)src_img->head_roi.LR_x - half_src_width) +
+		inv_theta_22 * ((double)src_img->head_roi.LR_y - half_src_height);
+
+	const double LL_x = half_src_width +
+		inv_theta_11 * ((double)src_img->head_roi.LL_x - half_src_width) +
+		inv_theta_21 * ((double)src_img->head_roi.LL_y - half_src_height);
+
+	const double LL_y = half_src_height +
+		inv_theta_12 * ((double)src_img->head_roi.LL_x - half_src_width) +
+		inv_theta_22 * ((double)src_img->head_roi.LL_y - half_src_height);
+
 
 	// Define bounding box size:
 	const unsigned int max_width = (fabs(UL_x - LR_x) > fabs(UR_x - LL_x) ? fabs(UL_x - LR_x) : fabs(UR_x - LL_x)) + 1;
@@ -226,22 +204,18 @@ IMG_DATA * rotateBicubic(IMG_DATA * src_img, const double theta_11, const double
 		topmost_corner = LL_y;
 	}
 
-	IMG_DATA * dst_img = (IMG_DATA*)malloc(sizeof(IMG_DATA));
-	dst_img->width = max_width;
-	dst_img->height = max_height;
-	dst_img->UL_x = (unsigned int)(UL_x - leftmost_corner);
-	dst_img->UL_y = (unsigned int)(UL_y - topmost_corner);
-	dst_img->UR_x = (unsigned int)(UR_x - leftmost_corner);
-	dst_img->UR_y = (unsigned int)(UR_y - topmost_corner);
-	dst_img->LR_x = (unsigned int)(LR_x - leftmost_corner);
-	dst_img->LR_y = (unsigned int)(LR_y - topmost_corner);
-	dst_img->LL_x = (unsigned int)(LL_x - leftmost_corner);
-	dst_img->LL_y = (unsigned int)(LL_y - topmost_corner);
-	dst_img->image_data = (double*)calloc(max_height * max_width, sizeof(double));
-
-	//half_src_height = (double)(max_height - 1) / 2.0;
-	//half_src_width = (double)(max_width - 1) / 2.0;
-
+	IMG_DATA * dst_img = createVoidImage(max_width, max_height);
+	addImageROI(dst_img, 
+		RBT_ROTATED,
+		(unsigned int)(UL_x - leftmost_corner),
+		(unsigned int)(UL_y - topmost_corner),
+		(unsigned int)(UR_x - leftmost_corner),
+		(unsigned int)(UR_y - topmost_corner),
+		(unsigned int)(LR_x - leftmost_corner),
+		(unsigned int)(LR_y - topmost_corner),
+		(unsigned int)(LL_x - leftmost_corner),
+		(unsigned int)(LL_y - topmost_corner));
+	
 	/* Copy the source image to a temporal zero padded matrix. */
 	IMG_DATA * src_temp = (IMG_DATA*)malloc(sizeof(IMG_DATA));
 	src_temp->image_data = (double*)calloc((src_height + 3) * (src_width + 3), sizeof(double));
@@ -258,8 +232,8 @@ IMG_DATA * rotateBicubic(IMG_DATA * src_img, const double theta_11, const double
 	}
 
 	double interpolation_result;
-	double max_value = -1000.0;
-	double min_value = 1000.0;
+	double max_value = -1e3;
+	double min_value = 1e3;
 	for (int i = 0; i < max_height; i++)
 	{
 		for (int j = 0; j < max_width; j++)
@@ -508,14 +482,18 @@ IMG_DATA * createVoidImage(const unsigned int src_width, const unsigned int src_
 	new_img->max_value = 1.0;
 	new_img->min_value = 0.0;
 
-	new_img->UL_x = 0;
-	new_img->UL_y = 0;
-	new_img->UR_x = src_width - 1;
-	new_img->UR_y = 0;
-	new_img->LR_x = src_width - 1;
-	new_img->LR_y = src_height - 1;
-	new_img->LL_x = 0;
-	new_img->LL_y = src_height - 1;
+	new_img->head_roi.next_roi = NULL;
+	new_img->tail_roi = &new_img->head_roi;
+	
+	new_img->head_roi.ROI_type = RBT_AREA;
+	new_img->head_roi.UL_x = 0;
+	new_img->head_roi.UL_y = 0;
+	new_img->head_roi.UR_x = src_width - 1;
+	new_img->head_roi.UR_y = 0;
+	new_img->head_roi.LR_x = src_width - 1;
+	new_img->head_roi.LR_y = src_height - 1;
+	new_img->head_roi.LL_x = 0;
+	new_img->head_roi.LL_y = src_height - 1;
 
 	new_img->image_data = (double*)calloc(src_height * src_width, sizeof(double));
 	
@@ -535,107 +513,332 @@ IMG_DATA * diffImage(IMG_DATA * src_img, IMG_DATA * trg_img, const double delta_
 	const unsigned int src_half_width_left = (unsigned int)floor((double)src_width / 2.0);
 	const unsigned int src_half_height_upper = (unsigned int)floor((double)src_height / 2.0);
 
-	const int ULs_x = -src_half_width_left - (unsigned int)floor(delta_x);
-	const int ULs_y = -src_half_height_upper - (unsigned int)floor(delta_y);
+	int ULs_x = -src_half_width_left - (unsigned int)floor(delta_x);
+	int ULs_y = -src_half_height_upper - (unsigned int)floor(delta_y);
 	const int LRs_x = ULs_x + src_width;
 	const int LRs_y = ULs_y + src_height;
 
-	const int ULt_x = -(unsigned int)floor((double)trg_width / 2.0);
-	const int ULt_y = -(unsigned int)floor((double)trg_height / 2.0);
+	int ULt_x = -(unsigned int)floor((double)trg_width / 2.0);
+	int ULt_y = -(unsigned int)floor((double)trg_height / 2.0);
 	const int LRt_x = ULt_x + trg_width;
 	const int LRt_y = ULt_y + trg_height;
 
-	unsigned int xs_ini, xs_end;
-	unsigned int ys_ini, ys_end;
-	unsigned int xt_ini, yt_ini;
+	// Compute intersection ROI positions:
+	const int ULi_x = (ULs_x > ULt_x) ? ULs_x : ULt_x;
+	const int ULi_y = (ULs_y > ULt_y) ? ULs_y : ULt_y;
 
-	if (ULs_x > ULt_x)
+	POSITION_NODE * x_posititons_root = newPositionLeaf(ULs_x);
+	POSITION_NODE * y_posititons_root = newPositionLeaf(ULs_y);
+	
+	addPositionLeaf(x_posititons_root, ULs_x + src_width);
+	addPositionLeaf(y_posititons_root, ULs_y + src_height);
+	
+	addPositionLeaf(x_posititons_root, ULt_x);
+	addPositionLeaf(y_posititons_root, ULt_y);
+
+	addPositionLeaf(x_posititons_root, ULt_x + trg_width);
+	addPositionLeaf(y_posititons_root, ULt_y + trg_height);
+
+	unsigned int x_positions_count = x_posititons_root->tree_depth;
+	unsigned int y_positions_count = y_posititons_root->tree_depth;
+
+	int * x_positions = dumpPositionsTree(x_posititons_root);
+	int * y_positions = dumpPositionsTree(y_posititons_root);
+
+	freePositionsTree(x_posititons_root);
+	freePositionsTree(y_posititons_root);
+	
+	const unsigned int computable_width = *(x_positions + x_positions_count-1) - *(x_positions);
+	const unsigned int computable_height = *(y_positions + y_positions_count - 1) - *(y_positions);
+
+	IMG_DATA * diff_img = createVoidImage(computable_width, computable_height);
+
+	// Compute the ROIs:
+	for (unsigned int x_positions_index = 0; x_positions_index < (x_positions_count - 1); x_positions_index++)
 	{
-		xs_ini = 0;
-		xt_ini = ULs_x - ULt_x;
-	}
-	else
-	{
-		xs_ini = ULt_x - ULs_x;
-		xt_ini = 0;
-	}
-
-	if (ULs_y > ULt_y)
-	{
-		ys_ini = 0;
-		yt_ini = ULs_y - ULt_y;
-	}
-	else
-	{
-		ys_ini = ULt_y - ULs_y;
-		yt_ini = 0;
-	}
-
-	if (LRs_x < LRt_x)
-	{
-		xs_end = src_width - 1; // To make it inclusive
-	}
-	else
-	{
-		xs_end = LRt_x - ULs_x - 1;
-	}
-
-	if (LRs_y < LRt_y)
-	{
-		ys_end = src_height - 1; // To make it inclusive
-	}
-	else
-	{
-		ys_end = LRt_y - ULs_y - 1;
-	}
-
-	const unsigned int computable_width = xs_end - xs_ini + 1;
-	const unsigned int computable_height = ys_end - ys_ini + 1;
-
-	IMG_DATA * diff_img = (IMG_DATA*)malloc(sizeof(IMG_DATA));
-
-	diff_img->width = computable_width;
-	diff_img->height = computable_height;
-
-	diff_img->image_data = (double*)calloc(computable_width * computable_height, sizeof(double));
-
-	double min_value = 1e3;
-	double max_value = -1e3;
-
-	for (unsigned int y = 0; y < computable_height; y++)
-	{
-		for (unsigned int x = 0; x < computable_width; x++)
+		for (unsigned int y_positions_index = 0; y_positions_index < (y_positions_count - 1); y_positions_index++)
 		{
-			const double s_intensity = *(src_img->image_data + (y + ys_ini) * src_img->width + x + xs_ini);
-			const double t_intensity = *(trg_img->image_data + (y + yt_ini) * trg_img->width + x + xt_ini);
-			const double differences = t_intensity - s_intensity;
+			const int ULroi_x = *(x_positions + x_positions_index);
+			const int ULroi_y = *(y_positions + y_positions_index);
+			const int URroi_x = *(x_positions + x_positions_index + 1);
+			const int URroi_y = *(y_positions + y_positions_index);
+			const int LRroi_x = *(x_positions + x_positions_index + 1);
+			const int LRroi_y = *(y_positions + y_positions_index + 1);
+			const int LLroi_x = *(x_positions + x_positions_index);
+			const int LLroi_y = *(y_positions + y_positions_index + 1);
 
-			*(diff_img->image_data + y * computable_width + x) = differences;
-
-			if (min_value > differences)
+			ROI_BBOX_TYPE current_roi_type = RBT_UNCOMPUTED;
+			if ((ULroi_x == ULs_x && ULroi_y == ULs_y) || (LRroi_x == LRs_x && LRroi_y == LRs_y))
 			{
-				min_value = differences;
+				current_roi_type = RBT_SOURCE;
 			}
 
-			if (max_value < differences)
+			if ((ULroi_x == ULt_x && ULroi_y == ULt_y) || (LRroi_x == LRt_x && LRroi_y == LRs_y))
 			{
-				max_value = differences;
+				current_roi_type = RBT_TARGET;
 			}
+
+			if (ULroi_x == ULi_x && ULroi_y == ULi_y)
+			{
+				current_roi_type = RBT_INTERSECTION;
+			}
+
+			addImageROI(diff_img, 
+				current_roi_type, 
+				ULroi_x - *(x_positions),
+				ULroi_y - *(y_positions),
+				URroi_x - *(x_positions),
+				URroi_y - *(y_positions),
+				LRroi_x - *(x_positions),
+				LRroi_y - *(y_positions),
+				LLroi_x - *(x_positions),
+				LLroi_y - *(y_positions));
 		}
 	}
 
+	ULs_x -= *(x_positions);
+	ULt_x -= *(x_positions);
 
+	ULs_y -= *(y_positions);
+	ULt_y -= *(y_positions);
+
+	free(x_positions);
+	free(y_positions);
+
+	double max_value = -1e-3;
+	double min_value = 1e-3;
+
+	ROI_BBOX * next_roi = diff_img->head_roi.next_roi;
+	ROI_BBOX * current_roi;
+
+	while (next_roi)
+	{
+		current_roi = next_roi;
+		next_roi = current_roi->next_roi;
+
+		const unsigned int roi_x_ini = current_roi->UL_x;
+		const unsigned int roi_x_end = current_roi->UR_y;
+		const unsigned int roi_y_ini = current_roi->LR_x;
+		const unsigned int roi_y_end = current_roi->LR_y;
+
+		switch (current_roi->ROI_type)
+		{
+		case RBT_INTERSECTION:
+			for (unsigned int y = roi_y_ini; y <= roi_y_end; y++)
+			{
+				for (unsigned int x = roi_x_ini; x <= roi_x_end; x++)
+				{
+					const double t_intensity = *(trg_img->image_data + (y - ULt_y)* trg_width + x - ULt_x);
+					const double s_intensity = *(src_img->image_data + (y - ULs_y)* src_width + x - ULs_x);
+					const double d_intensity = t_intensity - s_intensity;
+
+					*(diff_img->image_data + y * computable_width + x) = d_intensity;
+					if (min_value > d_intensity)
+					{
+						min_value = d_intensity;
+					}
+
+					if (max_value < d_intensity)
+					{
+						max_value = d_intensity;
+					}
+				}
+			}
+			break;
+
+		case RBT_TARGET:
+			for (unsigned int y = roi_y_ini; y <= roi_y_end; y++)
+			{
+				for (unsigned int x = roi_x_ini; x <= roi_x_end; x++)
+				{
+					const double t_intensity = *(trg_img->image_data + (y - ULt_y)* trg_width + x - ULt_x);
+					const double d_intensity = t_intensity;
+
+					*(diff_img->image_data + y * computable_width + x) = d_intensity;
+					if (min_value > d_intensity)
+					{
+						min_value = d_intensity;
+					}
+
+					if (max_value < d_intensity)
+					{
+						max_value = d_intensity;
+					}
+				}
+			}
+			break;
+
+		case RBT_SOURCE:
+			for (unsigned int y = roi_y_ini; y <= roi_y_end; y++)
+			{
+				for (unsigned int x = roi_x_ini; x <= roi_x_end; x++)
+				{
+					const double s_intensity = *(src_img->image_data + (y - ULs_y)* src_width + x - ULs_x);
+					const double d_intensity = -s_intensity;
+
+					*(diff_img->image_data + y * computable_width + x) = d_intensity;
+					if (min_value > d_intensity)
+					{
+						min_value = d_intensity;
+					}
+
+					if (max_value < d_intensity)
+					{
+						max_value = d_intensity;
+					}
+				}
+			}
+			break;
+
+		case RBT_UNCOMPUTED:
+			break;
+		}
+	}
+	
 	diff_img->max_value = max_value;
 	diff_img->min_value = min_value;
-	
-	diff_img->UL_x = xs_ini;
-	diff_img->UL_y = ys_ini;
-	diff_img->UR_x = 0;
-	diff_img->UR_y = 0;
-	diff_img->LR_x = 0;
-	diff_img->LR_y = 0;
-	diff_img->LL_x = 0;
-	diff_img->LL_y = 0;
 
 	return diff_img;
+}
+
+
+void freeImageData(IMG_DATA * src_img_data_ptr)
+{
+	free(src_img_data_ptr->image_data);
+
+	ROI_BBOX * next_roi_node = src_img_data_ptr->head_roi.next_roi;
+	ROI_BBOX * current_roi_node;
+
+	while (next_roi_node)
+	{
+		current_roi_node = next_roi_node;
+		next_roi_node = current_roi_node->next_roi;
+
+		free(current_roi_node);
+	}
+
+	free(src_img_data_ptr);
+}
+
+
+
+void addImageROI(IMG_DATA * src_image_data_ptr,
+	const ROI_BBOX_TYPE new_roi_type,
+	const unsigned int src_UL_x,
+	const unsigned int src_UL_y,
+	const unsigned int src_UR_x,
+	const unsigned int src_UR_y,
+	const unsigned int src_LR_x,
+	const unsigned int src_LR_y,
+	const unsigned int src_LL_x,
+	const unsigned int src_LL_y)
+{
+	src_image_data_ptr->tail_roi->next_roi = (ROI_BBOX*)malloc(sizeof(ROI_BBOX));
+	src_image_data_ptr->tail_roi->next_roi->ROI_type = new_roi_type;
+
+	src_image_data_ptr->tail_roi = src_image_data_ptr->tail_roi->next_roi;
+
+	src_image_data_ptr->tail_roi->UL_x = src_UL_x;
+	src_image_data_ptr->tail_roi->UL_y = src_UL_y;
+	src_image_data_ptr->tail_roi->UR_x = src_UR_x;
+	src_image_data_ptr->tail_roi->UR_y = src_UR_y;
+	src_image_data_ptr->tail_roi->LR_x = src_LR_x;
+	src_image_data_ptr->tail_roi->LR_y = src_LR_y;
+	src_image_data_ptr->tail_roi->LL_x = src_LL_x;
+	src_image_data_ptr->tail_roi->LL_y = src_LL_y;
+
+	src_image_data_ptr->tail_roi->next_roi = NULL;
+}
+
+
+
+void addPositionLeaf(POSITION_NODE * src_current_leaf, const int src_new_position)
+{
+	if (src_new_position == src_current_leaf->position)
+	{
+		// If the new position already exists, it is ommited:
+		return;
+	}
+	else if (src_new_position < src_current_leaf->position)
+	{
+		src_current_leaf->tree_depth = src_current_leaf->tree_depth + 1;
+		src_current_leaf->count_left_leaves = src_current_leaf->count_left_leaves + 1;
+		if (!src_current_leaf->left_leaf) // Left base case:
+		{
+			src_current_leaf->left_leaf = newPositionLeaf(src_new_position);
+		}
+		else // Recursion to the left nodes:
+		{
+			addPositionLeaf(src_current_leaf->left_leaf, src_new_position);
+		}
+	}
+	else
+	{
+		src_current_leaf->tree_depth = src_current_leaf->tree_depth + 1;
+		if (!src_current_leaf->right_leaf) // Right base case:
+		{
+			src_current_leaf->right_leaf = newPositionLeaf(src_new_position);
+		}
+		else // Recursion to the left nodes:
+		{
+			addPositionLeaf(src_current_leaf->right_leaf, src_new_position);
+		}
+	}
+}
+
+
+
+POSITION_NODE * newPositionLeaf(const unsigned int src_new_position)
+{
+	POSITION_NODE* new_leaf = (POSITION_NODE*)malloc(sizeof(POSITION_NODE));
+	new_leaf->left_leaf->position = src_new_position;
+	new_leaf->left_leaf->left_leaf = NULL;
+	new_leaf->left_leaf->right_leaf = NULL;
+	new_leaf->count_left_leaves = 0;
+	new_leaf->tree_depth = 1;
+}
+
+
+
+void freePositionsTree(POSITION_NODE * src_tree_root)
+{
+	if (src_tree_root->left_leaf)
+	{
+		freePositionsTree(src_tree_root->left_leaf);
+	}
+
+	if (src_tree_root->right_leaf)
+	{
+		freePositionsTree(src_tree_root->right_leaf);
+	}
+
+	// Base case:
+	free(src_tree_root);
+}
+
+
+
+int * dumpPositionsTree(POSITION_NODE * tree_root)
+{
+	int * positions_array = (int*)malloc(tree_root->tree_depth * sizeof(int));
+	dumpPositionLeaf(tree_root, 0, positions_array);
+	return positions_array;
+}
+
+
+
+void dumpPositionLeaf(POSITION_NODE * src_current_leaf, const unsigned int src_count_positions_left, int * dst_positions_array)
+{
+	if (src_current_leaf->left_leaf)
+	{
+		dumpPositionLeaf(src_current_leaf->left_leaf, src_count_positions_left, dst_positions_array);
+	}
+
+	if (src_current_leaf->right_leaf)
+	{
+		dumpPositionLeaf(src_current_leaf->right_leaf, src_count_positions_left + src_current_leaf->count_left_leaves + 1, dst_positions_array);
+	}
+
+	// Base case:
+	*(dst_positions_array + src_count_positions_left + src_current_leaf->count_left_leaves) = src_current_leaf->position;
 }

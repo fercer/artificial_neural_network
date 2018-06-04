@@ -60,16 +60,16 @@ int main(int argc, char * argv[])
 		*(variables + var_i) = 0.0;
 		*(derivatives + var_i) = (double*)malloc(outputs_count*sizeof(double));
 	}
-	*(variables) = 0.8;
-	*(variables + 1) = 1.0;
+	*(variables) = 0.5;
+	*(variables + 1) = 0.5;
 
 	*(variables + 2) = cos(0.0*MY_PI / 180.0);
 	*(variables + 3) = -sin(0.0*MY_PI / 180.0);
 	*(variables + 4) = sin(0.0*MY_PI / 180.0);
 	*(variables + 5) = cos(0.0*MY_PI / 180.0);
 
-	*(variables + 6) = 214.0;
-	*(variables + 7) = 214.0;
+	*(variables + 6) = 0.0;
+	*(variables + 7) = 0.0;
 
 	const unsigned int max_iterations = my_args.getArgumentINT("-i");
 
@@ -91,8 +91,7 @@ int main(int argc, char * argv[])
 		IMG_DATA * tmp_img = rotateBicubic(src_img, *(variables+2) / *(variables), *(variables + 4) / *(variables), *(variables + 3) / *(variables + 1), *(variables + 5) / *(variables + 1));
 		IMG_DATA * dx_img = computeDerivativesX(tmp_img);
 		IMG_DATA * dy_img = computeDerivativesY(tmp_img);
-
-
+	
 		IMG_DATA * diff_img = diffImage(tmp_img, trg_img, *(variables + 6), *(variables + 7));
 		
 		if (iteration == 0)
@@ -100,8 +99,6 @@ int main(int argc, char * argv[])
 
 		const unsigned int computable_width = diff_img->width;
 		const unsigned int computable_height = diff_img->height;
-		const unsigned int xs_ini = diff_img->UL_x;
-		const unsigned int ys_ini = diff_img->UL_y;
 
 		double mean_error = 0.0;
 		for (unsigned int y = 0; y < computable_height; y++)
@@ -111,7 +108,8 @@ int main(int argc, char * argv[])
 				const double difference = *(diff_img->image_data + y*computable_width + x);
 				mean_error += difference * difference / 2.0;
 				*(outputs_derivatives) = difference;
-
+			}
+		}
 				// Contribution to the error corresponding to the theta parameters:
 				**(derivatives) = -*(dx_img->image_data + (y + ys_ini)*dx_img->width + x + xs_ini) *					((x + xs_ini) * *(variables + 2) + (y + ys_ini) * *(variables + 3));
 
@@ -125,15 +123,21 @@ int main(int argc, char * argv[])
 
 				**(derivatives + 5) = 0.0;//-*(dy_img->image_data + (y + ys_ini)*dy_img->width + x + xs_ini) *					*(variables + 1) * (y + ys_ini);
 
-				**(derivatives + 6) = 0.0;//-*(dy_img->image_data + (y + ys_ini)*dy_img->width + x + xs_ini);
+				**(derivatives + 6) = 0.0;// -*(dx_img->image_data + (y + ys_ini)*dx_img->width + x + xs_ini);
 
-				**(derivatives + 7) = 0.0;//-*(dy_img->image_data + (y + ys_ini)*dy_img->width + x + xs_ini);
+				**(derivatives + 7) = 0.0;// -*(dy_img->image_data + (y + ys_ini)*dy_img->width + x + xs_ini);
 
 				gradient_method.updateDeltasValues();
 			}
 		}
 		const double squared_gradient_norm = gradient_method.updateVariablesValues();
-		printf("[%i/%i] MSE = %f, previous MSE = %f, squared gradient = %f\n", iteration, max_iterations, mean_error, previous_error, squared_gradient_norm);
+		printf("[%i] MSE = %f, prev. MSE = %f, sq. grad = %f (%f", iteration, mean_error, previous_error, squared_gradient_norm, *(variables));
+		for (unsigned int variables_index = 1; variables_index < variables_count; variables_index++)
+		{
+			printf(", %f", *(variables + variables_index));
+		}
+		printf(")\n");
+
 		while (!gradient_method.confirmDescent(previous_error - mean_error))
 		{	
 
