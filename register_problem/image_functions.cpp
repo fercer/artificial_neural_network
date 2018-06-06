@@ -31,64 +31,6 @@ void saveImagePGM(const char * filename, IMG_DATA * src_img)
 
 
 
-double bicubicInterpolation(IMG_DATA *src_img, const double x, const double y)
-{
-	const unsigned int src_width = src_img->width;
-	const unsigned int src_height = src_img->height;
-
-	const int x_int = (int)floor(x);
-	const int y_int = (int)floor(y);
-
-	const double s0_x = x - (double)x_int;
-	const double s_1_x = 1.0 + s0_x;
-	const double s1_x = 1.0 - s0_x;
-	const double s2_x = 2.0 - s0_x;
-
-	const double s0_y = y - (double)y_int;
-	const double s_1_y = 1.0 + s0_y;
-	const double s1_y = 1.0 - s0_y;
-	const double s2_y = 2.0 - s0_y;
-
-	/* Compute coefficients for the x-axis interpolation */
-	const double ux_1 = -0.5 * s_1_x*s_1_x*s_1_x + 2.5 * s_1_x * s_1_x - 4.0 * s_1_x + 2.0;
-	const double ux0 = 1.5 * s0_x*s0_x*s0_x - 2.5 * s0_x*s0_x + 1.0;
-	const double ux1 = 1.5 * s1_x*s1_x*s1_x - 2.5 * s1_x*s1_x + 1.0;
-	const double ux2 = -0.5 * s2_x*s2_x*s2_x + 2.5 * s2_x * s2_x - 4.0 * s2_x + 2.0;
-
-	/* Compute coefficients for the y-axis interpolation */
-	const double uy_1 = -0.5 * s_1_y*s_1_y*s_1_y + 2.5 * s_1_y * s_1_y - 4.0 * s_1_y + 2.0;
-	const double uy0 = 1.5 * s0_y*s0_y*s0_y - 2.5 * s0_y*s0_y + 1.0;
-	const double uy1 = 1.5 * s1_y*s1_y*s1_y - 2.5 * s1_y*s1_y + 1.0;
-	const double uy2 = -0.5 * s2_y*s2_y*s2_y + 2.5 * s2_y * s2_y - 4.0 * s2_y + 2.0;
-
-	return
-		(*(src_img->image_data + (y_int - 1) * src_width + x_int - 1) * uy_1 +
-			*(src_img->image_data + y_int * src_width + x_int - 1) * uy0 +
-			*(src_img->image_data + (y_int + 1) * src_width + x_int - 1) * uy1 +
-			*(src_img->image_data + (y_int + 2) * src_width + x_int - 1) * uy2) * ux_1 +
-			(*(src_img->image_data + (y_int - 1) * src_width + x_int) * uy_1 +
-				*(src_img->image_data + y_int * src_width + x_int) * uy0 +
-				*(src_img->image_data + (y_int + 1) * src_width + x_int) * uy1 +
-				*(src_img->image_data + (y_int + 2) * src_width + x_int) * uy2) * ux0 +
-				(*(src_img->image_data + (y_int - 1) * src_width + x_int + 1) * uy_1 +
-					*(src_img->image_data + y_int * src_width + x_int + 1) * uy0 +
-					*(src_img->image_data + (y_int + 1) * src_width + x_int + 1) * uy1 +
-					*(src_img->image_data + (y_int + 2) * src_width + x_int + 1) * uy2) * ux1 +
-					(*(src_img->image_data + (y_int - 1) * src_width + x_int + 2) * uy_1 +
-						*(src_img->image_data + y_int * src_width + x_int + 2) * uy0 +
-						*(src_img->image_data + (y_int + 1) * src_width + x_int + 2) * uy1 +
-						*(src_img->image_data + (y_int + 2) * src_width + x_int + 2) * uy2) * ux2;
-}
-
-
-
-
-IMG_DATA * rotateBicubic(IMG_DATA * src_img, const double theta_11, const double theta_12, const double theta_21, const double theta_22)
-{
-	
-}
-
-
 double computeLoss(IMG_DATA * src_diff_img)
 {
 	ROI_BBOX * next_roi = src_diff_img->head_roi.next_roi;

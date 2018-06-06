@@ -18,6 +18,9 @@ public:
 
 protected:
 	void performOperation();
+
+private:
+	inline double bicubicInterpolation(IMG_DATA *src_img, const double x, const double y);
 };
 
-#endif // DIV_IMAGE_OPERATION_CLASS_H_INCLUDED
+#endif // ROTATE_IMAGE_OPERATION_CLASS_H_INCLUDED
