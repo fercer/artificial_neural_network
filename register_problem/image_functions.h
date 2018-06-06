@@ -22,10 +22,10 @@ typedef enum ROI_BBOX_TYPE {
 typedef struct ROI_BBOX /* [R]egion [O]f [I]nterest [B]ounding [BOX]*/
 {
 	ROI_BBOX_TYPE ROI_type;
-	unsigned int UL_x, UL_y;
-	unsigned int UR_x, UR_y;
-	unsigned int LR_x, LR_y;
-	unsigned int LL_x, LL_y;
+	int UL_x, UL_y;
+	int UR_x, UR_y;
+	int LR_x, LR_y;
+	int LL_x, LL_y;
 	ROI_BBOX * next_roi;
 };
 
@@ -62,14 +62,14 @@ void freeImageData(IMG_DATA * src_img_data_ptr);
 
 void addImageROI(IMG_DATA * src_image_data_ptr,
 	const ROI_BBOX_TYPE new_roi_type,
-	const unsigned int src_UL_x,
-	const unsigned int src_UL_y,
-	const unsigned int src_UR_x,
-	const unsigned int src_UR_y,
-	const unsigned int src_LR_x,
-	const unsigned int src_LR_y,
-	const unsigned int src_LL_x,
-	const unsigned int src_LL_y);
+	const int src_UL_x,
+	const int src_UL_y,
+	const int src_UR_x,
+	const int src_UR_y,
+	const int src_LR_x,
+	const int src_LR_y,
+	const int src_LL_x,
+	const int src_LL_y);
 
 int addPositionLeaf(POSITION_NODE * src_current_leaf, const int src_new_position);
 POSITION_NODE * newPositionLeaf(const unsigned int src_new_position);
@@ -81,5 +81,9 @@ IMG_DATA * filterImage(IMG_DATA * src_img, IMG_DATA * src_kernel);
 
 double computeImageMax(IMG_DATA * src_img);
 double computeImageMin(IMG_DATA * src_img);
+
+IMG_DATA * createFromImageData(const IMG_DATA * src_img);
+
+void copyImageData(const IMG_DATA * src_img, IMG_DATA * dst_img);
 
 #endif //IMAGE_FUNCTIONS_INCLUDED

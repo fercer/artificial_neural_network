@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <crtdbg.h>
 
-#include "random_numbers_generator.h"
+#include "../src/random_numbers_generator.h"
 #include "gradientMethods_class.h"
 
 gradientMethods::gradientMethods()
@@ -342,11 +342,13 @@ void gradientMethods::update_deltas_values_levenberg_marquardt()
 			double error_contribution_product = 0.0;
 			for (unsigned int output_index = 0; output_index < outputs_count; output_index++)
 			{
-				error_contribution_product += *(*(variables_derivatives_pointers_manager + variable_index_i) + output_index) *
+				error_contribution_product += 
+					*(*(variables_derivatives_pointers_manager + variable_index_i) + output_index) *
 					*(*(variables_derivatives_pointers_manager + variable_index_j) + output_index);
 			}
 
-			*(hessian_matrix + variable_index_base_i + variable_index_j) = *(hessian_matrix + variable_index_base_i + variable_index_j) + error_contribution_product;
+			*(hessian_matrix + variable_index_base_i + variable_index_j) = 
+				*(hessian_matrix + variable_index_base_i + variable_index_j) + error_contribution_product;
 		}
 	}
 }
@@ -358,8 +360,7 @@ double gradientMethods::update_variables_values_levenberg_marquardt()
 	// Save the current computed hessian matrix in case that it is singular:
 	memcpy(previous_hessian_matrix, hessian_matrix, variables_count * (variables_count + 1) / 2 * sizeof(double));
 	memcpy(previous_jacobian_error_derivative_product, jacobian_error_derivative_product, variables_count * sizeof(double));
-	memcpy(previous_variables_values, variables_values_pointer_manager, variables_count * sizeof(double));
-
+	
 	do
 	{
 		// Perform the Cholesky's factorization to obtain L * L^T = H + mu * I
@@ -402,7 +403,7 @@ double gradientMethods::update_variables_values_levenberg_marquardt()
 			const double difference = *(hessian_matrix + variable_index_base_i + variable_index_i) + mu_value - row_squared_sum;
 			if (difference < 1e-12) {
 				// If the hessian matrix is not invertable, increase the value of the diagonal:
-				mu_value *= mu_increasing_factor;
+				mu_value = (2.0 * mu_value > mu_increasing_factor) ? 2.0 * mu_value : mu_increasing_factor;
 				// Copy only the values that were modified:
 				memcpy(hessian_matrix, previous_hessian_matrix, (variable_index_base_i + variable_index_i) * sizeof(double));
 				memcpy(jacobian_error_derivative_product, previous_jacobian_error_derivative_product, (variable_index_i) * sizeof(double));
@@ -449,11 +450,12 @@ double gradientMethods::update_variables_values_levenberg_marquardt()
 
 bool gradientMethods::confirm_descent_levenberg_marquardt(const double src_error_difference)
 {
-	if (src_error_difference > 0.0)
+	if (src_error_difference >= 0.0)
 	{
 		mu_value *= mu_decreasing_factor;
 		memset(jacobian_error_derivative_product, 0, variables_count * sizeof(double));
 		memset(hessian_matrix, 0, variables_count * (variables_count + 1) / 2 * sizeof(double));
+		memcpy(previous_variables_values, variables_values_pointer_manager, variables_count * sizeof(double));
 		return true;
 	}
 
@@ -466,8 +468,9 @@ bool gradientMethods::confirm_descent_levenberg_marquardt(const double src_error
 		worsening_count = 0;
 		memset(jacobian_error_derivative_product, 0, variables_count * sizeof(double));
 		memset(hessian_matrix, 0, variables_count * (variables_count + 1) / 2 * sizeof(double));
-		return true;;
-	}	
+		memcpy(previous_variables_values, variables_values_pointer_manager, variables_count * sizeof(double));
+		return true;
+	}
 	
 	/* If the error has not decreased,
 	the diagonal of the hessian matrix is modified in order to change the descent direction
@@ -478,7 +481,6 @@ bool gradientMethods::confirm_descent_levenberg_marquardt(const double src_error
 		variables_count * sizeof(double));
 
 	mu_value *= mu_increasing_factor;
-	
 	update_variables_values_levenberg_marquardt();
 
 	return false;

@@ -1,0 +1,47 @@
+#include "max_image_scalar_operation_class.h"
+
+MAX_IMAGE_SCALAR_OPERATION::MAX_IMAGE_SCALAR_OPERATION()
+{
+	parameter = 1.0;
+}
+
+
+
+MAX_IMAGE_SCALAR_OPERATION::MAX_IMAGE_SCALAR_OPERATION(const MAX_IMAGE_SCALAR_OPERATION & src_max_image_scalar_operation)
+{
+	copyFromImageScalarOperation(src_max_image_scalar_operation);
+}
+
+
+
+MAX_IMAGE_SCALAR_OPERATION MAX_IMAGE_SCALAR_OPERATION::operator=(const MAX_IMAGE_SCALAR_OPERATION & src_max_image_scalar_operation)
+{
+	if (this != &src_max_image_scalar_operation)
+	{
+		copyFromImageScalarOperation(src_max_image_scalar_operation);
+	}
+
+	return *this;
+}
+
+
+
+MAX_IMAGE_SCALAR_OPERATION::~MAX_IMAGE_SCALAR_OPERATION()
+{
+	// Nothing to deallocate
+}
+
+
+
+double MAX_IMAGE_SCALAR_OPERATION::performScalarOperation()
+{
+	double max = -1e13;
+	for (unsigned int xy = 0; xy < height * width; xy++)
+	{
+		if (max < parameter * *(src_img->image_data + xy))
+		{
+			max = parameter * *(src_img->image_data + xy);
+		}
+	}
+	return max;
+}

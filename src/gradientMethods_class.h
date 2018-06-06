@@ -11,7 +11,7 @@
 
 #include <omp.h>
 
-#include "random_numbers_generator.h"
+#include "../src/random_numbers_generator.h"
 
 class gradientMethods
 {
@@ -64,6 +64,7 @@ private:
 	double * variables_values_pointer_manager;
 	double ** variables_derivatives_pointers_manager;
 	double * outputs_derivatives_pointer_manager;
+
 	double * deltas_values;
 	double * previous_deltas_values;
 	
