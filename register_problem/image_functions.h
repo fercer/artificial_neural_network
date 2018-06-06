@@ -79,4 +79,7 @@ void freePositionsTree(POSITION_NODE * src_tree_root);
 
 IMG_DATA * filterImage(IMG_DATA * src_img, IMG_DATA * src_kernel);
 
+double computeImageMax(IMG_DATA * src_img);
+double computeImageMin(IMG_DATA * src_img);
+
 #endif //IMAGE_FUNCTIONS_INCLUDED

@@ -838,20 +838,16 @@ IMG_DATA * filterImage(IMG_DATA * src_img, IMG_DATA * src_kernel)
 	/* Copy the iput data into a zero padded array of 2 powered dimension to a faster Fourier Transform */
 	const unsigned int width = src_img->width;
 	const unsigned int kernel_width = src_kernel->width;
-	const unsigned int max_width = (width > kernel_width) ? width : kernel_width;
 
 	const unsigned int height = src_img->height;
 	const unsigned int kernel_height = src_kernel->height;
-	const unsigned int max_height = (height > kernel_height) ? height : kernel_height;
-	const unsigned int max_dim = (max_height > max_width) ? max_height : max_width;
-
-	const double remainder_2p_dim = log2(max_dim) - floor(log2(max_dim));
-	const unsigned int nearest_2p_dim = (unsigned int)pow(2, floor(log2(max_dim)) + (remainder_2p_dim > 1e-12 ? 1 : 0));
 
 	/* Offset for the zero padded image */
-	const unsigned int offset_y = nearest_2p_dim / 2 - height / 2;
-	const unsigned int offset_x = nearest_2p_dim / 2 - width / 2;
-
+	const unsigned int offset_y = (unsigned int)floor((double)kernel_height / 2.0);
+	const unsigned int offset_x = (unsigned int)floor((double)kernel_width / 2.0);
+	
+	const unsigned int nearest_2p_dim = (unsigned int)pow(2, ceil(log2(((height + offset_y) > (width + offset_x)) ? (height + offset_y) : (width + offset_x))));
+	
 	/* Communication variables for Fourier transform (The size of the communication array was taken from the example of the library usage) */
 	communication_work_array = (double*)malloc((4 * nearest_2p_dim + 6 * nearest_2p_dim + 300) * sizeof(double));
 
@@ -862,12 +858,10 @@ IMG_DATA * filterImage(IMG_DATA * src_img, IMG_DATA * src_kernel)
 	
 	for (unsigned int i = 0; i < height; i++)
 	{
-		memcpy(zp_temp->image_data + (i + offset_y) * nearest_2p_dim + offset_x,
+		memcpy(zp_temp->image_data + i * nearest_2p_dim,
 			src_img->image_data + i * width, width * sizeof(double));
 	}
 	
-	saveImagePGM("zero_padded_src.pgm", zp_temp);
-
 	/* Initialize the function: */
 	dzfft2d(0, nearest_2p_dim, nearest_2p_dim, zp_temp->image_data, fft_zp_img, communication_work_array, &information_integer);
 
@@ -875,17 +869,15 @@ IMG_DATA * filterImage(IMG_DATA * src_img, IMG_DATA * src_kernel)
 	dzfft2d(1, nearest_2p_dim, nearest_2p_dim, zp_temp->image_data, fft_zp_img, communication_work_array, &information_integer);
 
 	/* Zero pad the kernel: */
-	const unsigned int kernel_offset_y = nearest_2p_dim / 2 - kernel_height / 2;
-	const unsigned int kernel_offset_x = nearest_2p_dim / 2 - kernel_width / 2;
-
 	doublecomplex * fft_zp_kernel = (doublecomplex*)malloc((nearest_2p_dim / 2 + 1)*nearest_2p_dim * sizeof(doublecomplex));
+
 	memset(zp_temp->image_data, 0, nearest_2p_dim * nearest_2p_dim * sizeof(double));
+
 	for (unsigned int i = 0; i < kernel_height; i++)
 	{
-		memcpy(zp_temp->image_data + (i + kernel_offset_y) * nearest_2p_dim + kernel_offset_x,
+		memcpy(zp_temp->image_data + i * nearest_2p_dim,
 			src_kernel->image_data + i * kernel_width, kernel_width * sizeof(double));
 	}
-	saveImagePGM("zero_padded_kernel.pgm", zp_temp);
 
 	/* Initialize the function: */
 	dzfft2d(0, nearest_2p_dim, nearest_2p_dim, zp_temp->image_data, fft_zp_kernel, communication_work_array, &information_integer);
@@ -925,91 +917,54 @@ IMG_DATA * filterImage(IMG_DATA * src_img, IMG_DATA * src_kernel)
 	
 	IMG_DATA * filtering_res = createVoidImage(width, height);
 	double * image_data_ptr = filtering_res->image_data;
-	double minima_filter_response = 1e13;
-	double maxima_filter_response = -1e13;
-	
-	unsigned int max_position_x;
-	unsigned int max_position_y;
-
-	for (unsigned int i = 0; i < height / 2; i++)
+	for (unsigned int i = 0; i < height; i++)
 	{
-		for (unsigned int j = 0; j < width / 2; j++, image_data_ptr++)
+		for (unsigned int j = 0; j < width; j++, image_data_ptr++)
 		{
-			*image_data_ptr = *(zp_temp->image_data + (i + nearest_2p_dim / 2 + offset_y) * nearest_2p_dim + nearest_2p_dim / 2 + offset_x + j);
-			
-			if (minima_filter_response > *image_data_ptr)
-			{
-				minima_filter_response = *image_data_ptr;
-			}
-			if (maxima_filter_response < *image_data_ptr)
-			{
-				maxima_filter_response = *image_data_ptr;
-				max_position_x = j;
-				max_position_y = i;
-			}
-		}
-
-		for (unsigned int j = width / 2; j < width; j++, image_data_ptr++)
-		{
-			*image_data_ptr = *(zp_temp->image_data + (i + nearest_2p_dim / 2 + offset_y) * nearest_2p_dim + (j - width / 2));
-
-			if (minima_filter_response > *image_data_ptr)
-			{
-				minima_filter_response = *image_data_ptr;
-			}
-			if (maxima_filter_response < *image_data_ptr)
-			{
-				maxima_filter_response = *image_data_ptr;
-				max_position_x = j;
-				max_position_y = i;
-			}
-		}
-	}
-	for (unsigned int i = height / 2; i < height; i++)
-	{
-		for (unsigned int j = 0; j < width / 2; j++, image_data_ptr++)
-		{
-			*image_data_ptr = *(zp_temp->image_data + (i - height / 2) * nearest_2p_dim + nearest_2p_dim / 2 + offset_x + j);
-			
-			if (minima_filter_response > *image_data_ptr)
-			{
-				minima_filter_response = *image_data_ptr;
-			}
-			if (maxima_filter_response < *image_data_ptr)
-			{
-				maxima_filter_response = *image_data_ptr;
-				max_position_x = j;
-				max_position_y = i;
-			}
-		}
-
-		for (unsigned int j = width / 2; j < width; j++, image_data_ptr++)
-		{
-			*image_data_ptr = *(zp_temp->image_data + (i - height / 2) * nearest_2p_dim + (j - width / 2));
-
-			if (minima_filter_response > *image_data_ptr)
-			{
-				minima_filter_response = *image_data_ptr;
-			}
-			if (maxima_filter_response < *image_data_ptr)
-			{
-				maxima_filter_response = *image_data_ptr;
-				max_position_x = j;
-				max_position_y = i;
-			}
+			*image_data_ptr = *(zp_temp->image_data + (i + offset_y) * nearest_2p_dim + offset_x + j);
 		}
 	}
 
 	freeImageData(zp_temp);
 
-	filtering_res->max_value = maxima_filter_response;
-	filtering_res->min_value = minima_filter_response;
-
-	addImageROI(filtering_res, RBT_AREA,
-		max_position_x - 1, max_position_y - 1,
-		max_position_x + 1, max_position_y - 1,
-		max_position_x - 1, max_position_y + 1,
-		max_position_x + 1, max_position_y + 1);
+	filtering_res->max_value = 1.0;
+	filtering_res->min_value = 1.0;
 
 	return filtering_res;
+}
+
+
+
+double computeImageMax(IMG_DATA * src_img)
+{
+	double max_value = -1e13;
+
+	for (unsigned int xy = 0; xy < src_img->height * src_img->width; xy++)
+	{
+		if (max_value < *(src_img->image_data + xy))
+		{
+			max_value = *(src_img->image_data + xy);
+		}
+	}
+
+	src_img->max_value = max_value;
+	return max_value;
+}
+
+
+
+double computeImageMin(IMG_DATA * src_img)
+{
+	double min_value = 1e13;
+
+	for (unsigned int xy = 0; xy < src_img->height * src_img->width; xy++)
+	{
+		if (min_value > *(src_img->image_data + xy))
+		{
+			min_value = *(src_img->image_data + xy);
+		}
+	}
+
+	src_img->min_value = min_value;
+	return min_value;
 }

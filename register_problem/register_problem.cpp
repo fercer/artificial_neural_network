@@ -24,22 +24,8 @@ int main(int argc, char * argv[])
 
 	IMG_DATA * filter_resp = filterImage(src_img, kernel_img);
 
-	unsigned int max_x, max_y;
-	max_x = filter_resp->tail_roi->UL_x;
-	max_y = filter_resp->tail_roi->UL_y;
-	*(filter_resp->image_data + max_y * filter_resp->width + max_x) = filter_resp->min_value;
-
-	max_x = filter_resp->tail_roi->UR_x;
-	max_y = filter_resp->tail_roi->UR_y;
-	*(filter_resp->image_data + max_y * filter_resp->width + max_x) = filter_resp->min_value;
-
-	max_x = filter_resp->tail_roi->LR_x;
-	max_y = filter_resp->tail_roi->LR_y;
-	*(filter_resp->image_data + max_y * filter_resp->width + max_x) = filter_resp->min_value;
-
-	max_x = filter_resp->tail_roi->LL_x;
-	max_y = filter_resp->tail_roi->LL_y;
-	*(filter_resp->image_data + max_y * filter_resp->width + max_x) = filter_resp->min_value;
+	computeImageMax(filter_resp);
+	computeImageMin(filter_resp);
 
 	saveImagePGM("filtering_result.pgm", filter_resp);
 
