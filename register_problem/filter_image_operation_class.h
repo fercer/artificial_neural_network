@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <acml.h>
+
 #include "image_operation_class.h"
 
 class FILTER_IMAGE_OPERATION :

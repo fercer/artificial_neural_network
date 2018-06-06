@@ -43,5 +43,8 @@ double MIN_IMAGE_SCALAR_OPERATION::performScalarOperation()
 			min = parameter * *(src_img->image_data + xy);
 		}
 	}
+
+	src_img->min_value = min;
+
 	return min;
 }

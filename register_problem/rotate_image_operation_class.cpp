@@ -150,12 +150,12 @@ void FILTER_IMAGE_OPERATION::performOperation()
 		dst_img->head_roi.LR_x = -half_width + width_A;
 		dst_img->head_roi.LR_x = -half_height + height_A;
 		dst_img->head_roi.LL_x = -half_width;
-		dst_img->head_roi.LL_y = -half_height + ;;
+		dst_img->head_roi.LL_y = -half_height + height_A;
 	}
 
 	for (unsigned int i = 0; i < height_A; i++)
 	{
-		memcpy(*dst_img->image_data, zp_temp->image_data + (i + offset_y) * nearest_2p_dim + offset_x, width_A * sizeof(double));
+		memcpy(dst_img->image_data, zp_temp->image_data + (i + offset_y) * nearest_2p_dim + offset_x, width_A * sizeof(double));
 	}
 
 	freeImageData(zp_temp);

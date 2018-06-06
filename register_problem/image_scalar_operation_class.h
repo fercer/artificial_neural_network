@@ -25,7 +25,9 @@ public:
 		result = 0.0;
 	}
 
-	virtual ~IMAGE_SCALAR_OPERATION() = 0;
+	~IMAGE_SCALAR_OPERATION() 
+	{
+	}
 	
 	double getImageScalar() 
 	{
@@ -44,7 +46,7 @@ public:
 
 	void setInputOperation(IMAGE_OPERATION * src_operation)
 	{
-		src_operation = src_operation;
+		operation = src_operation;
 		input_has_changed = true;
 	}
 

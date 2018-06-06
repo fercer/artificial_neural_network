@@ -18,7 +18,6 @@ public:
 
 protected:
 	void performOperation();
-
 };
 
 #endif // DIV_IMAGE_OPERATION_CLASS_H_INCLUDED

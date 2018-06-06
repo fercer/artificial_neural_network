@@ -35,11 +35,8 @@ SQROOT_IMAGE_OPERATION::~SQROOT_IMAGE_OPERATION()
 
 void SQROOT_IMAGE_OPERATION::performOperation()
 {
-	computeSumROI();
-
-	double max_value = -1e-3;
-	double min_value = 1e-3;
-
+	computeActiveROI();
+	
 	ROI_BBOX * next_roi = dst_img->head_roi.next_roi;
 	ROI_BBOX * current_roi;
 
@@ -65,15 +62,6 @@ void SQROOT_IMAGE_OPERATION::performOperation()
 					const double d_intensity = sqrt(parameter_A * *(src_img_A->image_data + (y - ULa_y)* width_A + x - ULa_x));
 
 					*(dst_img->image_data + (y - ULg_y) * computable_width + x - ULg_x) = d_intensity;
-					if (min_value > d_intensity)
-					{
-						min_value = d_intensity;
-					}
-
-					if (max_value < d_intensity)
-					{
-						max_value = d_intensity;
-					}
 				}
 			}
 			break;
@@ -84,6 +72,6 @@ void SQROOT_IMAGE_OPERATION::performOperation()
 		}
 	}
 
-	dst_img->max_value = max_value;
-	dst_img->min_value = min_value;
+	dst_img->max_value = 1.0;
+	dst_img->min_value = 0.0;
 }

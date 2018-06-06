@@ -43,5 +43,8 @@ double MAX_IMAGE_SCALAR_OPERATION::performScalarOperation()
 			max = parameter * *(src_img->image_data + xy);
 		}
 	}
+
+	src_img->max_value = max;
+
 	return max;
 }

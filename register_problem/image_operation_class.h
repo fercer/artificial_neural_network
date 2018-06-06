@@ -74,14 +74,14 @@ public:
 
 	void setInputOperationA(IMAGE_OPERATION * src_operation_A)
 	{
-		src_operation_A = src_operation_A;
+		operation_A = src_operation_A;
 		inputs_have_changed = true;
-		src_B_is_assigned = true;
+		src_A_is_assigned = true;
 	}
 
 	void setInputOperationB(IMAGE_OPERATION * src_operation_B)
 	{
-		src_operation_B = src_operation_B;
+		operation_B = src_operation_B;
 		inputs_have_changed = true;
 		src_B_is_assigned = true;
 	}
@@ -191,7 +191,7 @@ protected:
 	// Each derived class must define this function:
 	virtual void performOperation() = 0;
 	
-	void computeSumROI()
+	void computeActiveROI()
 	{
 		// Compute the sum of the intersection of the both images:
 		int LRa_x = 0;

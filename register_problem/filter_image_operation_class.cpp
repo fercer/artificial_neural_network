@@ -140,8 +140,6 @@ void ROTATE_IMAGE_OPERATION::performOperation()
 	src_temp->image_data = (double*)calloc((height_A + 3) * (width_A + 3), sizeof(double));
 	src_temp->width = width_A + 3;
 	src_temp->height = height_A + 3;
-	src_temp->min_value = src_img_A->min_value;
-	src_temp->max_value = src_img_A->max_value;
 
 	for (unsigned int i = 0; i < height_A; i++)
 	{
@@ -168,20 +166,12 @@ void ROTATE_IMAGE_OPERATION::performOperation()
 				interpolation_result = bicubicInterpolation(src_temp, src_x, src_y);
 
 				*(dst_img->image_data + max_width*i + j) = interpolation_result;
-				if (max_value < interpolation_result)
-				{
-					max_value = interpolation_result;
-				}
-				if (min_value > interpolation_result)
-				{
-					min_value = interpolation_result;
-				}
 			}
 		}
 	}
 
-	dst_img->min_value = min_value;
-	dst_img->max_value = max_value;
+	dst_img->min_value = 1.0;
+	dst_img->max_value = 0.0;
 
 	free(src_temp->image_data);
 	free(src_temp);

@@ -20,4 +20,4 @@ protected:
 	void performOperation();
 };
 
-#endif // DIV_IMAGE_OPERATION_CLASS_H_INCLUDED
+#endif // LOAD_IMAGE_OPERATION_CLASS_H_INCLUDED
