@@ -11,10 +11,9 @@
 typedef enum ROI_BBOX_TYPE {
 	RBT_UNCOMPUTED = 0,
 	RBT_AREA = 1,
-	RBT_ROTATED = 2,
-	RBT_SOURCE = 4,
-	RBT_TARGET = 8,
-	RBT_INTERSECTION = 12
+	RBT_SOURCE = 2,
+	RBT_TARGET = 4,
+	RBT_INTERSECTION = 6
 };
 
 typedef struct ROI_BBOX /* [R]egion [O]f [I]nterest [B]ounding [BOX]*/
@@ -29,7 +28,6 @@ typedef struct ROI_BBOX /* [R]egion [O]f [I]nterest [B]ounding [BOX]*/
 
 typedef struct IMG_DATA {
 	unsigned int width, height;
-	double min_value, max_value;
 	ROI_BBOX head_roi;
 	ROI_BBOX * tail_roi;
 	double * image_data;
@@ -46,9 +44,6 @@ typedef struct POSITION_NODE
 
 IMG_DATA * loadImagePGM(const char * filename);
 void saveImagePGM(const char * filename, IMG_DATA * src_img);
-inline double bicubicInterpolation(IMG_DATA *src_img, const double x, const double y);
-IMG_DATA * rotateBicubic(IMG_DATA * src_img, const double theta_11, const double theta_12, const double theta_21, const double theta_22);
-
 double computeLoss(IMG_DATA * src_diff_img);
 
 IMG_DATA * computeDerivativesX(IMG_DATA * src_img);
@@ -74,11 +69,6 @@ POSITION_NODE * newPositionLeaf(const unsigned int src_new_position);
 int * dumpPositionsTree(POSITION_NODE * tree_root);
 void dumpPositionLeaf(POSITION_NODE * src_current_leaf, const unsigned int src_count_positions_left, int * dst_positions_array);
 void freePositionsTree(POSITION_NODE * src_tree_root);
-
-IMG_DATA * filterImage(IMG_DATA * src_img, IMG_DATA * src_kernel);
-
-double computeImageMax(IMG_DATA * src_img);
-double computeImageMin(IMG_DATA * src_img);
 
 IMG_DATA * createFromImageData(const IMG_DATA * src_img);
 

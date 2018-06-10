@@ -35,7 +35,19 @@ SAVE_IMAGE_OPERATION::~SAVE_IMAGE_OPERATION()
 
 void SAVE_IMAGE_OPERATION::performOperation()
 {
+	if (!src_img_A)
+	{
+		printf("<<Error: The source image was not assigned>\n");
+		return;
+	}
+
 	FILE * fp_img = fopen(image_name, "w");
+
+	if (!fp_img)
+	{
+		printf("<Error: The file \"%s\" could not be created>\n", image_name);
+		return;
+	}
 
 	// Print magic number:
 	fprintf(fp_img, "P2\n");
@@ -45,15 +57,11 @@ void SAVE_IMAGE_OPERATION::performOperation()
 
 	// Print the width and height:
 	fprintf(fp_img, "%i %i\n", width_A, height_A);
-
-	const double min_intensity = src_img_A->min_value;
-	const double max_intensity = src_img_A->max_value;
 	fprintf(fp_img, "255\n");
 
-	unsigned char pix_intensity;
 	for (unsigned int pix_position = 0; pix_position < (width_A*height_A); pix_position++)
 	{
-		fprintf(fp_img, "%u\n", (unsigned int)(255.0 * (*(src_img_A->image_data + pix_position) - min_intensity) / (max_intensity - min_intensity)));
+		fprintf(fp_img, "%u\n", (unsigned int)floor(255.0 * *(src_img_A->image_data + pix_position)));
 	}
 
 	fclose(fp_img);

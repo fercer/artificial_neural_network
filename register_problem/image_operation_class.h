@@ -14,30 +14,26 @@ class IMAGE_OPERATION
 public:
 	IMAGE_OPERATION()
 	{
-		inputs_have_changed = false;
+		inputs_have_changed = true;
 
 		operation_A = NULL;
 		operation_B = NULL;
 		src_A_is_assigned = false;
 		src_B_is_assigned = false;
 
-		dst_img = (IMG_DATA*) malloc(sizeof(IMG_DATA));
-		dst_img->head_roi.next_roi = NULL;
-		dst_img->head_roi.ROI_type = RBT_AREA;
-		dst_img->head_roi.UL_x = 0;
-		dst_img->head_roi.UL_y = 0;
-		dst_img->head_roi.UR_x = 0;
-		dst_img->head_roi.UR_y = 0;
-		dst_img->head_roi.LR_x = 0;
-		dst_img->head_roi.LR_y = 0;
-		dst_img->head_roi.LL_x = 0;
-		dst_img->head_roi.LL_y = 0;
-
-		dst_img->tail_roi = &dst_img->head_roi;
-		dst_img->image_data = NULL;
+		dst_img = NULL;
 
 		src_img_A = NULL;
 		src_img_B = NULL;
+
+		ULa_x = 0;
+		ULa_y = 0;
+		LRa_x = 0;
+		LRa_y = 0;
+		ULb_x = 0;
+		ULb_y = 0;
+		LRb_x = 0;
+		LRb_y = 0;
 
 		parameter_A = 0.0;
 		parameter_B = 0.0;
@@ -47,9 +43,12 @@ public:
 		strcpy(image_name, "");
 	}
 
-	virtual ~IMAGE_OPERATION() 
+	~IMAGE_OPERATION() 
 	{
-		freeImageData(dst_img);
+		if (dst_img)
+		{
+			freeImageData(this->dst_img);
+		}
 	}
 	
 	IMG_DATA * getImageData() 
@@ -59,11 +58,27 @@ public:
 			if (operation_A)
 			{
 				src_img_A = operation_A->getImageData();
+
+				width_A = src_img_A->width;
+				height_A = src_img_A->height;
+
+				ULa_x = src_img_A->head_roi.UL_x;
+				ULa_y = src_img_A->head_roi.UL_y;
+				LRa_x = src_img_A->head_roi.LR_x;
+				LRa_y = src_img_A->head_roi.LR_y;
 			}
 
 			if (operation_B)
 			{
 				src_img_B = operation_B->getImageData();
+
+				width_B = src_img_B->width;
+				height_B = src_img_B->height;
+
+				ULb_x = src_img_B->head_roi.UL_x;
+				ULb_y = src_img_B->head_roi.UL_y;
+				LRb_x = src_img_B->head_roi.LR_x;
+				LRb_y = src_img_B->head_roi.LR_y;
 			}
 
 			performOperation();
@@ -134,9 +149,15 @@ protected:
 
 	int ULa_x;
 	int ULa_y;
-
+	int LRa_x;
+	int LRa_y;
 	int ULb_x;
 	int ULb_y;
+	int LRb_x;
+	int LRb_y;
+
+	int ULi_x;
+	int ULi_y;
 
 	int ULg_x;
 	int ULg_y;
@@ -178,9 +199,16 @@ protected:
 
 		this->ULa_x = src_image_operation.ULa_x;
 		this->ULa_y = src_image_operation.ULa_y;
+		this->LRa_x = src_image_operation.LRa_x;
+		this->LRa_y = src_image_operation.LRa_y;
 
 		this->ULb_x = src_image_operation.ULb_x;
 		this->ULb_y = src_image_operation.ULb_y;
+		this->LRb_x = src_image_operation.LRb_x;
+		this->LRb_y = src_image_operation.LRb_y;
+
+		this->ULi_x = src_image_operation.ULi_x;
+		this->ULi_y = src_image_operation.ULi_y;
 
 		this->ULg_x = src_image_operation.ULg_x;
 		this->ULg_y = src_image_operation.ULg_y;
@@ -194,34 +222,6 @@ protected:
 	void computeActiveROI()
 	{
 		// Compute the sum of the intersection of the both images:
-		int LRa_x = 0;
-		int LRa_y = 0;
-
-		if (src_A_is_assigned)
-		{
-			ULa_x = src_img_A->head_roi.UL_x;
-			ULa_y = src_img_A->head_roi.UL_y;
-			LRa_x = src_img_A->head_roi.LR_x;
-			LRa_y = src_img_A->head_roi.LR_y;
-
-			width_A = src_img_A->width;
-			height_A = src_img_A->height;
-		}
-
-		int LRb_x = 0;
-		int LRb_y = 0;
-		if (src_B_is_assigned)
-		{
-			width_B = src_img_B->width;
-			height_B = src_img_B->height;
-
-			ULb_x = src_img_B->head_roi.UL_x;
-			ULb_y = src_img_B->head_roi.UL_y;
-
-			LRb_x = src_img_B->head_roi.LR_x;
-			LRb_y = src_img_B->head_roi.LR_y;
-		}
-
 		POSITION_NODE * x_posititons_root = NULL;
 		POSITION_NODE * y_posititons_root = NULL;
 
@@ -230,6 +230,8 @@ protected:
 		{
 			ULg_x = (ULa_x < ULb_x) ? ULa_x : ULb_x;
 			ULg_y = (ULa_y < ULb_y) ? ULa_y : ULb_y;
+			ULi_x = (ULa_x > ULb_x) ? ULa_x : ULb_x;
+			ULi_y = (ULa_y > ULb_y) ? ULa_y : ULb_y;
 
 			x_posititons_root = newPositionLeaf(ULa_x);
 			y_posititons_root = newPositionLeaf(ULa_y);
@@ -246,6 +248,9 @@ protected:
 			ULg_x = ULa_x;
 			ULg_y = ULa_y;
 
+			ULi_x = ULa_x;
+			ULi_y = ULa_y;
+
 			x_posititons_root = newPositionLeaf(ULa_x);
 			y_posititons_root = newPositionLeaf(ULa_y);
 			addPositionLeaf(x_posititons_root, LRa_x);
@@ -255,6 +260,9 @@ protected:
 		{
 			ULg_x = ULb_x;
 			ULg_y = ULb_y;
+
+			ULi_x = ULb_x;
+			ULi_y = ULb_y;
 
 			x_posititons_root = newPositionLeaf(ULb_x);
 			y_posititons_root = newPositionLeaf(ULb_y);
@@ -272,21 +280,25 @@ protected:
 		freePositionsTree(x_posititons_root);
 		freePositionsTree(y_posititons_root);
 
-		computable_width = *(x_positions + x_positions_count - 1) - *(x_positions);
-		computable_height = *(y_positions + y_positions_count - 1) - *(y_positions);
+		computable_width = *(x_positions + x_positions_count - 1) - *(x_positions) + 1;
+		computable_height = *(y_positions + y_positions_count - 1) - *(y_positions) + 1;
 
-		if (dst_img->image_data)
+		if (!dst_img)
 		{
-			if ((dst_img->width != computable_width) || (dst_img->height != computable_height))
+			dst_img = createVoidImage(computable_width, computable_height);
+		}
+
+		if ((dst_img->width != computable_width) || (dst_img->height != computable_height))
+		{
+			if (dst_img->image_data)
 			{
 				free(dst_img->image_data);
-
-				dst_img->width = computable_width;
-				dst_img->height = computable_height;
-
-				dst_img->image_data = (double*)calloc(computable_width * computable_height, sizeof(double));
 			}
+			dst_img->width = computable_width;
+			dst_img->height = computable_height;
+			dst_img->image_data = (double*)calloc(computable_width * computable_height, sizeof(double));
 		}
+
 
 		if (dst_img->head_roi.next_roi)
 		{
@@ -301,8 +313,19 @@ protected:
 				free(current_roi_node);
 			}
 
+			dst_img->head_roi.next_roi = NULL;
 			dst_img->tail_roi = &dst_img->head_roi;
 		}
+
+		dst_img->head_roi.ROI_type = RBT_AREA;
+		dst_img->head_roi.UL_x = ULg_x;
+		dst_img->head_roi.UL_y = ULg_y;
+		dst_img->head_roi.UR_x = ULg_x + computable_width - 1;
+		dst_img->head_roi.UR_y = ULg_y;
+		dst_img->head_roi.LR_x = ULg_x + computable_width - 1;
+		dst_img->head_roi.LR_y = ULg_y + computable_height - 1;
+		dst_img->head_roi.LL_x = ULg_x;
+		dst_img->head_roi.LL_y = ULg_y + computable_height - 1;
 
 		// Compute the ROIs:
 		for (unsigned int x_positions_index = 0; x_positions_index < (x_positions_count - 1); x_positions_index++)
@@ -322,7 +345,7 @@ protected:
 				const int center_y = (int)floor((double)(ULroi_y + LRroi_y) / 2.0);
 
 				int current_roi_type_int = (int)RBT_UNCOMPUTED;
-
+				
 				// Verify if the current roi is inside the source image:
 				if (src_A_is_assigned && ULa_x < center_x && ULa_y < center_y && center_x < LRa_x && center_y < LRa_y)
 				{
@@ -337,14 +360,10 @@ protected:
 
 				addImageROI(dst_img,
 					(ROI_BBOX_TYPE)current_roi_type_int,
-					ULroi_x - *(x_positions),
-					ULroi_y - *(y_positions),
-					URroi_x - *(x_positions),
-					URroi_y - *(y_positions),
-					LRroi_x - *(x_positions),
-					LRroi_y - *(y_positions),
-					LLroi_x - *(x_positions),
-					LLroi_y - *(y_positions));
+					ULroi_x, ULroi_y,
+					URroi_x, URroi_y,
+					LRroi_x, LRroi_y,
+					LLroi_x, LLroi_y);
 			}
 		}
 

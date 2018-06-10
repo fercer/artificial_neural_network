@@ -16,14 +16,12 @@ void saveImagePGM(const char * filename, IMG_DATA * src_img)
 	// Print the width and height:
 	fprintf(fp_img, "%i %i\n", width, height);
 	
-	const double min_intensity = src_img->min_value;
-	const double max_intensity = src_img->max_value;
 	fprintf(fp_img, "255\n");
 
 	unsigned char pix_intensity;
 	for (unsigned int pix_position = 0; pix_position < (width*height); pix_position++)
 	{
-		fprintf(fp_img, "%u\n", (unsigned int)(255.0 * (*(src_img->image_data + pix_position) - min_intensity) / (max_intensity - min_intensity)));
+		fprintf(fp_img, "%u\n", (unsigned int)floor(255.0 * *(src_img->image_data + pix_position)));
 	}
 
 	fclose(fp_img);
@@ -62,7 +60,6 @@ double computeLoss(IMG_DATA * src_diff_img)
 			break;
 
 		case RBT_AREA:
-		case RBT_ROTATED:
 		case RBT_TARGET:
 		case RBT_SOURCE:
 		case RBT_UNCOMPUTED:
@@ -97,11 +94,6 @@ IMG_DATA * computeDerivativesX(IMG_DATA * src_img)
 	}
 	memcpy(exp_img + (src_height + 1) * (src_width + 2) + 1, src_img->image_data + (src_height - 1) * src_width, src_width * sizeof(double));
 
-	double max_dx_value = src_img->min_value;
-	double max_dy_value = src_img->min_value;
-	double min_dx_value = src_img->max_value;
-	double min_dy_value = src_img->max_value;
-
 	IMG_DATA * dst_dx_img = createVoidImage(src_width, src_height);
 
 	// Perform the numeric derivatives:
@@ -110,22 +102,10 @@ IMG_DATA * computeDerivativesX(IMG_DATA * src_img)
 		for (unsigned int x = 0; x < src_width; x++)
 		{
 			const double dx_value = (*(exp_img + (y + 1)*(src_width + 2) + x + 2) - *(exp_img + (y + 1)*(src_width + 2) + x)) / 2.0;
-			if (max_dx_value < dx_value)
-			{
-				max_dx_value = dx_value;
-			}
-			if (min_dx_value > dx_value)
-			{
-				min_dx_value = dx_value;
-			}
-
 			*(dst_dx_img->image_data + y * src_width + x) = dx_value;
 		}
 	}
-
-	dst_dx_img->min_value = min_dx_value;
-	dst_dx_img->max_value = max_dx_value;
-
+	
 	free(exp_img);
 	return dst_dx_img;
 }
@@ -154,11 +134,6 @@ IMG_DATA * computeDerivativesY(IMG_DATA * src_img)
 	}
 	memcpy(exp_img + (src_height + 1) * (src_width + 2) + 1, src_img->image_data + (src_height - 1) * src_width, src_width * sizeof(double));
 
-	double max_dx_value = src_img->min_value;
-	double max_dy_value = src_img->min_value;
-	double min_dx_value = src_img->max_value;
-	double min_dy_value = src_img->max_value;
-
 	IMG_DATA * dst_dy_img = createVoidImage(src_width, src_height);
 
 	// Perform the numeric derivatives:
@@ -167,22 +142,9 @@ IMG_DATA * computeDerivativesY(IMG_DATA * src_img)
 		for (unsigned int x = 0; x < src_width; x++)
 		{
 			const double dy_value = (*(exp_img + (y + 2)*(src_width + 2) + x + 1) - *(exp_img + y*(src_width + 2) + x + 1)) / 2.0;
-			if (max_dy_value < dy_value)
-			{
-				max_dy_value = dy_value;
-			}
-			if (min_dy_value > dy_value)
-			{
-				min_dy_value = dy_value;
-			}
-
 			*(dst_dy_img->image_data + y * src_width + x) = dy_value;
 		}
 	}
-
-	dst_dy_img->min_value = min_dy_value;
-	dst_dy_img->max_value = max_dy_value;
-
 	free(exp_img);
 
 	return dst_dy_img;
@@ -199,9 +161,6 @@ IMG_DATA * createVoidImage(const unsigned int src_width, const unsigned int src_
 
 	new_img->width = src_width;
 	new_img->height = src_height;
-
-	new_img->max_value = 1.0;
-	new_img->min_value = 0.0;
 
 	new_img->head_roi.next_roi = NULL;
 	new_img->tail_roi = &new_img->head_roi;
@@ -224,11 +183,6 @@ IMG_DATA * createVoidImage(const unsigned int src_width, const unsigned int src_
 
 void freeImageData(IMG_DATA * src_img_data_ptr)
 {
-	if (src_img_data_ptr->image_data)
-	{
-		free(src_img_data_ptr->image_data);
-	}
-
 	ROI_BBOX * next_roi_node = src_img_data_ptr->head_roi.next_roi;
 	ROI_BBOX * current_roi_node;
 
@@ -240,6 +194,10 @@ void freeImageData(IMG_DATA * src_img_data_ptr)
 		free(current_roi_node);
 	}
 
+	if (src_img_data_ptr->image_data)
+	{
+		free(src_img_data_ptr->image_data);
+	}
 	free(src_img_data_ptr);
 }
 
@@ -390,7 +348,7 @@ IMG_DATA * createFromImageData(const IMG_DATA * src_img)
 	dst_img->height = height;
 	dst_img->image_data = (double*)malloc(width * height * sizeof(double*));
 	
-	memcpy(src_img->image_data, dst_img->image_data, width * height * sizeof(double));
+	memcpy(dst_img->image_data, src_img->image_data, width * height * sizeof(double));
 	
 	memcpy(&dst_img->head_roi, &src_img->head_roi, sizeof(ROI_BBOX));
 	dst_img->head_roi.next_roi = NULL;
@@ -410,8 +368,6 @@ IMG_DATA * createFromImageData(const IMG_DATA * src_img)
 			current_roi_node->LR_x, current_roi_node->LR_y,
 			current_roi_node->LL_x, current_roi_node->LL_y);
 	}
-	dst_img->max_value = src_img->max_value;
-	dst_img->min_value = src_img->min_value;
 
 	return dst_img;
 }
@@ -432,9 +388,15 @@ void copyImageData(const IMG_DATA * src_img, IMG_DATA * dst_img)
 			dst_img->image_data = (double*)malloc(width * height * sizeof(double*));
 		}
 
-		memcpy(src_img->image_data, dst_img->image_data, width * height * sizeof(double));
+		memcpy(dst_img->image_data, src_img->image_data, width * height * sizeof(double));
 	}
-
+	else
+	{
+		dst_img->width = width;
+		dst_img->height = height;
+		dst_img->image_data = (double*)malloc(width * height * sizeof(double*));
+		memcpy(dst_img->image_data, src_img->image_data, width * height * sizeof(double));
+	}
 
 	if (dst_img->head_roi.next_roi)
 	{
@@ -448,26 +410,23 @@ void copyImageData(const IMG_DATA * src_img, IMG_DATA * dst_img)
 
 			free(current_roi_node);
 		}
-
-		memcpy(&dst_img->head_roi, &src_img->head_roi, sizeof(ROI_BBOX));
-		dst_img->head_roi.next_roi = NULL;
-		dst_img->tail_roi = &dst_img->head_roi;
-
-		next_roi_node = src_img->head_roi.next_roi;
-		
-		while (next_roi_node)
-		{
-			current_roi_node = next_roi_node;
-			next_roi_node = current_roi_node->next_roi;
-
-			addImageROI(dst_img, current_roi_node->ROI_type,
-				current_roi_node->UL_x, current_roi_node->UL_y,
-				current_roi_node->UR_x, current_roi_node->UR_y,
-				current_roi_node->LR_x, current_roi_node->LR_y,
-				current_roi_node->LL_x, current_roi_node->LL_y);
-		}
 	}
 
-	dst_img->max_value = src_img->max_value;
-	dst_img->min_value = src_img->min_value;
+	memcpy(&dst_img->head_roi, &src_img->head_roi, sizeof(ROI_BBOX));
+
+	dst_img->head_roi.next_roi = NULL;
+	dst_img->tail_roi = &dst_img->head_roi;
+	ROI_BBOX * next_roi_node = src_img->head_roi.next_roi;
+	ROI_BBOX * current_roi_node;
+	while (next_roi_node)
+	{
+		current_roi_node = next_roi_node;
+		next_roi_node = current_roi_node->next_roi;
+
+		addImageROI(dst_img, current_roi_node->ROI_type,
+			current_roi_node->UL_x, current_roi_node->UL_y,
+			current_roi_node->UR_x, current_roi_node->UR_y,
+			current_roi_node->LR_x, current_roi_node->LR_y,
+			current_roi_node->LL_x, current_roi_node->LL_y);
+	}
 }

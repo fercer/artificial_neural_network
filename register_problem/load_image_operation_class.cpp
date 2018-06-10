@@ -2,7 +2,7 @@
 
 LOAD_IMAGE_OPERATION::LOAD_IMAGE_OPERATION()
 {
-	// Nothing to define
+
 }
 
 
@@ -56,7 +56,41 @@ void LOAD_IMAGE_OPERATION::performOperation()
 	int max_intensity;
 	fscanf(fp_img, "%i", &max_intensity);
 
-	dst_img = createVoidImage(width, height);
+
+	if (!dst_img)
+	{
+		dst_img = createVoidImage(width, height);
+	}
+
+
+	if ((dst_img->width != width) || (dst_img->height != height))
+	{
+		if (dst_img->image_data)
+		{
+			free(dst_img->image_data);
+		}
+		dst_img->width = width;
+		dst_img->height = height;
+		dst_img->image_data = (double*)calloc(width * height, sizeof(double));
+	}
+
+
+	if (dst_img->head_roi.next_roi)
+	{
+		ROI_BBOX * next_roi_node = dst_img->head_roi.next_roi;
+		ROI_BBOX * current_roi_node;
+
+		while (next_roi_node)
+		{
+			current_roi_node = next_roi_node;
+			next_roi_node = current_roi_node->next_roi;
+
+			free(current_roi_node);
+		}
+
+		dst_img->head_roi.next_roi = NULL;
+		dst_img->tail_roi = &dst_img->head_roi;
+	}
 
 	unsigned int pix_intensity;
 	for (unsigned int pix_position = 0; pix_position < (width*height); pix_position++)

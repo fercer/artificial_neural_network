@@ -35,7 +35,7 @@ MAX_IMAGE_SCALAR_OPERATION::~MAX_IMAGE_SCALAR_OPERATION()
 
 double MAX_IMAGE_SCALAR_OPERATION::performScalarOperation()
 {
-	double max = -1e13;
+	double max = std::numeric_limits<double>::lowest();
 	for (unsigned int xy = 0; xy < height * width; xy++)
 	{
 		if (max < parameter * *(src_img->image_data + xy))
@@ -43,8 +43,6 @@ double MAX_IMAGE_SCALAR_OPERATION::performScalarOperation()
 			max = parameter * *(src_img->image_data + xy);
 		}
 	}
-
-	src_img->max_value = max;
-
+	
 	return max;
 }

@@ -62,7 +62,7 @@ void MULT_IMAGE_OPERATION::performOperation()
 						parameter_B * *(src_img_B->image_data + (y - ULb_y)* width_B + x - ULb_x) * 
 						parameter_A * *(src_img_A->image_data + (y - ULa_y)* width_A + x - ULa_x);
 
-					*(dst_img->image_data + (y - ULg_y) * computable_width + x - ULg_x) = d_intensity;
+					*(dst_img->image_data + (y - ULi_y) * computable_width + x - ULi_x) = d_intensity;
 				}
 			}
 			break;
@@ -70,12 +70,8 @@ void MULT_IMAGE_OPERATION::performOperation()
 		case RBT_TARGET:
 		case RBT_SOURCE:
 		case RBT_AREA:
-		case RBT_ROTATED:
 		case RBT_UNCOMPUTED:
 			break;
 		}
 	}
-
-	dst_img->max_value = 1.0;
-	dst_img->min_value = 0.0;
 }

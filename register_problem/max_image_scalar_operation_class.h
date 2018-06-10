@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <limits>
+
 #include "image_scalar_operation_class.h"
 
 class MAX_IMAGE_SCALAR_OPERATION :

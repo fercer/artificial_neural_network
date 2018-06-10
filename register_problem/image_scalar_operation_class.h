@@ -36,6 +36,8 @@ public:
 			if (operation)
 			{
 				src_img = operation->getImageData();
+				width = src_img->width;
+				height = src_img->height;
 			}
 
 			result = performScalarOperation();

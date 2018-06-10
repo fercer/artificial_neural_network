@@ -35,7 +35,7 @@ MIN_IMAGE_SCALAR_OPERATION::~MIN_IMAGE_SCALAR_OPERATION()
 
 double MIN_IMAGE_SCALAR_OPERATION::performScalarOperation()
 {
-	double min = 1e13;
+	double min = std::numeric_limits<double>::infinity();
 	for (unsigned int xy = 0; xy < height * width; xy++)
 	{
 		if (min > parameter * *(src_img->image_data + xy))
@@ -43,8 +43,6 @@ double MIN_IMAGE_SCALAR_OPERATION::performScalarOperation()
 			min = parameter * *(src_img->image_data + xy);
 		}
 	}
-
-	src_img->min_value = min;
 
 	return min;
 }

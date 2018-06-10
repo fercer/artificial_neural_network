@@ -66,12 +66,8 @@ void SQROOT_IMAGE_OPERATION::performOperation()
 			}
 			break;
 		case RBT_AREA:
-		case RBT_ROTATED:
 		case RBT_UNCOMPUTED:
 			break;
 		}
 	}
-
-	dst_img->max_value = 1.0;
-	dst_img->min_value = 0.0;
 }
