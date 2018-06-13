@@ -59,9 +59,9 @@ int main(int argc, char * argv[])
 	const double cphi = cos(phi);
 	const double sphi = sin(phi);
 	rotate_image_a.setParameterA(ctheta);
-	rotate_image_a.setParameterB(stheta);
+	rotate_image_a.setParameterB(sphi);
 	rotate_image_a.setParameterC(-stheta);
-	rotate_image_a.setParameterD(ctheta);
+	rotate_image_a.setParameterD(cphi);
 	rotate_image_a.setInputOperationA(&translate_image_a);
 	
 	SUM_IMAGE_OPERATION sum_ab;
@@ -70,17 +70,17 @@ int main(int argc, char * argv[])
 	//sum_ab.setInputOperationB(&image_b_loader);
 
 	MAX_IMAGE_SCALAR_OPERATION max_value_sum_ab;
-	max_value_sum_ab.setInputOperation(&sum_ab);
+	max_value_sum_ab.setInputOperation(&rotate_image_a);
 
 	MIN_IMAGE_SCALAR_OPERATION min_value_sum_ab;
-	min_value_sum_ab.setInputOperation(&sum_ab);
+	min_value_sum_ab.setInputOperation(&rotate_image_a);
 
 	printf("min = %f\n", min_value_sum_ab.getImageScalar());
 	printf("max = %f\n", max_value_sum_ab.getImageScalar());
 
 	SCALAR_SUM_IMAGE_OPERATION sum_minima;
 	sum_minima.setImageName("sum minima");
-	sum_minima.setInputOperationA(&sum_ab);
+	sum_minima.setInputOperationA(&rotate_image_a);
 	sum_minima.setParameterA(-min_value_sum_ab.getImageScalar());
 
 	SUM_IMAGE_OPERATION norm_sum_a_b;

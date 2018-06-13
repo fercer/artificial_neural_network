@@ -152,12 +152,12 @@ IMG_DATA * computeDerivativesY(IMG_DATA * src_img)
 
 
 
-IMG_DATA * createVoidImage(const unsigned int src_width, const unsigned int src_height)
+IMG_DATA * createVoidImage(const int src_width, const int src_height)
 {
 	IMG_DATA * new_img = (IMG_DATA*)malloc(sizeof(IMG_DATA));
 
-	const int UL_x = -floor((double)src_width / 2.0);
-	const int UL_y = -floor((double)src_height / 2.0);
+	const int UL_x = -src_width / 2;
+	const int UL_y = -src_height / 2;
 
 	new_img->width = src_width;
 	new_img->height = src_height;
@@ -412,8 +412,15 @@ void copyImageData(const IMG_DATA * src_img, IMG_DATA * dst_img)
 		}
 	}
 
-	memcpy(&dst_img->head_roi, &src_img->head_roi, sizeof(ROI_BBOX));
-
+	dst_img->head_roi.UL_x = src_img->head_roi.UL_x;
+	dst_img->head_roi.UL_y = src_img->head_roi.UL_y;
+	dst_img->head_roi.UR_x = src_img->head_roi.UR_x;
+	dst_img->head_roi.UR_y = src_img->head_roi.UR_y;
+	dst_img->head_roi.LR_x = src_img->head_roi.LR_x;
+	dst_img->head_roi.LR_y = src_img->head_roi.LR_y;
+	dst_img->head_roi.LL_x = src_img->head_roi.LL_x;
+	dst_img->head_roi.LL_y = src_img->head_roi.LL_y;
+	
 	dst_img->head_roi.next_roi = NULL;
 	dst_img->tail_roi = &dst_img->head_roi;
 	ROI_BBOX * next_roi_node = src_img->head_roi.next_roi;

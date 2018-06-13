@@ -95,17 +95,17 @@ void ROTATE_IMAGE_OPERATION::performOperation()
 	freePositionsTree(y_posititons_root);
 
 	// Make the ROI area grater for the resukting rotated image:
-	*(x_positions) = *(x_positions) - 1;
-	*(y_positions) = *(y_positions) - 1;
-	*(x_positions + x_positions_count - 1) = *(x_positions + x_positions_count - 1) + 1;
-	*(y_positions + y_positions_count - 1) = *(y_positions + y_positions_count - 1) + 1;
+	*(x_positions) = *(x_positions);// -1;
+	*(y_positions) = *(y_positions);// -1;
+	*(x_positions + x_positions_count - 1) = *(x_positions + x_positions_count - 1);// +1;
+	*(y_positions + y_positions_count - 1) = *(y_positions + y_positions_count - 1);// +1;
 
 	// Define bounding box size:
 	const unsigned int max_width = (double)(*(x_positions + x_positions_count - 1) - *(x_positions)) + 1;
 	const unsigned int max_height = (double)(*(y_positions + y_positions_count - 1) - *(y_positions)) + 1;
 
-	const unsigned int half_max_width = (unsigned int)floor(max_width/2);
-	const unsigned int half_max_height = (unsigned int)floor(max_height/2);
+	const unsigned int half_max_width = max_width / 2;
+	const unsigned int half_max_height = max_height / 2;
 
 	if (!dst_img)
 	{
@@ -162,7 +162,7 @@ void ROTATE_IMAGE_OPERATION::performOperation()
 		memcpy(src_temp_image_data + (width_A + 3) * (i + 1) + 1,
 			src_img_A->image_data + i*width_A, width_A * sizeof(double));
 	}
-
+	FILE * fp_points = fopen("points.dat", "w");
 	double interpolation_result;
 	for (int i = 0; i < max_height; i++)
 	{
@@ -183,12 +183,13 @@ void ROTATE_IMAGE_OPERATION::performOperation()
 			else
 			{
 				interpolation_result = bicubicInterpolation(src_temp_image_data, src_x, src_y);
-
+				fprintf(fp_points, "%f %f\n", src_x, src_y);
 				*(dst_img->image_data + max_width*i + j) = interpolation_result;
 			}
 		}
 	}
 
+	fclose(fp_points);
 	free(src_temp_image_data);
 }
 
@@ -197,8 +198,8 @@ void ROTATE_IMAGE_OPERATION::performOperation()
 
 double ROTATE_IMAGE_OPERATION::bicubicInterpolation(double * src_img, const double x, const double y)
 {
-	const int x_int = (int)x;
-	const int y_int = (int)y;
+	const int x_int = (int)floor(x);
+	const int y_int = (int)floor(y);
 
 	const double s0_x = x - (double)x_int;
 	const double s_1_x = 1.0 + s0_x;
@@ -223,20 +224,20 @@ double ROTATE_IMAGE_OPERATION::bicubicInterpolation(double * src_img, const doub
 	const double uy2 = -0.5 * s2_y*s2_y*s2_y + 2.5 * s2_y * s2_y - 4.0 * s2_y + 2.0;
 
 	return
-		(*(src_img + (y_int - 1) * width_A + x_int - 1) * uy_1 +
-			*(src_img + y_int * width_A + x_int - 1) * uy0 +
-			*(src_img + (y_int + 1) * width_A + x_int - 1) * uy1 +
-			*(src_img + (y_int + 2) * width_A + x_int - 1) * uy2) * ux_1 +
-			(*(src_img + (y_int - 1) * width_A + x_int) * uy_1 +
-				*(src_img + y_int * width_A + x_int) * uy0 +
-				*(src_img + (y_int + 1) * width_A + x_int) * uy1 +
-				*(src_img + (y_int + 2) * width_A + x_int) * uy2) * ux0 +
-				(*(src_img + (y_int - 1) * width_A + x_int + 1) * uy_1 +
-					*(src_img + y_int * width_A + x_int + 1) * uy0 +
-					*(src_img + (y_int + 1) * width_A + x_int + 1) * uy1 +
-					*(src_img + (y_int + 2) * width_A + x_int + 1) * uy2) * ux1 +
-					(*(src_img + (y_int - 1) * width_A + x_int + 2) * uy_1 +
-						*(src_img + y_int * width_A + x_int + 2) * uy0 +
-						*(src_img + (y_int + 1) * width_A + x_int + 2) * uy1 +
-						*(src_img + (y_int + 2) * width_A + x_int + 2) * uy2) * ux2;
+		(*(src_img + (y_int - 1) * (width_A + 3) + x_int - 1) * uy_1 +
+			*(src_img + y_int * (width_A + 3) + x_int - 1) * uy0 +
+			*(src_img + (y_int + 1) * (width_A + 3) + x_int - 1) * uy1 +
+			*(src_img + (y_int + 2) * (width_A + 3) + x_int - 1) * uy2) * ux_1 +
+			(*(src_img + (y_int - 1) * (width_A + 3) + x_int) * uy_1 +
+				*(src_img + y_int * (width_A + 3) + x_int) * uy0 +
+				*(src_img + (y_int + 1) * (width_A + 3) + x_int) * uy1 +
+				*(src_img + (y_int + 2) * (width_A + 3) + x_int) * uy2) * ux0 +
+				(*(src_img + (y_int - 1) * (width_A + 3) + x_int + 1) * uy_1 +
+					*(src_img + y_int * (width_A + 3) + x_int + 1) * uy0 +
+					*(src_img + (y_int + 1) * (width_A + 3) + x_int + 1) * uy1 +
+					*(src_img + (y_int + 2) * (width_A + 3) + x_int + 1) * uy2) * ux1 +
+					(*(src_img + (y_int - 1) * (width_A + 3) + x_int + 2) * uy_1 +
+						*(src_img + y_int * (width_A + 3) + x_int + 2) * uy0 +
+						*(src_img + (y_int + 1) * (width_A + 3) + x_int + 2) * uy1 +
+						*(src_img + (y_int + 2) * (width_A + 3) + x_int + 2) * uy2) * ux2;
 }
