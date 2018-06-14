@@ -46,14 +46,14 @@ int main(int argc, char * argv[])
 
 	TRANSLATE_IMAGE_OPERATION translate_image_a;
 	translate_image_a.setImageName("trans image a");
-	translate_image_a.setParameterA(-500.0);
-	translate_image_a.setParameterB(-250.0);
+	translate_image_a.setParameterA(-50.0);
+	translate_image_a.setParameterB(-20.0);
 	translate_image_a.setInputOperationA(&image_a_loader);
 
 	ROTATE_IMAGE_OPERATION rotate_image_a;
 	rotate_image_a.setImageName("rotate translated a");
-	const double theta = 0.0 * MY_PI / 180.0;
-	const double phi = 0.0 * MY_PI / 180.0;
+	const double theta = 10.0 * MY_PI / 180.0;
+	const double phi = 10.0 * MY_PI / 180.0;
 	const double ctheta = cos(theta);
 	const double stheta = sin(theta);
 	const double cphi = cos(phi);
@@ -67,26 +67,26 @@ int main(int argc, char * argv[])
 	SUM_IMAGE_OPERATION sum_ab;
 	sum_ab.setImageName("sum a + b");
 	sum_ab.setInputOperationA(&rotate_image_a);
-	//sum_ab.setInputOperationB(&image_b_loader);
+	sum_ab.setInputOperationB(&image_b_loader);
 
 	MAX_IMAGE_SCALAR_OPERATION max_value_sum_ab;
-	max_value_sum_ab.setInputOperation(&rotate_image_a);
+	max_value_sum_ab.setInputOperation(&sum_ab);
 
 	MIN_IMAGE_SCALAR_OPERATION min_value_sum_ab;
-	min_value_sum_ab.setInputOperation(&rotate_image_a);
+	min_value_sum_ab.setInputOperation(&sum_ab);
 
-	printf("min = %f\n", min_value_sum_ab.getImageScalar());
-	printf("max = %f\n", max_value_sum_ab.getImageScalar());
+	printf("min = %f\n", min_value_sum_ab.getScalarValue());
+	printf("max = %f\n", max_value_sum_ab.getScalarValue());
 
 	SCALAR_SUM_IMAGE_OPERATION sum_minima;
 	sum_minima.setImageName("sum minima");
-	sum_minima.setInputOperationA(&rotate_image_a);
-	sum_minima.setParameterA(-min_value_sum_ab.getImageScalar());
+	sum_minima.setInputOperationA(&sum_ab);
+	sum_minima.setParameterA(-min_value_sum_ab.getScalarValue());
 
 	SUM_IMAGE_OPERATION norm_sum_a_b;
 	norm_sum_a_b.setImageName("div by range");
 	norm_sum_a_b.setInputOperationA(&sum_minima);
-	norm_sum_a_b.setParameterA(1.0 / (max_value_sum_ab.getImageScalar() - min_value_sum_ab.getImageScalar()));
+	norm_sum_a_b.setParameterA(1.0 / (max_value_sum_ab.getScalarValue() - min_value_sum_ab.getScalarValue()));
 	
 	SAVE_IMAGE_OPERATION save_sum_ab;
 	save_sum_ab.setImageName("sum_a_b.pgm");

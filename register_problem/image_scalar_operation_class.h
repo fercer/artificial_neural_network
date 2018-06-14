@@ -8,8 +8,10 @@
 
 #include "image_functions.h"
 #include "image_operation_class.h"
+#include "node_scalar_class.h"
 
-class IMAGE_SCALAR_OPERATION
+class IMAGE_SCALAR_OPERATION :
+	public NODE_SCALAR
 {
 public:
 	IMAGE_SCALAR_OPERATION()
@@ -25,11 +27,11 @@ public:
 		result = 0.0;
 	}
 
-	~IMAGE_SCALAR_OPERATION() 
+	virtual ~IMAGE_SCALAR_OPERATION() 
 	{
 	}
 	
-	double getImageScalar() 
+	double getScalarValue() 
 	{
 		if (input_has_changed)
 		{

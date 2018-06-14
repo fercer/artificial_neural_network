@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "node_scalar_class.h"
+#include "generic_list_class.h"
 #include "image_functions.h"
 
 
@@ -35,10 +37,8 @@ public:
 		LRb_x = 0;
 		LRb_y = 0;
 
-		parameter_A = 0.0;
-		parameter_B = 0.0;
-		parameter_C = 0.0;
-		parameter_D = 0.0;
+		parameters_count = 0;
+		parameters_nodes = NULL;
 
 		strcpy(image_name, "");
 	}
@@ -48,6 +48,11 @@ public:
 		if (dst_img)
 		{
 			freeImageData(this->dst_img);
+		}
+
+		if (parameters_nodes)
+		{
+			delete[] parameters_nodes;
 		}
 	}
 	
@@ -100,38 +105,22 @@ public:
 		inputs_have_changed = true;
 		src_B_is_assigned = true;
 	}
-
-	void setParameterA(const double src_parameter_A)
-	{
-		parameter_A = src_parameter_A;
-	}
-
-	void setParameterB(const double src_parameter_B)
-	{
-		parameter_B = src_parameter_B;
-	}
-
-	void setParameterC(const double src_parameter_C)
-	{
-		parameter_C = src_parameter_C;
-	}
-
-	void setParameterD(const double src_parameter_D)
-	{
-		parameter_D = src_parameter_D;
-	}
+	
 
 	void setImageName(const char * src_image_name)
 	{
 		strcpy(image_name, src_image_name);
 	}
 
+	void setInputNodeScalar(NODE_SCALAR * src_node_scalar_pointer)
+	{
+		parameters_count = parameters_nodes_list.addNodeToList(src_node_scalar_pointer);
+	}
+
 protected:
-	double parameter_A;
-	double parameter_B;
-	double parameter_C;
-	double parameter_D;
-	
+	NODE_SCALAR ** parameters_nodes;
+	unsigned int parameters_count;
+
 	bool src_A_is_assigned;
 	bool src_B_is_assigned;
 
@@ -183,11 +172,9 @@ protected:
 		this->src_A_is_assigned = src_image_operation.src_A_is_assigned;
 		this->src_B_is_assigned = src_image_operation.src_B_is_assigned;
 
-		this->parameter_A = src_image_operation.parameter_A;
-		this->parameter_B = src_image_operation.parameter_B;
-		this->parameter_C = src_image_operation.parameter_C;
-		this->parameter_D = src_image_operation.parameter_D;
-
+		this->parameters_count = 0;
+		this->parameters_nodes = NULL;
+		
 		this->width_A = src_image_operation.width_A;
 		this->height_A = src_image_operation.height_A;
 
@@ -374,6 +361,8 @@ protected:
 
 private:
 	bool inputs_have_changed;
+
+	GENERIC_LIST<NODE_SCALAR*> parameters_nodes_list;
 
 	IMAGE_OPERATION * operation_A;
 	IMAGE_OPERATION * operation_B;
