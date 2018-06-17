@@ -47,14 +47,14 @@ void TRANSLATE_IMAGE_OPERATION::performOperation()
 	
 	// Modify only the ROI boundaries:
 	/// Modify the area ROI:
-	dst_img->head_roi.UL_x += parameter_A;
-	dst_img->head_roi.UL_y += parameter_B;
-	dst_img->head_roi.UR_x += parameter_A;
-	dst_img->head_roi.UR_y += parameter_B;
-	dst_img->head_roi.LR_x += parameter_A;
-	dst_img->head_roi.LR_y += parameter_B;
-	dst_img->head_roi.LL_x += parameter_A;
-	dst_img->head_roi.LL_y += parameter_B;
+	dst_img->head_roi.UL_x += (numeric_parameters_nodes_list.getNodeValue(0))->getScalarValue();
+	dst_img->head_roi.UL_y += (numeric_parameters_nodes_list.getNodeValue(1))->getScalarValue();
+	dst_img->head_roi.UR_x += (numeric_parameters_nodes_list.getNodeValue(0))->getScalarValue();
+	dst_img->head_roi.UR_y += (numeric_parameters_nodes_list.getNodeValue(1))->getScalarValue();
+	dst_img->head_roi.LR_x += (numeric_parameters_nodes_list.getNodeValue(0))->getScalarValue();
+	dst_img->head_roi.LR_y += (numeric_parameters_nodes_list.getNodeValue(1))->getScalarValue();
+	dst_img->head_roi.LL_x += (numeric_parameters_nodes_list.getNodeValue(0))->getScalarValue();
+	dst_img->head_roi.LL_y += (numeric_parameters_nodes_list.getNodeValue(1))->getScalarValue();
 
 	ROI_BBOX * next_roi_node = dst_img->head_roi.next_roi;
 	ROI_BBOX * current_roi_node;

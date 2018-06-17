@@ -38,7 +38,7 @@ public:
 		LRb_y = 0;
 
 		parameters_count = 0;
-		parameters_nodes = NULL;
+		parameters_have_changed = false;
 
 		strcpy(image_name, "");
 	}
@@ -48,11 +48,6 @@ public:
 		if (dst_img)
 		{
 			freeImageData(this->dst_img);
-		}
-
-		if (parameters_nodes)
-		{
-			delete[] parameters_nodes;
 		}
 	}
 	
@@ -106,20 +101,28 @@ public:
 		src_B_is_assigned = true;
 	}
 	
-
 	void setImageName(const char * src_image_name)
 	{
 		strcpy(image_name, src_image_name);
 	}
 
-	void setInputNodeScalar(NODE_SCALAR * src_node_scalar_pointer)
+	void setInputNodeScalar(NODE_SCALAR<double> * src_node_scalar_pointer, const unsigned int src_input_index = 0)
 	{
-		parameters_count = parameters_nodes_list.addNodeToList(src_node_scalar_pointer);
+		parameters_count = numeric_parameters_nodes_list.assignNodeValue(src_input_index, src_node_scalar_pointer);
+		parameters_have_changed = true;
+	}
+
+	void setInputNodeScalar(NODE_SCALAR<char*> * src_node_scalar_pointer, const unsigned int src_input_index = 0)
+	{
+		parameters_count = string_parameters_nodes_list.assignNodeValue(src_input_index, src_node_scalar_pointer);
+		parameters_have_changed = true;
 	}
 
 protected:
-	NODE_SCALAR ** parameters_nodes;
+	GENERIC_LIST<NODE_SCALAR<char*>*> string_parameters_nodes_list;
+	GENERIC_LIST<NODE_SCALAR<double>*> numeric_parameters_nodes_list;
 	unsigned int parameters_count;
+	bool parameters_have_changed;
 
 	bool src_A_is_assigned;
 	bool src_B_is_assigned;
@@ -140,6 +143,7 @@ protected:
 	int ULa_y;
 	int LRa_x;
 	int LRa_y;
+
 	int ULb_x;
 	int ULb_y;
 	int LRb_x;
@@ -172,8 +176,9 @@ protected:
 		this->src_A_is_assigned = src_image_operation.src_A_is_assigned;
 		this->src_B_is_assigned = src_image_operation.src_B_is_assigned;
 
-		this->parameters_count = 0;
-		this->parameters_nodes = NULL;
+		this->parameters_count = src_image_operation.parameters_count;
+		this->numeric_parameters_nodes_list = src_image_operation.numeric_parameters_nodes_list;
+		this->string_parameters_nodes_list = src_image_operation.string_parameters_nodes_list;
 		
 		this->width_A = src_image_operation.width_A;
 		this->height_A = src_image_operation.height_A;
@@ -361,8 +366,6 @@ protected:
 
 private:
 	bool inputs_have_changed;
-
-	GENERIC_LIST<NODE_SCALAR*> parameters_nodes_list;
 
 	IMAGE_OPERATION * operation_A;
 	IMAGE_OPERATION * operation_B;
