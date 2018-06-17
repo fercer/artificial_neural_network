@@ -64,13 +64,13 @@ void TRANSLATE_IMAGE_OPERATION::performOperation()
 		current_roi_node = next_roi_node;
 		next_roi_node = current_roi_node->next_roi;
 
-		current_roi_node->UL_x += parameter_A;
-		current_roi_node->UL_y += parameter_B;
-		current_roi_node->UR_x += parameter_A;
-		current_roi_node->UR_y += parameter_B;
-		current_roi_node->LR_x += parameter_A;
-		current_roi_node->LR_y += parameter_B;
-		current_roi_node->LL_x += parameter_A;
-		current_roi_node->LL_y += parameter_B;
+		current_roi_node->UL_x += (numeric_parameters_nodes_list.getNodeValue(0))->getScalarValue();
+		current_roi_node->UL_y += (numeric_parameters_nodes_list.getNodeValue(1))->getScalarValue();;
+		current_roi_node->UR_x += (numeric_parameters_nodes_list.getNodeValue(0))->getScalarValue();
+		current_roi_node->UR_y += (numeric_parameters_nodes_list.getNodeValue(1))->getScalarValue();;
+		current_roi_node->LR_x += (numeric_parameters_nodes_list.getNodeValue(0))->getScalarValue();
+		current_roi_node->LR_y += (numeric_parameters_nodes_list.getNodeValue(1))->getScalarValue();;
+		current_roi_node->LL_x += (numeric_parameters_nodes_list.getNodeValue(0))->getScalarValue();
+		current_roi_node->LL_y += (numeric_parameters_nodes_list.getNodeValue(1))->getScalarValue();;
 	}
 }

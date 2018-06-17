@@ -2,9 +2,7 @@
 
 ONES_IMAGE_OPERATION::ONES_IMAGE_OPERATION()
 {
-	parameter_A = 1.0;
-	parameter_B = 1.0;
-	parameter_C = 1.0;
+	/* Requires assign a default value here ... */
 }
 
 
@@ -35,8 +33,8 @@ ONES_IMAGE_OPERATION::~ONES_IMAGE_OPERATION()
 
 void ONES_IMAGE_OPERATION::performOperation()
 {
-	const unsigned int width = (unsigned int)floor(parameter_A);
-	const unsigned int height = (unsigned int)floor(parameter_B);
+	const unsigned int width = (unsigned int)floor(numeric_parameters_nodes_list.getNodeValue(0)->getScalarValue());
+	const unsigned int height = (unsigned int)floor(numeric_parameters_nodes_list.getNodeValue(1)->getScalarValue());
 
 	if (!dst_img)
 	{
@@ -86,6 +84,6 @@ void ONES_IMAGE_OPERATION::performOperation()
 	
 	for (unsigned int xy = 0; xy < height*width; xy++)
 	{
-		*(dst_img->image_data + xy) = parameter_C;
+		*(dst_img->image_data + xy) = numeric_parameters_nodes_list.getNodeValue(2)->getScalarValue();
 	}
 }

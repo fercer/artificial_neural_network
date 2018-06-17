@@ -9,20 +9,23 @@
 #include "image_functions.h"
 #include "image_operation_class.h"
 #include "node_scalar_class.h"
+#include "generic_list_class.h"
 
 class IMAGE_SCALAR_OPERATION :
-	public NODE_SCALAR
+	public NODE_SCALAR<double>
 {
 public:
 	IMAGE_SCALAR_OPERATION()
 	{
 		input_has_changed = false;
+		parameters_have_hanged = false;
 
 		operation = NULL;
 
 		src_img = NULL;
 
-		parameter = 0.0;
+		numeric_parameters_count = 0;
+		string_parameters_count = 0;
 
 		result = 0.0;
 	}
@@ -54,17 +57,26 @@ public:
 		input_has_changed = true;
 	}
 
-	void setParameter(const double src_parameter)
+	void setParameter(NODE_SCALAR<double> * src_parameter_node_pointer, const unsigned int src_parameter_index = 0)
 	{
-		parameter = src_parameter;
+		numeric_parameters_count = numeric_parameters.assignNodeValue(src_parameter_index, src_parameter_node_pointer);
+		parameters_have_hanged = true;
 	}
 
+	void setParameter(NODE_SCALAR<char*> * src_parameter_node_pointer, const unsigned int src_parameter_index = 0)
+	{
+		string_parameters_count = string_parameters.assignNodeValue(src_parameter_index, src_parameter_node_pointer);
+		parameters_have_hanged = true;
+	}
 
 protected:
 	unsigned int width;
 	unsigned int height;
 
-	double parameter;
+	GENERIC_LIST<NODE_SCALAR<double>*> numeric_parameters;
+	unsigned int numeric_parameters_count;
+	GENERIC_LIST<NODE_SCALAR<char*>*> string_parameters;
+	unsigned int string_parameters_count;
 	
 	IMG_DATA * src_img;
 	
@@ -77,7 +89,10 @@ protected:
 
 		this->src_img = this->operation->getImageData();
 		
-		this->parameter = src_image_scalar_operation.parameter;
+		this->numeric_parameters = src_image_scalar_operation.numeric_parameters;
+		this->numeric_parameters_count = src_image_scalar_operation.numeric_parameters_count;
+		this->string_parameters = src_image_scalar_operation.string_parameters;
+		this->string_parameters_count = src_image_scalar_operation.string_parameters_count;
 
 		this->width = src_image_scalar_operation.width;
 		this->height = src_image_scalar_operation.height;
@@ -88,6 +103,7 @@ protected:
 	
 private:
 	bool input_has_changed;
+	bool parameters_have_hanged;
 	double result;
 	IMAGE_OPERATION * operation;
 };

@@ -35,7 +35,7 @@ LOAD_IMAGE_OPERATION::~LOAD_IMAGE_OPERATION()
 
 void LOAD_IMAGE_OPERATION::performOperation()
 {
-	FILE * fp_img = fopen(image_name, "r");
+	FILE * fp_img = fopen(string_parameters_nodes_list.getNodeValue(0)->getScalarValue(), "r");
 	if (!fp_img)
 	{
 		return;

@@ -16,8 +16,15 @@ public:
 	SUM_IMAGE_OPERATION operator = (const SUM_IMAGE_OPERATION & src_sum_image_operation);
 	~SUM_IMAGE_OPERATION();
 
+	void assignParameterA(const double src_parameter_A);
+	void assignParameterB(const double src_parameter_B);
+
 protected:
 	void performOperation();
+
+private:
+	NODE_SCALAR<double> parameter_A;
+	NODE_SCALAR<double> parameter_B;
 };
 
 #endif // SUM_IMAGE_OPERATION_CLASS_H_INCLUDED

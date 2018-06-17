@@ -38,11 +38,14 @@ void ROTATE_IMAGE_OPERATION::performOperation()
 	const double half_src_width = width_A / 2;
 	const double half_src_height = height_A / 2;
 
-	const double rotation_matrix_determinant = parameter_A*parameter_D - parameter_B*parameter_C;
-	const double inv_parameter_A = parameter_D / rotation_matrix_determinant;
-	const double inv_parameter_B = -parameter_B / rotation_matrix_determinant;
-	const double inv_parameter_C = -parameter_C / rotation_matrix_determinant;
-	const double inv_parameter_D = parameter_A / rotation_matrix_determinant;
+	const double rotation_matrix_determinant =
+		numeric_parameters_nodes_list.getNodeValue(0)->getScalarValue() * numeric_parameters_nodes_list.getNodeValue(2)->getScalarValue() -
+		numeric_parameters_nodes_list.getNodeValue(1)->getScalarValue() * numeric_parameters_nodes_list.getNodeValue(3)->getScalarValue();
+
+	const double inv_parameter_A = numeric_parameters_nodes_list.getNodeValue(3)->getScalarValue() / rotation_matrix_determinant;
+	const double inv_parameter_B = -numeric_parameters_nodes_list.getNodeValue(1)->getScalarValue() / rotation_matrix_determinant;
+	const double inv_parameter_C = -numeric_parameters_nodes_list.getNodeValue(2)->getScalarValue() / rotation_matrix_determinant;
+	const double inv_parameter_D = numeric_parameters_nodes_list.getNodeValue(0)->getScalarValue() / rotation_matrix_determinant;
 	
 	/* Rotate the ROI corners of the source image to figure out the size fo the destination image */
 	const double UL_x = 
@@ -169,9 +172,9 @@ void ROTATE_IMAGE_OPERATION::performOperation()
 		for (int j = 0; j < max_width; j++)
 		{
 			const double src_x = half_src_width +
-				parameter_A * ((double)j - half_max_width) + parameter_C * ((double)i - half_max_height);
+				numeric_parameters_nodes_list.getNodeValue(0)->getScalarValue() * ((double)j - half_max_width) + numeric_parameters_nodes_list.getNodeValue(2)->getScalarValue() * ((double)i - half_max_height);
 			const double src_y = half_src_height +
-				parameter_B * ((double)j - half_max_width) + parameter_D * ((double)i - half_max_height);
+				numeric_parameters_nodes_list.getNodeValue(1)->getScalarValue() * ((double)j - half_max_width) + numeric_parameters_nodes_list.getNodeValue(3)->getScalarValue() * ((double)i - half_max_height);
 
 			if ((src_x < 1) ||
 				(src_x > width_A) ||

@@ -16,8 +16,15 @@ public:
 	SQROOT_IMAGE_OPERATION operator = (const SQROOT_IMAGE_OPERATION & src_sum_image_operation);
 	~SQROOT_IMAGE_OPERATION();
 
+
+	void assignParameter(const double src_parameter);
+
 protected:
 	void performOperation();
+
+
+private:
+	NODE_SCALAR<double> parameter;
 };
 
 #endif // SQROOT_IMAGE_OPERATION_CLASS_H_INCLUDED

@@ -39,6 +39,11 @@ public:
 	{
 		return *(*scalar_pointer_manager + array_position);
 	}
+
+	virtual void setScalarValue(const class_value_type src_scalar_value)
+	{
+		*(*scalar_pointer_manager + array_position) = src_scalar_value;
+	}
 	
 private:
 	class_value_type ** scalar_pointer_manager;
@@ -84,6 +89,12 @@ public:
 	{
 		return *(*scalar_pointer_manager + array_position);
 	}
+
+	virtual void setScalarValue(const char * src_scalar_value)
+	{
+		strcpy(*(*scalar_pointer_manager + array_position), src_scalar_value);
+	}
+
 
 private:
 	char*** scalar_pointer_manager;

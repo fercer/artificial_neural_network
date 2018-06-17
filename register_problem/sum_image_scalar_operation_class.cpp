@@ -2,7 +2,6 @@
 
 SUM_IMAGE_SCALAR_OPERATION::SUM_IMAGE_SCALAR_OPERATION()
 {
-	parameter = 1.0;
 }
 
 
@@ -38,7 +37,7 @@ double SUM_IMAGE_SCALAR_OPERATION::performScalarOperation()
 	double sum = 0.0;
 	for (unsigned int xy = 0; xy < height * width; xy++)
 	{
-		sum += parameter * *(src_img->image_data + xy);
+		sum += *(src_img->image_data + xy);
 	}
 	return sum;
 }

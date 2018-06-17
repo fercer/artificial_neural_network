@@ -14,7 +14,7 @@ private:
 		LIST_NODE * next_node;
 	};
 
-	class_link_type (*get_node_value_method)(const unsigned int src_node_index);
+	class_link_type (GENERIC_LIST::*get_node_value_method)(const unsigned int src_node_index);
 
 	unsigned int nodes_count;
 	unsigned int last_dump_nodes_count;
@@ -43,13 +43,15 @@ private:
 			array_from_list = new class_link_type[nodes_count];
 		}
 
+		LIST_NODE * next_node_pointer = head_node.next_node;
+		LIST_NODE * current_node_pointer;
 		unsigned int current_node_position = 0;
 		while (next_node_pointer)
 		{
 			current_node_pointer = next_node_pointer;
 			next_node_pointer = current_node_pointer->next_node;
 
-			*(array_from_list + current_node_position) = current_node_position->node_value;
+			*(array_from_list + current_node_position) = current_node_pointer->node_value;
 			current_node_position++;
 		}
 		last_dump_nodes_count = nodes_count;
@@ -215,7 +217,7 @@ public:
 
 	class_link_type getNodeValue(const unsigned int src_node_index)
 	{
-		(this->*get_node_value_method)(src_node_index);
+		return (this->*get_node_value_method)(src_node_index);
 	}
 
 
