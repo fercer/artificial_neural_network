@@ -13,6 +13,26 @@ MULT_IMAGE_OPERATION::MULT_IMAGE_OPERATION()
 MULT_IMAGE_OPERATION::MULT_IMAGE_OPERATION(const MULT_IMAGE_OPERATION & src_mult_image_operation)
 {
 	copyFromImageOperation(src_mult_image_operation);
+
+	/* Verify if the parameters are connected to an outer node pointer,
+	or if them are connected to the default nodes of the source:
+	*/
+	this->numeric_parameters_nodes_list = src_mult_image_operation.numeric_parameters_nodes_list;
+
+	NODE_SCALAR<double> * src_parameter_A_pointer = this->numeric_parameters_nodes_list.getNodeValue(0);
+	NODE_SCALAR<double> * src_parameter_B_pointer = this->numeric_parameters_nodes_list.getNodeValue(1);
+
+	if (src_parameter_A_pointer == &src_mult_image_operation.parameter_A)
+	{
+		this->parameter_A.setScalarValue(src_parameter_A_pointer->getScalarValue());
+		this->numeric_parameters_nodes_list.assignNodeValue(0, &this->parameter_A);
+	}
+
+	if (src_parameter_B_pointer == &src_mult_image_operation.parameter_B)
+	{
+		this->parameter_B.setScalarValue(src_parameter_B_pointer->getScalarValue());
+		this->numeric_parameters_nodes_list.assignNodeValue(1, &this->parameter_B);
+	}
 }
 
 
@@ -22,6 +42,26 @@ MULT_IMAGE_OPERATION MULT_IMAGE_OPERATION::operator=(const MULT_IMAGE_OPERATION 
 	if (this != &src_mult_image_operation)
 	{
 		copyFromImageOperation(src_mult_image_operation);
+
+		/* Verify if the parameters are connected to an outer node pointer,
+		or if them are connected to the default nodes of the source:
+		*/
+		this->numeric_parameters_nodes_list = src_mult_image_operation.numeric_parameters_nodes_list;
+
+		NODE_SCALAR<double> * src_parameter_A_pointer = this->numeric_parameters_nodes_list.getNodeValue(0);
+		NODE_SCALAR<double> * src_parameter_B_pointer = this->numeric_parameters_nodes_list.getNodeValue(1);
+
+		if (src_parameter_A_pointer == &src_mult_image_operation.parameter_A)
+		{
+			this->parameter_A.setScalarValue(src_parameter_A_pointer->getScalarValue());
+			this->numeric_parameters_nodes_list.assignNodeValue(0, &this->parameter_A);
+		}
+
+		if (src_parameter_B_pointer == &src_mult_image_operation.parameter_B)
+		{
+			this->parameter_B.setScalarValue(src_parameter_B_pointer->getScalarValue());
+			this->numeric_parameters_nodes_list.assignNodeValue(1, &this->parameter_B);
+		}
 	}
 
 	return *this;
@@ -34,14 +74,28 @@ MULT_IMAGE_OPERATION::~MULT_IMAGE_OPERATION()
 	// Nothing to deallocate
 }
 
-void MULT_IMAGE_OPERATION::assignParameterA(const double src_parameter_A)
+void MULT_IMAGE_OPERATION::setParameterA(const double src_parameter_A)
 {
 	parameter_A.setScalarValue(src_parameter_A);
 }
 
-void MULT_IMAGE_OPERATION::assignParameterB(const double src_parameter_B)
+void MULT_IMAGE_OPERATION::setParameterA(NODE_SCALAR<double>* src_node_A)
+{
+	numeric_parameters_nodes_list.assignNodeValue(0, src_node_A);
+	parameters_have_changed = true;
+}
+
+
+void MULT_IMAGE_OPERATION::setParameterB(const double src_parameter_B)
 {
 	parameter_B.setScalarValue(src_parameter_B);
+}
+
+
+void MULT_IMAGE_OPERATION::setParameterB(NODE_SCALAR<double>* src_node_B)
+{
+	numeric_parameters_nodes_list.assignNodeValue(1, src_node_B);
+	parameters_have_changed = true;
 }
 
 

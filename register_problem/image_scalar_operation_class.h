@@ -57,18 +57,6 @@ public:
 		input_has_changed = true;
 	}
 
-	void setParameter(NODE_SCALAR<double> * src_parameter_node_pointer, const unsigned int src_parameter_index = 0)
-	{
-		numeric_parameters_count = numeric_parameters.assignNodeValue(src_parameter_index, src_parameter_node_pointer);
-		parameters_have_hanged = true;
-	}
-
-	void setParameter(NODE_SCALAR<char*> * src_parameter_node_pointer, const unsigned int src_parameter_index = 0)
-	{
-		string_parameters_count = string_parameters.assignNodeValue(src_parameter_index, src_parameter_node_pointer);
-		parameters_have_hanged = true;
-	}
-
 protected:
 	unsigned int width;
 	unsigned int height;

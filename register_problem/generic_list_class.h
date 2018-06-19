@@ -26,7 +26,7 @@ private:
 
 	void dumpListToArray()
 	{
-		if ((nodes_count < 1) || list_was_dumped_to_array)
+		if (list_was_dumped_to_array)
 		{
 			return;
 		}
@@ -200,7 +200,7 @@ public:
 
 	unsigned int assignNodeValue(const unsigned int src_index, const class_link_type src_node)
 	{
-		if (src_index > nodes_count)
+		if (src_index >= nodes_count)
 		{
 			addNodeToList(src_node);
 		}
@@ -209,7 +209,9 @@ public:
 		{
 			dumpListToArray();
 		}
+
 		*(array_from_list + src_index) = src_node;
+
 		return nodes_count;
 	}
 

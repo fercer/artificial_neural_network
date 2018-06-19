@@ -17,7 +17,8 @@ public:
 	~SQROOT_IMAGE_OPERATION();
 
 
-	void assignParameter(const double src_parameter);
+	void setParameter(const double src_parameter);
+	void setParameter(NODE_SCALAR<double> * src_node);
 
 protected:
 	void performOperation();

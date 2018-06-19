@@ -16,8 +16,10 @@ public:
 	SUM_IMAGE_OPERATION operator = (const SUM_IMAGE_OPERATION & src_sum_image_operation);
 	~SUM_IMAGE_OPERATION();
 
-	void assignParameterA(const double src_parameter_A);
-	void assignParameterB(const double src_parameter_B);
+	void setParameterA(const double src_parameter_A);
+	void setParameterA(NODE_SCALAR<double> * src_node_A);
+	void setParameterB(const double src_parameter_B);
+	void setParameterB(NODE_SCALAR<double> * src_node_B);
 
 protected:
 	void performOperation();

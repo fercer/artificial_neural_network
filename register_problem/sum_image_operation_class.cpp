@@ -14,6 +14,26 @@ SUM_IMAGE_OPERATION::SUM_IMAGE_OPERATION()
 SUM_IMAGE_OPERATION::SUM_IMAGE_OPERATION(const SUM_IMAGE_OPERATION & src_sum_image_operation)
 {
 	copyFromImageOperation(src_sum_image_operation);
+
+	/* Verify if the parameters are connected to an outer node pointer,
+	or if them are connected to the default nodes of the source:
+	*/
+	this->numeric_parameters_nodes_list = src_sum_image_operation.numeric_parameters_nodes_list;
+
+	NODE_SCALAR<double> * src_parameter_A_pointer = this->numeric_parameters_nodes_list.getNodeValue(0);
+	NODE_SCALAR<double> * src_parameter_B_pointer = this->numeric_parameters_nodes_list.getNodeValue(1);
+
+	if (src_parameter_A_pointer == &src_sum_image_operation.parameter_A)
+	{
+		this->parameter_A.setScalarValue(src_parameter_A_pointer->getScalarValue());
+		this->numeric_parameters_nodes_list.assignNodeValue(0, &this->parameter_A);
+	}
+
+	if (src_parameter_B_pointer == &src_sum_image_operation.parameter_B)
+	{
+		this->parameter_B.setScalarValue(src_parameter_B_pointer->getScalarValue());
+		this->numeric_parameters_nodes_list.assignNodeValue(1, &this->parameter_B);
+	}
 }
 
 
@@ -23,6 +43,26 @@ SUM_IMAGE_OPERATION SUM_IMAGE_OPERATION::operator=(const SUM_IMAGE_OPERATION & s
 	if (this != &src_sum_image_operation)
 	{
 		copyFromImageOperation(src_sum_image_operation);
+
+		/* Verify if the parameters are connected to an outer node pointer,
+		or if them are connected to the default nodes of the source:
+		*/
+		this->numeric_parameters_nodes_list = src_sum_image_operation.numeric_parameters_nodes_list;
+
+		NODE_SCALAR<double> * src_parameter_A_pointer = this->numeric_parameters_nodes_list.getNodeValue(0);
+		NODE_SCALAR<double> * src_parameter_B_pointer = this->numeric_parameters_nodes_list.getNodeValue(1);
+
+		if (src_parameter_A_pointer == &src_sum_image_operation.parameter_A)
+		{
+			this->parameter_A.setScalarValue(src_parameter_A_pointer->getScalarValue());
+			this->numeric_parameters_nodes_list.assignNodeValue(0, &this->parameter_A);
+		}
+
+		if (src_parameter_B_pointer == &src_sum_image_operation.parameter_B)
+		{
+			this->parameter_B.setScalarValue(src_parameter_B_pointer->getScalarValue());
+			this->numeric_parameters_nodes_list.assignNodeValue(1, &this->parameter_B);
+		}
 	}
 
 	return *this;
@@ -33,14 +73,28 @@ SUM_IMAGE_OPERATION::~SUM_IMAGE_OPERATION()
 	// Nothing to deallocate
 }
 
-void SUM_IMAGE_OPERATION::assignParameterA(const double src_parameter_A)
+void SUM_IMAGE_OPERATION::setParameterA(const double src_parameter_A)
 {
 	parameter_A.setScalarValue(src_parameter_A);
+	parameters_have_changed = true;
 }
 
-void SUM_IMAGE_OPERATION::assignParameterB(const double src_parameter_B)
+void SUM_IMAGE_OPERATION::setParameterA(NODE_SCALAR<double>* src_node_A)
+{
+	numeric_parameters_nodes_list.assignNodeValue(0, src_node_A);
+	parameters_have_changed = true;
+}
+
+void SUM_IMAGE_OPERATION::setParameterB(const double src_parameter_B)
 {
 	parameter_B.setScalarValue(src_parameter_B);
+	parameters_have_changed = true;
+}
+
+void SUM_IMAGE_OPERATION::setParameterB(NODE_SCALAR<double>* src_node_B)
+{
+	numeric_parameters_nodes_list.assignNodeValue(1, src_node_B);
+	parameters_have_changed = true;
 }
 
 

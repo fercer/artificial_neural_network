@@ -2,7 +2,8 @@
 
 LOAD_IMAGE_OPERATION::LOAD_IMAGE_OPERATION()
 {
-
+	default_filename.setScalarValue("NOT-DEFINED");
+	string_parameters_nodes_list.assignNodeValue(0, &default_filename);
 }
 
 
@@ -10,6 +11,19 @@ LOAD_IMAGE_OPERATION::LOAD_IMAGE_OPERATION()
 LOAD_IMAGE_OPERATION::LOAD_IMAGE_OPERATION(const LOAD_IMAGE_OPERATION & src_load_image_operation)
 {
 	copyFromImageOperation(src_load_image_operation);
+
+	/* Verify if the parameters are connected to an outer node pointer,
+	or if them are connected to the default nodes of the source:
+	*/
+	this->string_parameters_nodes_list = src_load_image_operation.string_parameters_nodes_list;
+
+	NODE_SCALAR<char *> * src_filename_pointer = this->string_parameters_nodes_list.getNodeValue(0);
+
+	if (src_filename_pointer == &src_load_image_operation.default_filename)
+	{
+		this->default_filename.setScalarValue(src_filename_pointer->getScalarValue());
+		this->string_parameters_nodes_list.assignNodeValue(0, &this->default_filename);
+	}
 }
 
 
@@ -19,6 +33,19 @@ LOAD_IMAGE_OPERATION LOAD_IMAGE_OPERATION::operator=(const LOAD_IMAGE_OPERATION 
 	if (this != &src_load_image_operation)
 	{
 		copyFromImageOperation(src_load_image_operation);
+
+		/* Verify if the parameters are connected to an outer node pointer,
+		or if them are connected to the default nodes of the source:
+		*/
+		this->string_parameters_nodes_list = src_load_image_operation.string_parameters_nodes_list;
+
+		NODE_SCALAR<char *> * src_filename_pointer = this->string_parameters_nodes_list.getNodeValue(0);
+
+		if (src_filename_pointer == &src_load_image_operation.default_filename)
+		{
+			this->default_filename.setScalarValue(src_filename_pointer->getScalarValue());
+			this->string_parameters_nodes_list.assignNodeValue(0, &this->default_filename);
+		}
 	}
 
 	return *this;
@@ -32,9 +59,27 @@ LOAD_IMAGE_OPERATION::~LOAD_IMAGE_OPERATION()
 }
 
 
+void LOAD_IMAGE_OPERATION::setFilename(const char * src_filename)
+{
+	default_filename.setScalarValue(src_filename);
+	parameters_have_changed = true;
+}
+
+void LOAD_IMAGE_OPERATION::setFilename(NODE_SCALAR<char*>* src_node_filename)
+{
+	string_parameters_nodes_list.assignNodeValue(0, src_node_filename);
+	parameters_have_changed = true;
+}
+
 
 void LOAD_IMAGE_OPERATION::performOperation()
 {
+	if (strcmp(string_parameters_nodes_list.getNodeValue(0)->getScalarValue(), "NOT-DEFINED") == 0)
+	{
+		printf("<<Error: The filename has not been defined yet>>\n");
+		return;
+	}
+
 	FILE * fp_img = fopen(string_parameters_nodes_list.getNodeValue(0)->getScalarValue(), "r");
 	if (!fp_img)
 	{

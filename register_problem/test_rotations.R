@@ -10,12 +10,12 @@ c.x <- (UL[1] + LR[1]) / 2
 c.y <- (UL[2] + LR[2]) / 2
 
 theta <- 30.0 / 180.0 * pi
-phi <- 30.0 / 180.0 * pi
+phi <- theta
 
 rot.mat <- matrix(c(cos(theta), sin(phi), -sin(theta), cos(phi)), ncol = 2, byrow=T)
 rot.mat
 
-inv.rot.mat <- matrix(c(cos(theta), -sin(phi), sin(theta), cos(phi)), ncol=2, byrow=T) / (cos(theta)*cos(phi) + sin(theta)*sin(phi))
+inv.rot.mat <- matrix(c(cos(phi), -sin(phi), sin(theta), cos(theta)), ncol=2, byrow=T) / (cos(theta)*cos(phi) + sin(theta)*sin(phi))
 inv.rot.mat
 
 r.corners <- corners %*% rot.mat

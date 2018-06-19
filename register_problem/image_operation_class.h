@@ -17,7 +17,7 @@ public:
 	IMAGE_OPERATION()
 	{
 		inputs_have_changed = true;
-
+		
 		operation_A = NULL;
 		operation_B = NULL;
 		src_A_is_assigned = false;
@@ -38,7 +38,7 @@ public:
 		LRb_y = 0;
 
 		parameters_count = 0;
-		parameters_have_changed = false;
+		parameters_have_changed = true;
 
 		strcpy(image_name, "");
 	}
@@ -53,7 +53,7 @@ public:
 	
 	IMG_DATA * getImageData() 
 	{
-		if (inputs_have_changed)
+		if (inputs_have_changed || parameters_have_changed)
 		{
 			if (operation_A)
 			{
@@ -82,7 +82,9 @@ public:
 			}
 
 			performOperation();
+
 			inputs_have_changed = false;
+			parameters_have_changed = false;
 		}
 		return dst_img;
 	}
@@ -104,18 +106,6 @@ public:
 	void setImageName(const char * src_image_name)
 	{
 		strcpy(image_name, src_image_name);
-	}
-
-	void setInputNodeScalar(NODE_SCALAR<double> * src_node_scalar_pointer, const unsigned int src_input_index = 0)
-	{
-		parameters_count = numeric_parameters_nodes_list.assignNodeValue(src_input_index, src_node_scalar_pointer);
-		parameters_have_changed = true;
-	}
-
-	void setInputNodeScalar(NODE_SCALAR<char*> * src_node_scalar_pointer, const unsigned int src_input_index = 0)
-	{
-		parameters_count = string_parameters_nodes_list.assignNodeValue(src_input_index, src_node_scalar_pointer);
-		parameters_have_changed = true;
 	}
 
 protected:
@@ -177,8 +167,7 @@ protected:
 		this->src_B_is_assigned = src_image_operation.src_B_is_assigned;
 
 		this->parameters_count = src_image_operation.parameters_count;
-		this->numeric_parameters_nodes_list = src_image_operation.numeric_parameters_nodes_list;
-		this->string_parameters_nodes_list = src_image_operation.string_parameters_nodes_list;
+		this->parameters_have_changed = src_image_operation.parameters_have_changed;
 		
 		this->width_A = src_image_operation.width_A;
 		this->height_A = src_image_operation.height_A;

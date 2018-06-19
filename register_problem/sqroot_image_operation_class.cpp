@@ -11,6 +11,20 @@ SQROOT_IMAGE_OPERATION::SQROOT_IMAGE_OPERATION()
 SQROOT_IMAGE_OPERATION::SQROOT_IMAGE_OPERATION(const SQROOT_IMAGE_OPERATION & src_sum_image_operation)
 {
 	copyFromImageOperation(src_sum_image_operation);
+
+	/* Verify if the parameters are connected to an outer node pointer,
+	or if them are connected to the default nodes of the source:
+	*/
+	this->numeric_parameters_nodes_list = src_sum_image_operation.numeric_parameters_nodes_list;
+
+	NODE_SCALAR<double> * src_parameter_pointer = this->numeric_parameters_nodes_list.getNodeValue(0);
+
+	if (src_parameter_pointer == &src_sum_image_operation.parameter)
+	{
+		this->parameter.setScalarValue(src_parameter_pointer->getScalarValue());
+		this->numeric_parameters_nodes_list.assignNodeValue(0, &this->parameter);
+	}
+
 }
 
 
@@ -20,6 +34,21 @@ SQROOT_IMAGE_OPERATION SQROOT_IMAGE_OPERATION::operator=(const SQROOT_IMAGE_OPER
 	if (this != &src_sum_image_operation)
 	{
 		copyFromImageOperation(src_sum_image_operation);
+
+		/* Verify if the parameters are connected to an outer node pointer,
+		or if them are connected to the default nodes of the source:
+		*/
+		this->numeric_parameters_nodes_list = src_sum_image_operation.numeric_parameters_nodes_list;
+
+		NODE_SCALAR<double> * src_parameter_pointer = this->numeric_parameters_nodes_list.getNodeValue(0);
+
+		if (src_parameter_pointer == &src_sum_image_operation.parameter)
+		{
+			this->parameter.setScalarValue(src_parameter_pointer->getScalarValue());
+			this->numeric_parameters_nodes_list.assignNodeValue(0, &this->parameter);
+		}
+
+
 	}
 
 	return *this;
@@ -32,9 +61,18 @@ SQROOT_IMAGE_OPERATION::~SQROOT_IMAGE_OPERATION()
 	// Nothing to deallocate
 }
 
-void SQROOT_IMAGE_OPERATION::assignParameter(const double src_parameter)
+
+
+void SQROOT_IMAGE_OPERATION::setParameter(const double src_parameter)
 {
 	parameter.setScalarValue(src_parameter);
+	parameters_have_changed = true;
+}
+
+void SQROOT_IMAGE_OPERATION::setParameter(NODE_SCALAR<double>* src_node)
+{
+	numeric_parameters_nodes_list.assignNodeValue(0, src_node);
+	parameters_have_changed = true;
 }
 
 

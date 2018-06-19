@@ -16,6 +16,16 @@ public:
 		array_position = 0;
 	}
 
+
+	NODE_SCALAR(const class_value_type src_value)
+	{
+		scalar_pointer_manager = &scalar_pointer;
+		scalar_pointer = &scalar_value;
+		array_position = 0;
+
+		scalar_value = src_value;
+	}
+
 	virtual ~NODE_SCALAR()
 	{
 		// Nothing to deallocate
@@ -66,9 +76,19 @@ public:
 		array_position = 0;
 	}
 
+	NODE_SCALAR(const char * src_string)
+	{
+		scalar_pointer_manager = &scalar_pointer;
+		scalar_pointer = &scalar_value;
+		scalar_value = (char*)malloc(512 * sizeof(char));
+		array_position = 0;
+
+		strcpy(scalar_value, src_string);
+	}
+
 	virtual ~NODE_SCALAR()
 	{
-		free(scalar_pointer);
+		free(scalar_value);
 	}
 
 	void assignScalarPointerManager(char*** src_scalar_pointer_manager = NULL, const unsigned int src_array_position = 0)
