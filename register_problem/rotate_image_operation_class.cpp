@@ -147,16 +147,64 @@ void ROTATE_IMAGE_OPERATION::setRotationAngle(const double src_rotaiton_matrix_e
 }
 
 
-void ROTATE_IMAGE_OPERATION::setRotationAngle(NODE_SCALAR<double>* src_rotaiton_matrix_entry_11_node, NODE_SCALAR<double>* src_rotaiton_matrix_entry_12_node, NODE_SCALAR<double>* src_rotaiton_matrix_entry_21_node, NODE_SCALAR<double>* src_rotaiton_matrix_entry_22_node)
+void ROTATE_IMAGE_OPERATION::setRotationAngle11(NODE_SCALAR<double>* src_rotaiton_matrix_entry_11_node)
 {
-	numeric_parameters_nodes_list.assignNodeValue(0, src_rotaiton_matrix_entry_11_node);
-	numeric_parameters_nodes_list.assignNodeValue(1, src_rotaiton_matrix_entry_12_node);
-	numeric_parameters_nodes_list.assignNodeValue(2, src_rotaiton_matrix_entry_21_node);
-	numeric_parameters_nodes_list.assignNodeValue(3, src_rotaiton_matrix_entry_22_node);
-
-	parameters_have_changed = true;
+	if (src_rotaiton_matrix_entry_11_node)
+	{
+		numeric_parameters_nodes_list.assignNodeValue(0, src_rotaiton_matrix_entry_11_node);
+		parameters_have_changed = true;
+	}
+	else
+	{
+		rotation_matrix_parameter_11.setScalarValue(numeric_parameters_nodes_list.getNodeValue(0)->getScalarValue());
+		numeric_parameters_nodes_list.assignNodeValue(0, &rotation_matrix_parameter_11);
+	}
 }
 
+
+void ROTATE_IMAGE_OPERATION::setRotationAngle12(NODE_SCALAR<double>* src_rotaiton_matrix_entry_12_node)
+{
+	if (src_rotaiton_matrix_entry_12_node)
+	{
+		numeric_parameters_nodes_list.assignNodeValue(1, src_rotaiton_matrix_entry_12_node);
+		parameters_have_changed = true;
+	}
+	else
+	{
+		rotation_matrix_parameter_12.setScalarValue(numeric_parameters_nodes_list.getNodeValue(1)->getScalarValue());
+		numeric_parameters_nodes_list.assignNodeValue(1, &rotation_matrix_parameter_12);
+	}
+}
+
+
+void ROTATE_IMAGE_OPERATION::setRotationAngle21(NODE_SCALAR<double>* src_rotaiton_matrix_entry_21_node)
+{
+	if (src_rotaiton_matrix_entry_21_node)
+	{
+		numeric_parameters_nodes_list.assignNodeValue(0, src_rotaiton_matrix_entry_21_node);
+		parameters_have_changed = true;
+	}
+	else
+	{
+		rotation_matrix_parameter_21.setScalarValue(numeric_parameters_nodes_list.getNodeValue(2)->getScalarValue());
+		numeric_parameters_nodes_list.assignNodeValue(2, &rotation_matrix_parameter_21);
+	}
+}
+
+
+void ROTATE_IMAGE_OPERATION::setRotationAngle22(NODE_SCALAR<double>* src_rotaiton_matrix_entry_22_node)
+{
+	if (src_rotaiton_matrix_entry_22_node)
+	{
+		numeric_parameters_nodes_list.assignNodeValue(3, src_rotaiton_matrix_entry_22_node);
+		parameters_have_changed = true;
+	}
+	else
+	{
+		rotation_matrix_parameter_22.setScalarValue(numeric_parameters_nodes_list.getNodeValue(3)->getScalarValue());
+		numeric_parameters_nodes_list.assignNodeValue(3, &rotation_matrix_parameter_22);
+	}
+}
 
 
 void ROTATE_IMAGE_OPERATION::performOperation()

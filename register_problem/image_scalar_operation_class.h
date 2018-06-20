@@ -71,6 +71,8 @@ protected:
 	// Use this function when implementing the copy constructor, and assignation operator (operator =), in derived classes:
 	void copyFromImageScalarOperation(const IMAGE_SCALAR_OPERATION& src_image_scalar_operation)
 	{
+		copyFromNodeScalar(src_image_scalar_operation);
+
 		this->input_has_changed = src_image_scalar_operation.input_has_changed;
 
 		this->operation = src_image_scalar_operation.operation;

@@ -38,10 +38,13 @@ public:
 protected:
 	NODE_SCALAR<double> * node_parameter_A;
 	NODE_SCALAR<double> * node_parameter_B;
-	
+	bool parameters_have_hanged;
+
 	// Use this function when implementing the copy constructor, and assignation operator (operator =), in derived classes:
 	void copyFromNodesScalarOperation(const NODES_SCALAR_OPERATION& src_nodes_scalar_operation)
 	{
+		copyFromNodeScalar(src_nodes_scalar_operation);
+
 		this->parameters_have_hanged = src_nodes_scalar_operation.parameters_have_hanged;
 
 		this->node_parameter_A = src_nodes_scalar_operation.node_parameter_A;
@@ -54,8 +57,6 @@ protected:
 	virtual double performScalarOperation() = 0;
 	
 private:
-
-	bool parameters_have_hanged;
 	double result;
 };
 

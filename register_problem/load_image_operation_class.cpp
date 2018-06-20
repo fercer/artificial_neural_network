@@ -67,8 +67,16 @@ void LOAD_IMAGE_OPERATION::setFilename(const char * src_filename)
 
 void LOAD_IMAGE_OPERATION::setFilename(NODE_SCALAR<char*>* src_node_filename)
 {
-	string_parameters_nodes_list.assignNodeValue(0, src_node_filename);
-	parameters_have_changed = true;
+	if (src_node_filename)
+	{
+		string_parameters_nodes_list.assignNodeValue(0, src_node_filename);
+		parameters_have_changed = true;
+	}
+	else
+	{
+		default_filename.setScalarValue(string_parameters_nodes_list.getNodeValue(0)->getScalarValue());
+		string_parameters_nodes_list.assignNodeValue(0, &default_filename);
+	}
 }
 
 

@@ -24,6 +24,7 @@ public:
 protected:
 	double performScalarOperation();
 
+private:
 	NODE_SCALAR<double> value_A;
 	NODE_SCALAR<double> value_B;
 };

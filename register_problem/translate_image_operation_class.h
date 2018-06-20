@@ -20,6 +20,7 @@ public:
 	void setDeltaX(NODE_SCALAR<double> * src_delta_x_node);
 	void setDeltaY(const double src_delta_y);
 	void setDeltaY(NODE_SCALAR<double> * src_delta_y_node);
+
 protected:
 	void performOperation();
 

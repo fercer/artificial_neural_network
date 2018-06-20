@@ -71,8 +71,16 @@ void SQROOT_IMAGE_OPERATION::setParameter(const double src_parameter)
 
 void SQROOT_IMAGE_OPERATION::setParameter(NODE_SCALAR<double>* src_node)
 {
-	numeric_parameters_nodes_list.assignNodeValue(0, src_node);
-	parameters_have_changed = true;
+	if (src_node)
+	{
+		numeric_parameters_nodes_list.assignNodeValue(0, src_node);
+		parameters_have_changed = true;
+	}
+	else
+	{
+		parameter.setScalarValue(numeric_parameters_nodes_list.getNodeValue(0)->getScalarValue());
+		numeric_parameters_nodes_list.assignNodeValue(0, &parameter);
+	}
 }
 
 

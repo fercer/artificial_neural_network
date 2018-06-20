@@ -81,8 +81,16 @@ void SUM_IMAGE_OPERATION::setParameterA(const double src_parameter_A)
 
 void SUM_IMAGE_OPERATION::setParameterA(NODE_SCALAR<double>* src_node_A)
 {
-	numeric_parameters_nodes_list.assignNodeValue(0, src_node_A);
-	parameters_have_changed = true;
+	if (src_node_A)
+	{
+		numeric_parameters_nodes_list.assignNodeValue(0, src_node_A);
+		parameters_have_changed = true;
+	}
+	else
+	{
+		parameter_A.setScalarValue(numeric_parameters_nodes_list.getNodeValue(0)->getScalarValue());
+		numeric_parameters_nodes_list.assignNodeValue(0, &parameter_A);
+	}
 }
 
 void SUM_IMAGE_OPERATION::setParameterB(const double src_parameter_B)
@@ -93,8 +101,16 @@ void SUM_IMAGE_OPERATION::setParameterB(const double src_parameter_B)
 
 void SUM_IMAGE_OPERATION::setParameterB(NODE_SCALAR<double>* src_node_B)
 {
-	numeric_parameters_nodes_list.assignNodeValue(1, src_node_B);
-	parameters_have_changed = true;
+	if (src_node_B)
+	{
+		numeric_parameters_nodes_list.assignNodeValue(1, src_node_B);
+		parameters_have_changed = true;
+	}
+	else
+	{
+		parameter_B.setScalarValue(numeric_parameters_nodes_list.getNodeValue(1)->getScalarValue());
+		numeric_parameters_nodes_list.assignNodeValue(1, &parameter_B);
+	}
 }
 
 

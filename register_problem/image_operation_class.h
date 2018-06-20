@@ -40,7 +40,7 @@ public:
 		parameters_count = 0;
 		parameters_have_changed = true;
 
-		strcpy(image_name, "");
+		strcpy(image_operation_name, "");
 	}
 
 	~IMAGE_OPERATION() 
@@ -105,7 +105,7 @@ public:
 	
 	void setImageName(const char * src_image_name)
 	{
-		strcpy(image_name, src_image_name);
+		strcpy(image_operation_name, src_image_name);
 	}
 
 protected:
@@ -145,7 +145,7 @@ protected:
 	int ULg_x;
 	int ULg_y;
 
-	char image_name[1024];
+	char image_operation_name[64];
 
 	// Use this function when implementing the copy constructor, and assignation operator (operator =), in derived classes:
 	void copyFromImageOperation(const IMAGE_OPERATION& src_image_operation)
@@ -194,7 +194,7 @@ protected:
 		this->ULg_x = src_image_operation.ULg_x;
 		this->ULg_y = src_image_operation.ULg_y;
 
-		strcpy(this->image_name, src_image_operation.image_name);
+		sprintf(this->image_operation_name, "%s-copy", src_image_operation.image_operation_name);
 	}
 
 	// Each derived class must define this function:

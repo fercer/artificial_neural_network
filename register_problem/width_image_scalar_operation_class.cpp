@@ -34,5 +34,5 @@ WIDTH_IMAGE_SCALAR_OPERATION::~WIDTH_IMAGE_SCALAR_OPERATION()
 
 double WIDTH_IMAGE_SCALAR_OPERATION::performScalarOperation()
 {
-	return src_img->width();
+	return src_img->width;
 }

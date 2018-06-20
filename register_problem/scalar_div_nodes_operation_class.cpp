@@ -37,6 +37,7 @@ SCALAR_DIV_NODES_OPERATION::~SCALAR_DIV_NODES_OPERATION()
 void SCALAR_DIV_NODES_OPERATION::setNodeAValue(const double src_parameter_A_value)
 {
 	value_A.setScalarValue(src_parameter_A_value);
+	parameters_have_hanged = true;
 }
 
 
@@ -45,9 +46,11 @@ void SCALAR_DIV_NODES_OPERATION::setNodeAValue(NODE_SCALAR<double> * src_paramet
 	if (src_parameter_A_node)
 	{
 		node_parameter_A = src_parameter_A_node;
+		parameters_have_hanged = true;
 	}
 	else
 	{
+		value_A.setScalarValue( node_parameter_A->getScalarValue() );
 		node_parameter_A = &value_A;
 	}
 }
@@ -56,6 +59,7 @@ void SCALAR_DIV_NODES_OPERATION::setNodeAValue(NODE_SCALAR<double> * src_paramet
 void SCALAR_DIV_NODES_OPERATION::setNodeBValue(const double src_parameter_B_value)
 {
 	value_B.setScalarValue(src_parameter_B_value);
+	parameters_have_hanged = true;
 }
 
 
@@ -64,9 +68,11 @@ void SCALAR_DIV_NODES_OPERATION::setNodeBValue(NODE_SCALAR<double> * src_paramet
 	if (src_parameter_B_node)
 	{
 		node_parameter_B = src_parameter_B_node;
+		parameters_have_hanged = true;
 	}
 	else
 	{
+		value_B.setScalarValue(node_parameter_B->getScalarValue());
 		node_parameter_B = &value_B;
 	}
 }

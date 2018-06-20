@@ -54,12 +54,36 @@ public:
 	{
 		*(*scalar_pointer_manager + array_position) = src_scalar_value;
 	}
-	
+
+	void setNodeScalarName(const char * src_name)
+	{
+		strcpy(node_scalar_name, src_name);
+	}
+
+protected:
+	void copyFromNodeScalar(const NODE_SCALAR<class_value_type>& src_node_scalar)
+	{
+		if (src_node_scalar.scalar_pointer_manager != &src_node_scalar.scalar_pointer)
+		{
+			this->scalar_pointer_manager = src_node_scalar.scalar_pointer_manager;
+			this->array_position = src_node_scalar.array_position;
+		}
+		else
+		{
+			this->scalar_value = src_node_scalar.scalar_value;
+			this->array_position = 0;
+		}
+
+		sprintf(node_scalar_name, "%s-copy", src_node_scalar.node_scalar_name);
+	}
+
 private:
 	class_value_type ** scalar_pointer_manager;
 	class_value_type * scalar_pointer;
 	class_value_type scalar_value;
 	unsigned int array_position;
+
+	char node_scalar_name[64];
 };
 
 
@@ -115,12 +139,34 @@ public:
 		strcpy(*(*scalar_pointer_manager + array_position), src_scalar_value);
 	}
 
+	void setNodeScalarName(const char * src_name)
+	{
+		strcpy(node_scalar_name, src_name);
+	}
+
+protected:
+	void copyFromNodeScalar(const NODE_SCALAR<char*>& src_node_scalar)
+	{
+		if (src_node_scalar.scalar_pointer_manager != &src_node_scalar.scalar_pointer)
+		{
+			this->scalar_pointer_manager = src_node_scalar.scalar_pointer_manager;
+			this->array_position = src_node_scalar.array_position;
+		}
+		else
+		{
+			strcpy(this->scalar_value, src_node_scalar.scalar_value);
+			this->array_position = 0;
+		}
+		
+		sprintf(node_scalar_name, "%s-copy", src_node_scalar.node_scalar_name);
+	}
 
 private:
 	char*** scalar_pointer_manager;
 	char** scalar_pointer;
 	char* scalar_value;
 	unsigned int array_position;
+	char node_scalar_name[64];
 };
 
 #endif // NODE_SCALAR_CLASS_H_INCLUDED

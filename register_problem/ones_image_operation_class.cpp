@@ -101,8 +101,16 @@ void ONES_IMAGE_OPERATION::setWidth(const unsigned int src_width)
 
 void ONES_IMAGE_OPERATION::setWidth(NODE_SCALAR<double>* src_width_node)
 {
-	numeric_parameters_nodes_list.assignNodeValue(0, src_width_node);
-	parameters_have_changed = true;
+	if (src_width_node)
+	{
+		numeric_parameters_nodes_list.assignNodeValue(0, src_width_node);
+		parameters_have_changed = true;
+	}
+	else
+	{
+		width_parameter.setScalarValue(numeric_parameters_nodes_list.getNodeValue(0)->getScalarValue());
+		numeric_parameters_nodes_list.assignNodeValue(0, &width_parameter);
+	}
 }
 
 
@@ -116,8 +124,16 @@ void ONES_IMAGE_OPERATION::setHeight(const unsigned int src_height)
 
 void ONES_IMAGE_OPERATION::setHeight(NODE_SCALAR<double>* src_height_node)
 {
-	numeric_parameters_nodes_list.assignNodeValue(1, src_height_node);
-	parameters_have_changed = true;
+	if (src_height_node)
+	{
+		numeric_parameters_nodes_list.assignNodeValue(1, src_height_node);
+		parameters_have_changed = true;
+	}
+	else
+	{
+		height_parameter.setScalarValue(numeric_parameters_nodes_list.getNodeValue(1)->getScalarValue());
+		numeric_parameters_nodes_list.assignNodeValue(1, &height_parameter);
+	}
 }
 
 
@@ -131,8 +147,16 @@ void ONES_IMAGE_OPERATION::setFillValue(const double src_fill_value)
 
 void ONES_IMAGE_OPERATION::setFillValue(NODE_SCALAR<double>* src_fill_value_node)
 {
-	numeric_parameters_nodes_list.assignNodeValue(2, src_fill_value_node);
-	parameters_have_changed = true;
+	if (src_fill_value_node)
+	{
+		numeric_parameters_nodes_list.assignNodeValue(2, src_fill_value_node);
+		parameters_have_changed = true;
+	}
+	else
+	{
+		fill_parameter.setScalarValue(numeric_parameters_nodes_list.getNodeValue(2)->getScalarValue());
+		numeric_parameters_nodes_list.assignNodeValue(0, &fill_parameter);
+	}
 }
 
 

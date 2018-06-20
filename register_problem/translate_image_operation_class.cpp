@@ -85,8 +85,16 @@ void TRANSLATE_IMAGE_OPERATION::setDeltaX(const double src_delta_x)
 
 void TRANSLATE_IMAGE_OPERATION::setDeltaX(NODE_SCALAR<double>* src_delta_x_node)
 {
-	numeric_parameters_nodes_list.assignNodeValue(0, src_delta_x_node);
-	parameters_have_changed = true;
+	if (src_delta_x_node)
+	{
+		numeric_parameters_nodes_list.assignNodeValue(0, src_delta_x_node);
+		parameters_have_changed = true;
+	}
+	else
+	{
+		parameter_dx.setScalarValue(numeric_parameters_nodes_list.getNodeValue(0)->getScalarValue());
+		numeric_parameters_nodes_list.assignNodeValue(0, &parameter_dx);
+	}
 }
 
 
@@ -96,10 +104,19 @@ void TRANSLATE_IMAGE_OPERATION::setDeltaY(const double src_delta_y)
 	parameters_have_changed = true;
 }
 
+
 void TRANSLATE_IMAGE_OPERATION::setDeltaY(NODE_SCALAR<double>* src_delta_y_node)
 {
-	numeric_parameters_nodes_list.assignNodeValue(1, src_delta_y_node);
-	parameters_have_changed = true;
+	if (src_delta_y_node)
+	{
+		numeric_parameters_nodes_list.assignNodeValue(1, src_delta_y_node);
+		parameters_have_changed = true;
+	}
+	else
+	{
+		parameter_dy.setScalarValue(numeric_parameters_nodes_list.getNodeValue(1)->getScalarValue());
+		numeric_parameters_nodes_list.assignNodeValue(1, &parameter_dy);
+	}
 }
 
 
