@@ -125,6 +125,13 @@ private:
 	
 	void loadProcessFile();
 	CHAIN_LINK * dumpLinkToList(CHAIN_LINK * src_root);
+
+
+	CHAIN_LINK * dumpLinkVariableToList(CHAIN_LINK * src_root, GENERIC_LIST<NODE_SCALAR<double>*>* src_input_nodes_list);
+
+	CHAIN_LINK * dumpLinkVariableToList(CHAIN_LINK * src_root, GENERIC_LIST<NODE_SCALAR<char*>*>* src_input_nodes_list);
+
+	CHAIN_LINK * dumpLinkVariableToList(CHAIN_LINK * src_root, GENERIC_LIST<IMAGE_OPERATION*>* src_input_operation_list);
 };
 
 #endif //IMAGE_PROCESS_HANDLER_CLASS_H_INCLUDED

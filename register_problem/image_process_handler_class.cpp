@@ -248,6 +248,7 @@ IMAGE_PROCESS_HANDLER::CHAIN_LINK * IMAGE_PROCESS_HANDLER::dumpLinkToList(CHAIN_
 			/* At this point, all the varaibles on the header should have been read, 
 			so them are dump into the corresponding operation.
 			*/
+			// Using temporal lists of nodes, and then adding them to the newlly generated objects.
 			switch (current_link_operation)
 			{
 			case NV_NUMERIC:
@@ -565,4 +566,22 @@ IMAGE_PROCESS_HANDLER::CHAIN_LINK * IMAGE_PROCESS_HANDLER::dumpLinkToList(CHAIN_
 	}
 
 	return NULL;
+}
+
+
+
+IMAGE_PROCESS_HANDLER::CHAIN_LINK * IMAGE_PROCESS_HANDLER::dumpLinkVariableToList(CHAIN_LINK * src_root, GENERIC_LIST<NODE_SCALAR<double>*> * src_input_nodes_list)
+{
+}
+
+
+
+IMAGE_PROCESS_HANDLER::CHAIN_LINK * IMAGE_PROCESS_HANDLER::dumpLinkVariableToList(CHAIN_LINK * src_root, GENERIC_LIST<NODE_SCALAR<char*>*> * src_input_nodes_list)
+{
+}
+
+
+
+IMAGE_PROCESS_HANDLER::CHAIN_LINK * IMAGE_PROCESS_HANDLER::dumpLinkVariableToList(CHAIN_LINK * src_root, GENERIC_LIST<IMAGE_OPERATION*> * src_input_operation_list)
+{
 }
