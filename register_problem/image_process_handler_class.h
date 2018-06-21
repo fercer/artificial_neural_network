@@ -42,8 +42,7 @@ public:
 	void setFilename(const char * src_filename);
 
 	void loadProcess();
-
-
+	
 private:
 	typedef enum OPERATION_TYPE
 	{
@@ -126,12 +125,11 @@ private:
 	void loadProcessFile();
 	CHAIN_LINK * dumpLinkToList(CHAIN_LINK * src_root);
 
-
-	CHAIN_LINK * dumpLinkVariableToList(CHAIN_LINK * src_root, GENERIC_LIST<NODE_SCALAR<double>*>* src_input_nodes_list);
-
-	CHAIN_LINK * dumpLinkVariableToList(CHAIN_LINK * src_root, GENERIC_LIST<NODE_SCALAR<char*>*>* src_input_nodes_list);
-
-	CHAIN_LINK * dumpLinkVariableToList(CHAIN_LINK * src_root, GENERIC_LIST<IMAGE_OPERATION*>* src_input_operation_list);
+	CHAIN_LINK * dumpLinkValues(CHAIN_LINK * src_node, NODE_SCALAR<double>* src_numeric_node);
+	CHAIN_LINK * dumpLinkValues(CHAIN_LINK * src_node, NODE_SCALAR<char*>* src_string_node);
+	CHAIN_LINK * dumpLinkValues(CHAIN_LINK * src_node, NODES_SCALAR_OPERATION * src_nodes_scalar_operation);
+	CHAIN_LINK * dumpLinkValues(CHAIN_LINK * src_node, IMAGE_OPERATION * src_image_operation);
+	CHAIN_LINK * dumpLinkValues(CHAIN_LINK * src_node, IMAGE_SCALAR_OPERATION * src_image_scalar_operation);
 };
 
 #endif //IMAGE_PROCESS_HANDLER_CLASS_H_INCLUDED

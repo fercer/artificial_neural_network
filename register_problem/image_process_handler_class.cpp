@@ -231,15 +231,20 @@ IMAGE_PROCESS_HANDLER::CHAIN_LINK * IMAGE_PROCESS_HANDLER::dumpLinkToList(CHAIN_
 {
 	CHAIN_LINK * next_link = src_root;
 	CHAIN_LINK * current_link;
-	char current_header[128];
-	strcpy(current_header, src_root->string_value);
+	char * current_header = src_root->string_value;
 
 	unsigned int current_link_position;
 	char current_link_name[128];
 	
-	/* All the possible operations */
+	OPERATION_TYPE current_link_operation_base;
 	OPERATION_TYPE current_link_operation;
-	
+
+	NODE_SCALAR<double> * new_numeric_node_scalar = NULL;
+	NODE_SCALAR<char*> * new_string_node_scalar = NULL;
+	NODES_SCALAR_OPERATION * new_nodes_operation = NULL;
+	IMAGE_OPERATION * new_image_operation = NULL;
+	IMAGE_SCALAR_OPERATION * new_image_scalar_operation = NULL;
+
 	while (next_link && !(strcmp(next_link->string_value, current_header) == 0 && next_link->link_node_type == NT_TAIL))
 	{
 		current_link = next_link;
@@ -248,165 +253,167 @@ IMAGE_PROCESS_HANDLER::CHAIN_LINK * IMAGE_PROCESS_HANDLER::dumpLinkToList(CHAIN_
 			/* At this point, all the varaibles on the header should have been read, 
 			so them are dump into the corresponding operation.
 			*/
-			// Using temporal lists of nodes, and then adding them to the newlly generated objects.
 			switch (current_link_operation)
 			{
 			case NV_NUMERIC:
 			{
-				NODE_SCALAR<double> * new_node_scalar = (NODE_SCALAR<double>*) malloc(sizeof(NODE_SCALAR<double>));
-				new_node_scalar->setNodeScalarName(current_link_name);
-				numeric_node_scalar_count = numeric_node_scalar_list.assignNodeValue(numeric_node_scalar_count, new_node_scalar);
+				new_numeric_node_scalar = (NODE_SCALAR<double>*) malloc(sizeof(NODE_SCALAR<double>));
+				new_numeric_node_scalar->setNodeScalarName(current_link_name);
+				numeric_node_scalar_count = numeric_node_scalar_list.assignNodeValue(numeric_node_scalar_count, new_numeric_node_scalar);
+				current_link_operation_base = OT_NODE_SCALAR;
 				break;
 			}
 			case NV_STRING:
 			{
-				NODE_SCALAR<char*> * new_node_scalar = (NODE_SCALAR<char*>*) malloc(sizeof(NODE_SCALAR<char*>));
-				new_node_scalar->setNodeScalarName(current_link_name);
-				string_node_scalar_count = string_node_scalar_list.assignNodeValue(string_node_scalar_count, new_node_scalar);
+				new_string_node_scalar = (NODE_SCALAR<char*>*) malloc(sizeof(NODE_SCALAR<char*>));
+				new_string_node_scalar->setNodeScalarName(current_link_name);
+				string_node_scalar_count = string_node_scalar_list.assignNodeValue(string_node_scalar_count, new_string_node_scalar);
+				current_link_operation_base = OT_NODE_SCALAR;
 				break;
 			}
 			case NOV_DIV:
 			{
-				SCALAR_DIV_NODES_OPERATION * new_nodes_operation = (SCALAR_DIV_NODES_OPERATION*)malloc(sizeof(SCALAR_DIV_NODES_OPERATION));
-				new_nodes_operation->setNodeScalarName(current_link_name);
-				nodes_operation_count = nodes_operation_list.assignNodeValue(nodes_operation_count, new_nodes_operation);
+				new_nodes_operation = (SCALAR_DIV_NODES_OPERATION*)malloc(sizeof(SCALAR_DIV_NODES_OPERATION));
+				current_link_operation_base = OT_NODES_SCALAR_OPERATION;
 				break;
 			}
 			case NOV_MULT:
 			{
-				SCALAR_MULT_NODES_OPERATION * new_nodes_operation = (SCALAR_MULT_NODES_OPERATION*)malloc(sizeof(SCALAR_MULT_NODES_OPERATION));
-				new_nodes_operation->setNodeScalarName(current_link_name);
-				nodes_operation_count = nodes_operation_list.assignNodeValue(nodes_operation_count, new_nodes_operation);
+				new_nodes_operation = (SCALAR_MULT_NODES_OPERATION*)malloc(sizeof(SCALAR_MULT_NODES_OPERATION));
+				current_link_operation_base = OT_NODES_SCALAR_OPERATION;
 				break;
 			}
 			case NOV_SQRT:
 			{
-				SCALAR_SQRT_NODES_OPERATION * new_nodes_operation = (SCALAR_SQRT_NODES_OPERATION*)malloc(sizeof(SCALAR_SQRT_NODES_OPERATION));
-				new_nodes_operation->setNodeScalarName(current_link_name);
-				nodes_operation_count = nodes_operation_list.assignNodeValue(nodes_operation_count, new_nodes_operation);
+				new_nodes_operation = (SCALAR_SQRT_NODES_OPERATION*)malloc(sizeof(SCALAR_SQRT_NODES_OPERATION));
+				current_link_operation_base = OT_NODES_SCALAR_OPERATION;
 				break;
 			}
 			case NOV_SUM:
 			{
-				SCALAR_SUM_NODES_OPERATION * new_nodes_operation = (SCALAR_SUM_NODES_OPERATION*)malloc(sizeof(SCALAR_SUM_NODES_OPERATION));
-				new_nodes_operation->setNodeScalarName(current_link_name);
-				nodes_operation_count = nodes_operation_list.assignNodeValue(nodes_operation_count, new_nodes_operation);
+				new_nodes_operation = (SCALAR_SUM_NODES_OPERATION*)malloc(sizeof(SCALAR_SUM_NODES_OPERATION));
+				current_link_operation_base = OT_NODES_SCALAR_OPERATION;
 				break;
 			}
 			case NOV_SUB:
 			{
-				SCALAR_SUB_NODES_OPERATION * new_nodes_operation = (SCALAR_SUB_NODES_OPERATION*)malloc(sizeof(SCALAR_SUB_NODES_OPERATION));
-				new_nodes_operation->setNodeScalarName(current_link_name);
-				nodes_operation_count = nodes_operation_list.assignNodeValue(nodes_operation_count, new_nodes_operation);
+				new_nodes_operation = (SCALAR_SUB_NODES_OPERATION*)malloc(sizeof(SCALAR_SUB_NODES_OPERATION));
+				current_link_operation_base = OT_NODES_SCALAR_OPERATION;
 				break;
 			}
 			case IO_DIV:
 			{
-				DIV_IMAGE_OPERATION * new_image_operation = (DIV_IMAGE_OPERATION*)malloc(sizeof(DIV_IMAGE_OPERATION));
-				new_image_operation->setImageName(current_link_name);
-				image_operation_count = image_operation_list.assignNodeValue(image_operation_count, new_image_operation);
+				new_image_operation = (DIV_IMAGE_OPERATION*)malloc(sizeof(DIV_IMAGE_OPERATION));
+				current_link_operation_base = OT_IMAGE_OPERATION;
 				break;
 			}
 			case IO_FILTER:
 			{
-				FILTER_IMAGE_OPERATION * new_image_operation = (FILTER_IMAGE_OPERATION*)malloc(sizeof(FILTER_IMAGE_OPERATION));
-				new_image_operation->setImageName(current_link_name);
-				image_operation_count = image_operation_list.assignNodeValue(image_operation_count, new_image_operation);
+				new_image_operation = (FILTER_IMAGE_OPERATION*)malloc(sizeof(FILTER_IMAGE_OPERATION));
+				current_link_operation_base = OT_IMAGE_OPERATION;
 				break;
 			}
 			case IO_LOAD:
 			{
-				LOAD_IMAGE_OPERATION * new_image_operation = (LOAD_IMAGE_OPERATION*)malloc(sizeof(LOAD_IMAGE_OPERATION));
-				new_image_operation->setImageName(current_link_name);
-				image_operation_count = image_operation_list.assignNodeValue(image_operation_count, new_image_operation);
+				new_image_operation = (LOAD_IMAGE_OPERATION*)malloc(sizeof(LOAD_IMAGE_OPERATION));
+				current_link_operation_base = OT_IMAGE_OPERATION;
 				break;
 			}
 			case IO_MULT:
 			{
-				MULT_IMAGE_OPERATION * new_image_operation = (MULT_IMAGE_OPERATION*)malloc(sizeof(MULT_IMAGE_OPERATION));
-				new_image_operation->setImageName(current_link_name);
-				image_operation_count = image_operation_list.assignNodeValue(image_operation_count, new_image_operation);
+				new_image_operation = (MULT_IMAGE_OPERATION*)malloc(sizeof(MULT_IMAGE_OPERATION));
+				current_link_operation_base = OT_IMAGE_OPERATION;
 				break;
 			}
 			case IO_ONES:
 			{
-				ONES_IMAGE_OPERATION * new_image_operation = (ONES_IMAGE_OPERATION*)malloc(sizeof(ONES_IMAGE_OPERATION));
-				new_image_operation->setImageName(current_link_name);
-				image_operation_count = image_operation_list.assignNodeValue(image_operation_count, new_image_operation);
+				new_image_operation = (ONES_IMAGE_OPERATION*)malloc(sizeof(ONES_IMAGE_OPERATION));
+				current_link_operation_base = OT_IMAGE_OPERATION;
 				break;
 			}
 			case IO_ROTATE:
 			{
-				ROTATE_IMAGE_OPERATION * new_image_operation = (ROTATE_IMAGE_OPERATION*)malloc(sizeof(ROTATE_IMAGE_OPERATION));
-				new_image_operation->setImageName(current_link_name);
-				image_operation_count = image_operation_list.assignNodeValue(image_operation_count, new_image_operation);
+				new_image_operation = (ROTATE_IMAGE_OPERATION*)malloc(sizeof(ROTATE_IMAGE_OPERATION));
+				current_link_operation_base = OT_IMAGE_OPERATION;
 				break;
 			}
 			case IO_SAVE:
 			{
-				SAVE_IMAGE_OPERATION * new_image_operation = (SAVE_IMAGE_OPERATION*)malloc(sizeof(SAVE_IMAGE_OPERATION));
-				new_image_operation->setImageName(current_link_name);
-				image_operation_count = image_operation_list.assignNodeValue(image_operation_count, new_image_operation);
+				new_image_operation = (SAVE_IMAGE_OPERATION*)malloc(sizeof(SAVE_IMAGE_OPERATION));
+				current_link_operation_base = OT_IMAGE_OPERATION;
 				break;
 			}
 			case IO_SQRT:
 			{
-				SQROOT_IMAGE_OPERATION * new_image_operation = (SQROOT_IMAGE_OPERATION*)malloc(sizeof(SQROOT_IMAGE_OPERATION));
-				new_image_operation->setImageName(current_link_name);
-				image_operation_count = image_operation_list.assignNodeValue(image_operation_count, new_image_operation);
+				new_image_operation = (SQROOT_IMAGE_OPERATION*)malloc(sizeof(SQROOT_IMAGE_OPERATION));
+				current_link_operation_base = OT_IMAGE_OPERATION;
 				break;
 			}
 			case IO_SUM:
 			{
-				SUM_IMAGE_OPERATION * new_image_operation = (SUM_IMAGE_OPERATION*)malloc(sizeof(SUM_IMAGE_OPERATION));
-				new_image_operation->setImageName(current_link_name);
-				image_operation_count = image_operation_list.assignNodeValue(image_operation_count, new_image_operation);
+				new_image_operation = (SUM_IMAGE_OPERATION*)malloc(sizeof(SUM_IMAGE_OPERATION));
+				current_link_operation_base = OT_IMAGE_OPERATION;
 				break;
 			}
 			case IO_TRANSLATE:
 			{
-				TRANSLATE_IMAGE_OPERATION * new_image_operation = (TRANSLATE_IMAGE_OPERATION*)malloc(sizeof(TRANSLATE_IMAGE_OPERATION));
-				new_image_operation->setImageName(current_link_name);
-				image_operation_count = image_operation_list.assignNodeValue(image_operation_count, new_image_operation);
+				new_image_operation = (TRANSLATE_IMAGE_OPERATION*)malloc(sizeof(TRANSLATE_IMAGE_OPERATION));
+				current_link_operation_base = OT_IMAGE_OPERATION;
 				break;
 			}
 			case ISO_HEIGHT:
 			{
-				HEIGHT_IMAGE_SCALAR_OPERATION * new_image_scalar_operation = (HEIGHT_IMAGE_SCALAR_OPERATION*)malloc(sizeof(HEIGHT_IMAGE_SCALAR_OPERATION));
-				new_image_scalar_operation->setNodeScalarName(current_link_name);
-				image_scalar_operation_count = image_scalar_operation_list.assignNodeValue(image_scalar_operation_count, new_image_scalar_operation);
+				new_image_scalar_operation = (HEIGHT_IMAGE_SCALAR_OPERATION*)malloc(sizeof(HEIGHT_IMAGE_SCALAR_OPERATION));
+				current_link_operation_base = OT_IMAGE_SCALAR_OPERATION;
 				break;
 			}
 			case ISO_MAX:
 			{
-				MAX_IMAGE_SCALAR_OPERATION * new_image_scalar_operation = (MAX_IMAGE_SCALAR_OPERATION*)malloc(sizeof(MAX_IMAGE_SCALAR_OPERATION));
-				new_image_scalar_operation->setNodeScalarName(current_link_name);
-				image_scalar_operation_count = image_scalar_operation_list.assignNodeValue(image_scalar_operation_count, new_image_scalar_operation);
+				new_image_scalar_operation = (MAX_IMAGE_SCALAR_OPERATION*)malloc(sizeof(MAX_IMAGE_SCALAR_OPERATION));
+				current_link_operation_base = OT_IMAGE_SCALAR_OPERATION;
 				break;
 			}
 			case ISO_MIN:
 			{
-				MIN_IMAGE_SCALAR_OPERATION * new_image_scalar_operation = (MIN_IMAGE_SCALAR_OPERATION*)malloc(sizeof(MIN_IMAGE_SCALAR_OPERATION));
-				new_image_scalar_operation->setNodeScalarName(current_link_name);
-				image_scalar_operation_count = image_scalar_operation_list.assignNodeValue(image_scalar_operation_count, new_image_scalar_operation);
+				new_image_scalar_operation = (MIN_IMAGE_SCALAR_OPERATION*)malloc(sizeof(MIN_IMAGE_SCALAR_OPERATION));
+				current_link_operation_base = OT_IMAGE_SCALAR_OPERATION;
 				break;
 			}
 			case ISO_SUM:
 			{
-				SUM_IMAGE_SCALAR_OPERATION * new_image_scalar_operation = (SUM_IMAGE_SCALAR_OPERATION*)malloc(sizeof(SUM_IMAGE_SCALAR_OPERATION));
-				new_image_scalar_operation->setNodeScalarName(current_link_name);
-				image_scalar_operation_count = image_scalar_operation_list.assignNodeValue(image_scalar_operation_count, new_image_scalar_operation);
+				new_image_scalar_operation = (SUM_IMAGE_SCALAR_OPERATION*)malloc(sizeof(SUM_IMAGE_SCALAR_OPERATION));
+				current_link_operation_base = OT_IMAGE_SCALAR_OPERATION;
 				break;
 			}
 			case ISO_WIDTH:
 			{
-				WIDTH_IMAGE_SCALAR_OPERATION * new_image_scalar_operation = (WIDTH_IMAGE_SCALAR_OPERATION*)malloc(sizeof(WIDTH_IMAGE_SCALAR_OPERATION));
-				new_image_scalar_operation->setNodeScalarName(current_link_name);
-				image_scalar_operation_count = image_scalar_operation_list.assignNodeValue(image_scalar_operation_count, new_image_scalar_operation);
+				new_image_scalar_operation = (WIDTH_IMAGE_SCALAR_OPERATION*)malloc(sizeof(WIDTH_IMAGE_SCALAR_OPERATION));
+				current_link_operation_base = OT_IMAGE_SCALAR_OPERATION;
 				break;
 			}
 			default:
 				printf("<<Error: The operation type is not deffined \'%s\'>>\n", current_header);
+				break;
+			}
+
+			switch (current_link_operation_base)
+			{
+			case OT_NODE_SCALAR:
+				break;
+			case OT_NODES_SCALAR_OPERATION:
+				new_nodes_operation->setNodeScalarName(current_link_name);
+				nodes_operation_count = nodes_operation_list.assignNodeValue(nodes_operation_count, new_nodes_operation);
+				break;
+			case OT_IMAGE_OPERATION:
+				new_image_operation->setImageName(current_link_name);
+				image_operation_count = image_operation_list.assignNodeValue(image_operation_count, new_image_operation);
+				break;
+			case OT_IMAGE_SCALAR_OPERATION:
+				new_image_scalar_operation->setNodeScalarName(current_link_name);
+				image_scalar_operation_count = image_scalar_operation_list.assignNodeValue(image_scalar_operation_count, new_image_scalar_operation);
+				break;
+			default:
+				printf("<<Error: The operation base type is not deffined \'%s\'>>\n", current_header);
 				break;
 			}
 		}
@@ -569,19 +576,55 @@ IMAGE_PROCESS_HANDLER::CHAIN_LINK * IMAGE_PROCESS_HANDLER::dumpLinkToList(CHAIN_
 }
 
 
-
-IMAGE_PROCESS_HANDLER::CHAIN_LINK * IMAGE_PROCESS_HANDLER::dumpLinkVariableToList(CHAIN_LINK * src_root, GENERIC_LIST<NODE_SCALAR<double>*> * src_input_nodes_list)
+IMAGE_PROCESS_HANDLER::CHAIN_LINK * IMAGE_PROCESS_HANDLER::dumpLinkValues(CHAIN_LINK * src_node, NODE_SCALAR<double> * src_numeric_node)
 {
+	CHAIN_LINK * next_link = src_node;
+	CHAIN_LINK * current_link;
+	char * current_header = src_node->string_value;
+
+	while (next_link && !((strcmp(next_link->string_value, current_header) == 0) && (next_link->link_node_type == NT_TAIL)))
+	{
+		current_link = next_link;
+		next_link = current_link->next_link;
+
+		src_numeric_node->setScalarValue(atof(current_link->string_value));
+	}
+
+	return next_link;
 }
 
 
-
-IMAGE_PROCESS_HANDLER::CHAIN_LINK * IMAGE_PROCESS_HANDLER::dumpLinkVariableToList(CHAIN_LINK * src_root, GENERIC_LIST<NODE_SCALAR<char*>*> * src_input_nodes_list)
+IMAGE_PROCESS_HANDLER::CHAIN_LINK * IMAGE_PROCESS_HANDLER::dumpLinkValues(CHAIN_LINK * src_node, NODE_SCALAR<char*> * src_string_node)
 {
+	CHAIN_LINK * next_link = src_node;
+	CHAIN_LINK * current_link;
+	char * current_header = src_node->string_value;
+
+	while (next_link && !((strcmp(next_link->string_value, current_header) == 0) && (next_link->link_node_type == NT_TAIL)))
+	{
+		current_link = next_link;
+		next_link = current_link->next_link;
+
+		src_string_node->setScalarValue(current_link->string_value);
+	}
+
+	return next_link;
 }
 
 
-
-IMAGE_PROCESS_HANDLER::CHAIN_LINK * IMAGE_PROCESS_HANDLER::dumpLinkVariableToList(CHAIN_LINK * src_root, GENERIC_LIST<IMAGE_OPERATION*> * src_input_operation_list)
+IMAGE_PROCESS_HANDLER::CHAIN_LINK * IMAGE_PROCESS_HANDLER::dumpLinkValues(CHAIN_LINK * src_node, NODES_SCALAR_OPERATION * src_nodes_scalar_operation)
 {
+
+}
+
+
+IMAGE_PROCESS_HANDLER::CHAIN_LINK * IMAGE_PROCESS_HANDLER::dumpLinkValues(CHAIN_LINK * src_node, IMAGE_OPERATION * src_image_operation)
+{
+
+}
+
+
+IMAGE_PROCESS_HANDLER::CHAIN_LINK * IMAGE_PROCESS_HANDLER::dumpLinkValues(CHAIN_LINK * src_node, IMAGE_SCALAR_OPERATION * src_image_scalar_operation)
+{
+
 }

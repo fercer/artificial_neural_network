@@ -16,14 +16,8 @@ public:
 	LOAD_IMAGE_OPERATION operator = (const LOAD_IMAGE_OPERATION & src_load_image_operation);
 	~LOAD_IMAGE_OPERATION();
 
-	void setFilename(const char * src_filename);
-	void setFilename(NODE_SCALAR<char *> * src_node_filename);
-
 protected:
 	void performOperation();
-
-private:
-	NODE_SCALAR<char*> default_filename;
 };
 
 #endif // LOAD_IMAGE_OPERATION_CLASS_H_INCLUDED

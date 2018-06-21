@@ -196,8 +196,6 @@ public:
 		emptyList();
 	}
 
-
-
 	unsigned int assignNodeValue(const unsigned int src_index, const class_link_type src_node)
 	{
 		if (src_index >= nodes_count)
@@ -214,7 +212,6 @@ public:
 
 		return nodes_count;
 	}
-
 
 
 	class_link_type getNodeValue(const unsigned int src_node_index)

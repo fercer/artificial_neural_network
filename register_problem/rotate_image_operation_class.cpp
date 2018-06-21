@@ -2,15 +2,35 @@
 
 ROTATE_IMAGE_OPERATION::ROTATE_IMAGE_OPERATION()
 {
-	rotation_matrix_parameter_11.setScalarValue(1.0);
-	rotation_matrix_parameter_12.setScalarValue(0.0);
-	rotation_matrix_parameter_21.setScalarValue(0.0);
-	rotation_matrix_parameter_22.setScalarValue(1.0);
+	input_numeric_nodes_required = 4;
+	nodes_names_list.assignNodeValue(0, "node_11");
+	nodes_names_list.assignNodeValue(1, "node_12");
+	nodes_names_list.assignNodeValue(2, "node_21");
+	nodes_names_list.assignNodeValue(3, "node_22");
 
-	numeric_parameters_nodes_list.assignNodeValue(0, &rotation_matrix_parameter_11);
-	numeric_parameters_nodes_list.assignNodeValue(1, &rotation_matrix_parameter_12);
-	numeric_parameters_nodes_list.assignNodeValue(2, &rotation_matrix_parameter_21);
-	numeric_parameters_nodes_list.assignNodeValue(3, &rotation_matrix_parameter_22);
+	NODE_SCALAR<double> * local_node_A = (NODE_SCALAR<double>*)malloc(sizeof(NODE_SCALAR<double>));
+	local_node_A->setScalarValue(1.0);
+	local_numeric_nodes_list.assignNodeValue(0, local_node_A);
+	numeric_nodes_list.assignNodeValue(0, local_node_A);
+	numeric_node_is_local_list.assignNodeValue(0, true);
+
+	NODE_SCALAR<double> * local_node_B = (NODE_SCALAR<double>*)malloc(sizeof(NODE_SCALAR<double>));
+	local_node_B->setScalarValue(0.0);
+	local_numeric_nodes_list.assignNodeValue(1, local_node_B);
+	numeric_nodes_list.assignNodeValue(1, local_node_B);
+	numeric_node_is_local_list.assignNodeValue(1, true);
+
+	NODE_SCALAR<double> * local_node_C = (NODE_SCALAR<double>*)malloc(sizeof(NODE_SCALAR<double>));
+	local_node_C->setScalarValue(0.0);
+	local_numeric_nodes_list.assignNodeValue(2, local_node_C);
+	numeric_nodes_list.assignNodeValue(2, local_node_C);
+	numeric_node_is_local_list.assignNodeValue(2, true);
+
+	NODE_SCALAR<double> * local_node_D = (NODE_SCALAR<double>*)malloc(sizeof(NODE_SCALAR<double>));
+	local_node_D->setScalarValue(1.0);
+	local_numeric_nodes_list.assignNodeValue(3, local_node_D);
+	numeric_nodes_list.assignNodeValue(3, local_node_D);
+	numeric_node_is_local_list.assignNodeValue(3, true);
 }
 
 
@@ -18,40 +38,6 @@ ROTATE_IMAGE_OPERATION::ROTATE_IMAGE_OPERATION()
 ROTATE_IMAGE_OPERATION::ROTATE_IMAGE_OPERATION(const ROTATE_IMAGE_OPERATION & src_rotate_image_operation)
 {
 	copyFromImageOperation(src_rotate_image_operation);
-
-	/* Verify if the parameters are connected to an outer node pointer,
-	or if them are connected to the default nodes of the source:
-	*/
-	this->numeric_parameters_nodes_list = src_rotate_image_operation.numeric_parameters_nodes_list;
-
-	NODE_SCALAR<double> * src_rotation_11_pointer = this->numeric_parameters_nodes_list.getNodeValue(0);
-	NODE_SCALAR<double> * src_rotation_12_pointer = this->numeric_parameters_nodes_list.getNodeValue(1);
-	NODE_SCALAR<double> * src_rotation_21_pointer = this->numeric_parameters_nodes_list.getNodeValue(2);
-	NODE_SCALAR<double> * src_rotation_22_pointer = this->numeric_parameters_nodes_list.getNodeValue(3);
-
-	if (src_rotation_11_pointer == &src_rotate_image_operation.rotation_matrix_parameter_11)
-	{
-		this->rotation_matrix_parameter_11.setScalarValue(src_rotation_11_pointer->getScalarValue());
-		this->numeric_parameters_nodes_list.assignNodeValue(0, &this->rotation_matrix_parameter_11);
-	}
-
-	if (src_rotation_12_pointer == &src_rotate_image_operation.rotation_matrix_parameter_12)
-	{
-		this->rotation_matrix_parameter_12.setScalarValue(src_rotation_12_pointer->getScalarValue());
-		this->numeric_parameters_nodes_list.assignNodeValue(0, &this->rotation_matrix_parameter_12);
-	}
-
-	if (src_rotation_21_pointer == &src_rotate_image_operation.rotation_matrix_parameter_21)
-	{
-		this->rotation_matrix_parameter_21.setScalarValue(src_rotation_21_pointer->getScalarValue());
-		this->numeric_parameters_nodes_list.assignNodeValue(0, &this->rotation_matrix_parameter_21);
-	}
-
-	if (src_rotation_22_pointer == &src_rotate_image_operation.rotation_matrix_parameter_22)
-	{
-		this->rotation_matrix_parameter_22.setScalarValue(src_rotation_22_pointer->getScalarValue());
-		this->numeric_parameters_nodes_list.assignNodeValue(0, &this->rotation_matrix_parameter_22);
-	}
 }
 
 
@@ -61,40 +47,6 @@ ROTATE_IMAGE_OPERATION ROTATE_IMAGE_OPERATION::operator=(const ROTATE_IMAGE_OPER
 	if (this != &src_rotate_image_operation)
 	{
 		copyFromImageOperation(src_rotate_image_operation);
-
-		/* Verify if the parameters are connected to an outer node pointer,
-		or if them are connected to the default nodes of the source:
-		*/
-		this->numeric_parameters_nodes_list = src_rotate_image_operation.numeric_parameters_nodes_list;
-
-		NODE_SCALAR<double> * src_rotation_11_pointer = this->numeric_parameters_nodes_list.getNodeValue(0);
-		NODE_SCALAR<double> * src_rotation_12_pointer = this->numeric_parameters_nodes_list.getNodeValue(1);
-		NODE_SCALAR<double> * src_rotation_21_pointer = this->numeric_parameters_nodes_list.getNodeValue(2);
-		NODE_SCALAR<double> * src_rotation_22_pointer = this->numeric_parameters_nodes_list.getNodeValue(3);
-
-		if (src_rotation_11_pointer == &src_rotate_image_operation.rotation_matrix_parameter_11)
-		{
-			this->rotation_matrix_parameter_11.setScalarValue(src_rotation_11_pointer->getScalarValue());
-			this->numeric_parameters_nodes_list.assignNodeValue(0, &this->rotation_matrix_parameter_11);
-		}
-
-		if (src_rotation_12_pointer == &src_rotate_image_operation.rotation_matrix_parameter_12)
-		{
-			this->rotation_matrix_parameter_12.setScalarValue(src_rotation_12_pointer->getScalarValue());
-			this->numeric_parameters_nodes_list.assignNodeValue(0, &this->rotation_matrix_parameter_12);
-		}
-
-		if (src_rotation_21_pointer == &src_rotate_image_operation.rotation_matrix_parameter_21)
-		{
-			this->rotation_matrix_parameter_21.setScalarValue(src_rotation_21_pointer->getScalarValue());
-			this->numeric_parameters_nodes_list.assignNodeValue(0, &this->rotation_matrix_parameter_21);
-		}
-
-		if (src_rotation_22_pointer == &src_rotate_image_operation.rotation_matrix_parameter_22)
-		{
-			this->rotation_matrix_parameter_22.setScalarValue(src_rotation_22_pointer->getScalarValue());
-			this->numeric_parameters_nodes_list.assignNodeValue(0, &this->rotation_matrix_parameter_22);
-		}
 	}
 
 	return *this;
@@ -109,117 +61,19 @@ ROTATE_IMAGE_OPERATION::~ROTATE_IMAGE_OPERATION()
 
 
 
-
-void ROTATE_IMAGE_OPERATION::setRotationAngle(const double src_theta)
-{
-	const double ctheta = cos(src_theta);
-	const double stheta = sin(src_theta);
-	rotation_matrix_parameter_11.setScalarValue(ctheta);
-	rotation_matrix_parameter_12.setScalarValue(stheta);
-	rotation_matrix_parameter_21.setScalarValue(-stheta);
-	rotation_matrix_parameter_22.setScalarValue(ctheta);
-	parameters_have_changed = true;
-}
-
-
-void ROTATE_IMAGE_OPERATION::setRotationAngle(const double src_theta, const double src_phi)
-{
-	const double ctheta = cos(src_theta);
-	const double stheta = sin(src_theta);
-	const double cphi = cos(src_phi);
-	const double sphi = sin(src_phi);
-
-	rotation_matrix_parameter_11.setScalarValue(ctheta);
-	rotation_matrix_parameter_12.setScalarValue(sphi);
-	rotation_matrix_parameter_21.setScalarValue(-stheta);
-	rotation_matrix_parameter_22.setScalarValue(cphi);
-	parameters_have_changed = true;
-}
-
-
-void ROTATE_IMAGE_OPERATION::setRotationAngle(const double src_rotaiton_matrix_entry_11, const double src_rotaiton_matrix_entry_12, const double src_rotaiton_matrix_entry_21, const double src_rotaiton_matrix_entry_22)
-{
-	rotation_matrix_parameter_11.setScalarValue(src_rotaiton_matrix_entry_11);
-	rotation_matrix_parameter_12.setScalarValue(src_rotaiton_matrix_entry_12);
-	rotation_matrix_parameter_21.setScalarValue(src_rotaiton_matrix_entry_21);
-	rotation_matrix_parameter_22.setScalarValue(src_rotaiton_matrix_entry_22);
-	parameters_have_changed = true;
-}
-
-
-void ROTATE_IMAGE_OPERATION::setRotationAngle11(NODE_SCALAR<double>* src_rotaiton_matrix_entry_11_node)
-{
-	if (src_rotaiton_matrix_entry_11_node)
-	{
-		numeric_parameters_nodes_list.assignNodeValue(0, src_rotaiton_matrix_entry_11_node);
-		parameters_have_changed = true;
-	}
-	else
-	{
-		rotation_matrix_parameter_11.setScalarValue(numeric_parameters_nodes_list.getNodeValue(0)->getScalarValue());
-		numeric_parameters_nodes_list.assignNodeValue(0, &rotation_matrix_parameter_11);
-	}
-}
-
-
-void ROTATE_IMAGE_OPERATION::setRotationAngle12(NODE_SCALAR<double>* src_rotaiton_matrix_entry_12_node)
-{
-	if (src_rotaiton_matrix_entry_12_node)
-	{
-		numeric_parameters_nodes_list.assignNodeValue(1, src_rotaiton_matrix_entry_12_node);
-		parameters_have_changed = true;
-	}
-	else
-	{
-		rotation_matrix_parameter_12.setScalarValue(numeric_parameters_nodes_list.getNodeValue(1)->getScalarValue());
-		numeric_parameters_nodes_list.assignNodeValue(1, &rotation_matrix_parameter_12);
-	}
-}
-
-
-void ROTATE_IMAGE_OPERATION::setRotationAngle21(NODE_SCALAR<double>* src_rotaiton_matrix_entry_21_node)
-{
-	if (src_rotaiton_matrix_entry_21_node)
-	{
-		numeric_parameters_nodes_list.assignNodeValue(0, src_rotaiton_matrix_entry_21_node);
-		parameters_have_changed = true;
-	}
-	else
-	{
-		rotation_matrix_parameter_21.setScalarValue(numeric_parameters_nodes_list.getNodeValue(2)->getScalarValue());
-		numeric_parameters_nodes_list.assignNodeValue(2, &rotation_matrix_parameter_21);
-	}
-}
-
-
-void ROTATE_IMAGE_OPERATION::setRotationAngle22(NODE_SCALAR<double>* src_rotaiton_matrix_entry_22_node)
-{
-	if (src_rotaiton_matrix_entry_22_node)
-	{
-		numeric_parameters_nodes_list.assignNodeValue(3, src_rotaiton_matrix_entry_22_node);
-		parameters_have_changed = true;
-	}
-	else
-	{
-		rotation_matrix_parameter_22.setScalarValue(numeric_parameters_nodes_list.getNodeValue(3)->getScalarValue());
-		numeric_parameters_nodes_list.assignNodeValue(3, &rotation_matrix_parameter_22);
-	}
-}
-
-
 void ROTATE_IMAGE_OPERATION::performOperation()
 {
 	const double half_src_width = width_A / 2;
 	const double half_src_height = height_A / 2;
 
 	const double rotation_matrix_determinant =
-		numeric_parameters_nodes_list.getNodeValue(0)->getScalarValue() * numeric_parameters_nodes_list.getNodeValue(2)->getScalarValue() -
-		numeric_parameters_nodes_list.getNodeValue(1)->getScalarValue() * numeric_parameters_nodes_list.getNodeValue(3)->getScalarValue();
+		numeric_nodes_list.getNodeValue(0)->getScalarValue() * numeric_nodes_list.getNodeValue(2)->getScalarValue() -
+		numeric_nodes_list.getNodeValue(1)->getScalarValue() * numeric_nodes_list.getNodeValue(3)->getScalarValue();
 
-	const double inv_parameter_A = numeric_parameters_nodes_list.getNodeValue(3)->getScalarValue() / rotation_matrix_determinant;
-	const double inv_parameter_B = -numeric_parameters_nodes_list.getNodeValue(1)->getScalarValue() / rotation_matrix_determinant;
-	const double inv_parameter_C = -numeric_parameters_nodes_list.getNodeValue(2)->getScalarValue() / rotation_matrix_determinant;
-	const double inv_parameter_D = numeric_parameters_nodes_list.getNodeValue(0)->getScalarValue() / rotation_matrix_determinant;
+	const double inv_parameter_A = numeric_nodes_list.getNodeValue(3)->getScalarValue() / rotation_matrix_determinant;
+	const double inv_parameter_B = -numeric_nodes_list.getNodeValue(1)->getScalarValue() / rotation_matrix_determinant;
+	const double inv_parameter_C = -numeric_nodes_list.getNodeValue(2)->getScalarValue() / rotation_matrix_determinant;
+	const double inv_parameter_D = numeric_nodes_list.getNodeValue(0)->getScalarValue() / rotation_matrix_determinant;
 	
 	/* Rotate the ROI corners of the source image to figure out the size fo the destination image */
 	const double UL_x = 
@@ -346,9 +200,9 @@ void ROTATE_IMAGE_OPERATION::performOperation()
 		for (int j = 0; j < max_width; j++)
 		{
 			const double src_x = half_src_width +
-				numeric_parameters_nodes_list.getNodeValue(0)->getScalarValue() * ((double)j - half_max_width) + numeric_parameters_nodes_list.getNodeValue(2)->getScalarValue() * ((double)i - half_max_height);
+				numeric_nodes_list.getNodeValue(0)->getScalarValue() * ((double)j - half_max_width) + numeric_nodes_list.getNodeValue(2)->getScalarValue() * ((double)i - half_max_height);
 			const double src_y = half_src_height +
-				numeric_parameters_nodes_list.getNodeValue(1)->getScalarValue() * ((double)j - half_max_width) + numeric_parameters_nodes_list.getNodeValue(3)->getScalarValue() * ((double)i - half_max_height);
+				numeric_nodes_list.getNodeValue(1)->getScalarValue() * ((double)j - half_max_width) + numeric_nodes_list.getNodeValue(3)->getScalarValue() * ((double)i - half_max_height);
 
 			if ((src_x < 1) ||
 				(src_x > width_A) ||

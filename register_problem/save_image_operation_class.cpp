@@ -2,8 +2,14 @@
 
 SAVE_IMAGE_OPERATION::SAVE_IMAGE_OPERATION()
 {
-	default_filename.setScalarValue("img.pgm");
-	string_parameters_nodes_list.assignNodeValue(0, &default_filename);
+	input_string_nodes_required = 1;
+	nodes_names_list.assignNodeValue(0, "filename");
+
+	NODE_SCALAR<char*> * local_node_A = (NODE_SCALAR<char*>*)malloc(sizeof(NODE_SCALAR<char*>));
+	local_node_A->setScalarValue("NOT-DEFINED");
+	local_string_nodes_list.assignNodeValue(0, local_node_A);
+	string_nodes_list.assignNodeValue(0, local_node_A);
+	string_node_is_local_list.assignNodeValue(0, true);
 }
 
 
@@ -11,19 +17,6 @@ SAVE_IMAGE_OPERATION::SAVE_IMAGE_OPERATION()
 SAVE_IMAGE_OPERATION::SAVE_IMAGE_OPERATION(const SAVE_IMAGE_OPERATION & src_save_image_operation)
 {
 	copyFromImageOperation(src_save_image_operation);
-
-	/* Verify if the parameters are connected to an outer node pointer,
-	or if them are connected to the default nodes of the source:
-	*/
-	this->string_parameters_nodes_list = src_save_image_operation.string_parameters_nodes_list;
-
-	NODE_SCALAR<char *> * src_filename_pointer = this->string_parameters_nodes_list.getNodeValue(0);
-
-	if (src_filename_pointer == &src_save_image_operation.default_filename)
-	{
-		this->default_filename.setScalarValue(src_filename_pointer->getScalarValue());
-		this->string_parameters_nodes_list.assignNodeValue(0, &this->default_filename);
-	}
 }
 
 
@@ -33,19 +26,6 @@ SAVE_IMAGE_OPERATION SAVE_IMAGE_OPERATION::operator=(const SAVE_IMAGE_OPERATION 
 	if (this != &src_save_image_operation)
 	{
 		copyFromImageOperation(src_save_image_operation);
-
-		/* Verify if the parameters are connected to an outer node pointer,
-		or if them are connected to the default nodes of the source:
-		*/
-		this->string_parameters_nodes_list = src_save_image_operation.string_parameters_nodes_list;
-
-		NODE_SCALAR<char *> * src_filename_pointer = this->string_parameters_nodes_list.getNodeValue(0);
-
-		if (src_filename_pointer == &src_save_image_operation.default_filename)
-		{
-			this->default_filename.setScalarValue(src_filename_pointer->getScalarValue());
-			this->string_parameters_nodes_list.assignNodeValue(0, &this->default_filename);
-		}
 	}
 
 	return *this;
@@ -58,27 +38,6 @@ SAVE_IMAGE_OPERATION::~SAVE_IMAGE_OPERATION()
 	// Nothing to deallocate
 }
 
-void SAVE_IMAGE_OPERATION::setFilename(const char * src_filename)
-{
-	default_filename.setScalarValue(src_filename);
-	parameters_have_changed = true;
-}
-
-
-void SAVE_IMAGE_OPERATION::setFilename(NODE_SCALAR<char*>* src_node_filename)
-{
-	if (src_node_filename)
-	{
-		string_parameters_nodes_list.assignNodeValue(0, src_node_filename);
-		parameters_have_changed = true;
-	}
-	else
-	{
-		default_filename.setScalarValue(string_parameters_nodes_list.getNodeValue(0)->getScalarValue());
-		string_parameters_nodes_list.assignNodeValue(0, &default_filename);
-	}
-}
-
 
 void SAVE_IMAGE_OPERATION::performOperation()
 {
@@ -88,11 +47,11 @@ void SAVE_IMAGE_OPERATION::performOperation()
 		return;
 	}
 
-	FILE * fp_img = fopen(string_parameters_nodes_list.getNodeValue(0)->getScalarValue(), "w");
+	FILE * fp_img = fopen(string_nodes_list.getNodeValue(0)->getScalarValue(), "w");
 
 	if (!fp_img)
 	{
-		printf("<Error: The file \"%s\" could not be created>\n", string_parameters_nodes_list.getNodeValue(0)->getScalarValue());
+		printf("<Error: The file \"%s\" could not be created>\n", string_nodes_list.getNodeValue(0)->getScalarValue());
 		return;
 	}
 

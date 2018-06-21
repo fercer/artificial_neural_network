@@ -61,6 +61,9 @@ public:
 	}
 
 protected:
+	class_value_type ** scalar_pointer_manager;
+	unsigned int array_position;
+
 	void copyFromNodeScalar(const NODE_SCALAR<class_value_type>& src_node_scalar)
 	{
 		if (src_node_scalar.scalar_pointer_manager != &src_node_scalar.scalar_pointer)
@@ -78,10 +81,8 @@ protected:
 	}
 
 private:
-	class_value_type ** scalar_pointer_manager;
 	class_value_type * scalar_pointer;
 	class_value_type scalar_value;
-	unsigned int array_position;
 
 	char node_scalar_name[64];
 };

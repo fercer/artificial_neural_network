@@ -2,8 +2,14 @@
 
 SCALAR_SQRT_NODES_OPERATION::SCALAR_SQRT_NODES_OPERATION()
 {
-	value.setScalarValue(1.0);
-	node_parameter_A = &value;
+	input_numeric_nodes_required = 1;
+	nodes_names_list.assignNodeValue(0, "node_A");
+
+	NODE_SCALAR<double> * local_node_A = (NODE_SCALAR<double>*)malloc(sizeof(NODE_SCALAR<double>));
+	local_node_A->setScalarValue(0.0);
+	local_numeric_nodes_list.assignNodeValue(0, local_node_A);
+	numeric_nodes_list.assignNodeValue(0, local_node_A);
+	numeric_node_is_local_list.assignNodeValue(0, true);
 }
 
 
@@ -12,7 +18,6 @@ SCALAR_SQRT_NODES_OPERATION::SCALAR_SQRT_NODES_OPERATION(const SCALAR_SQRT_NODES
 {
 	copyFromNodesScalarOperation(src_scalar_sqrt_nodes_operation);
 }
-
 
 
 SCALAR_SQRT_NODES_OPERATION SCALAR_SQRT_NODES_OPERATION::operator=(const SCALAR_SQRT_NODES_OPERATION & src_scalar_sqrt_nodes_operation)
@@ -25,34 +30,14 @@ SCALAR_SQRT_NODES_OPERATION SCALAR_SQRT_NODES_OPERATION::operator=(const SCALAR_
 	return *this;
 }
 
+
 SCALAR_SQRT_NODES_OPERATION::~SCALAR_SQRT_NODES_OPERATION()
 {
 	// Nothing to deallocate
 }
 
-void SCALAR_SQRT_NODES_OPERATION::setNodeValue(const double src_parameter_value)
-{
-	value.setScalarValue(src_parameter_value);
-	parameters_have_hanged = true;
-}
-
-void SCALAR_SQRT_NODES_OPERATION::setNodeValue(NODE_SCALAR<double>* src_parameter_node)
-{
-	if (src_parameter_node)
-	{
-		node_parameter_A = src_parameter_node;
-		parameters_have_hanged = true;
-	}
-	else
-	{
-		value.setScalarValue(node_parameter_A->getScalarValue());
-		node_parameter_A = &value;
-	}
-}
-
-
 
 double SCALAR_SQRT_NODES_OPERATION::performScalarOperation()
 {
-	return sqrt(node_parameter_A->getScalarValue());
+	return sqrt(numeric_nodes_list.getNodeValue(0)->getScalarValue());
 }

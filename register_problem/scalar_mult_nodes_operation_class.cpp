@@ -2,11 +2,21 @@
 
 SCALAR_MULT_NODES_OPERATION::SCALAR_MULT_NODES_OPERATION()
 {
-	value_A.setScalarValue(1.0);
-	value_B.setScalarValue(1.0);
+	input_numeric_nodes_required = 2;
+	nodes_names_list.assignNodeValue(0, "node_A");
+	nodes_names_list.assignNodeValue(1, "node_B");
 
-	node_parameter_A = &value_A;
-	node_parameter_B = &value_B;
+	NODE_SCALAR<double> * local_node_A = (NODE_SCALAR<double>*)malloc(sizeof(NODE_SCALAR<double>));
+	local_node_A->setScalarValue(0.0);
+	local_numeric_nodes_list.assignNodeValue(0, local_node_A);
+	numeric_nodes_list.assignNodeValue(0, local_node_A);
+	numeric_node_is_local_list.assignNodeValue(0, true);
+
+	NODE_SCALAR<double> * local_node_B = (NODE_SCALAR<double>*)malloc(sizeof(NODE_SCALAR<double>));
+	local_node_B->setScalarValue(1.0);
+	local_numeric_nodes_list.assignNodeValue(1, local_node_B);
+	numeric_nodes_list.assignNodeValue(1, local_node_B);
+	numeric_node_is_local_list.assignNodeValue(1, true);
 }
 
 
@@ -34,48 +44,7 @@ SCALAR_MULT_NODES_OPERATION::~SCALAR_MULT_NODES_OPERATION()
 }
 
 
-void SCALAR_MULT_NODES_OPERATION::setNodeAValue(const double src_parameter_A_value)
-{
-	value_A.setScalarValue(src_parameter_A_value);
-	parameters_have_hanged = true;
-}
-
-void SCALAR_MULT_NODES_OPERATION::setNodeAValue(NODE_SCALAR<double>* src_parameter_A_node)
-{
-	if (src_parameter_A_node)
-	{
-		node_parameter_A = src_parameter_A_node;
-		parameters_have_hanged = true;
-	}
-	else
-	{
-		value_A.setScalarValue(node_parameter_A->getScalarValue());
-		node_parameter_A = &value_A;
-	}
-}
-
-void SCALAR_MULT_NODES_OPERATION::setNodeBValue(const double src_parameter_B_value)
-{
-	value_B.setScalarValue(src_parameter_B_value);
-	parameters_have_hanged = true;
-}
-
-void SCALAR_MULT_NODES_OPERATION::setNodeBValue(NODE_SCALAR<double>* src_parameter_B_node)
-{
-	if (src_parameter_B_node)
-	{
-		node_parameter_B = src_parameter_B_node;
-		parameters_have_hanged = true;
-	}
-	else
-	{
-		value_B.setScalarValue(node_parameter_B->getScalarValue());
-		node_parameter_B = &value_B;
-	}
-}
-
-
 double SCALAR_MULT_NODES_OPERATION::performScalarOperation()
 {
-	return node_parameter_A->getScalarValue() * node_parameter_B->getScalarValue();
+	return numeric_nodes_list.getNodeValue(0)->getScalarValue() * numeric_nodes_list.getNodeValue(1)->getScalarValue();
 }

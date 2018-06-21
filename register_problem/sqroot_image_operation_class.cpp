@@ -2,8 +2,14 @@
 
 SQROOT_IMAGE_OPERATION::SQROOT_IMAGE_OPERATION()
 {
-	parameter.setScalarValue(1.0);
-	numeric_parameters_nodes_list.assignNodeValue(0, &parameter);
+	input_numeric_nodes_required = 1;
+	nodes_names_list.assignNodeValue(0, "node_A");
+
+	NODE_SCALAR<double> * local_node_A = (NODE_SCALAR<double>*)malloc(sizeof(NODE_SCALAR<double>));
+	local_node_A->setScalarValue(0.0);
+	local_numeric_nodes_list.assignNodeValue(0, local_node_A);
+	numeric_nodes_list.assignNodeValue(0, local_node_A);
+	numeric_node_is_local_list.assignNodeValue(0, true);
 }
 
 
@@ -11,20 +17,6 @@ SQROOT_IMAGE_OPERATION::SQROOT_IMAGE_OPERATION()
 SQROOT_IMAGE_OPERATION::SQROOT_IMAGE_OPERATION(const SQROOT_IMAGE_OPERATION & src_sum_image_operation)
 {
 	copyFromImageOperation(src_sum_image_operation);
-
-	/* Verify if the parameters are connected to an outer node pointer,
-	or if them are connected to the default nodes of the source:
-	*/
-	this->numeric_parameters_nodes_list = src_sum_image_operation.numeric_parameters_nodes_list;
-
-	NODE_SCALAR<double> * src_parameter_pointer = this->numeric_parameters_nodes_list.getNodeValue(0);
-
-	if (src_parameter_pointer == &src_sum_image_operation.parameter)
-	{
-		this->parameter.setScalarValue(src_parameter_pointer->getScalarValue());
-		this->numeric_parameters_nodes_list.assignNodeValue(0, &this->parameter);
-	}
-
 }
 
 
@@ -34,21 +26,6 @@ SQROOT_IMAGE_OPERATION SQROOT_IMAGE_OPERATION::operator=(const SQROOT_IMAGE_OPER
 	if (this != &src_sum_image_operation)
 	{
 		copyFromImageOperation(src_sum_image_operation);
-
-		/* Verify if the parameters are connected to an outer node pointer,
-		or if them are connected to the default nodes of the source:
-		*/
-		this->numeric_parameters_nodes_list = src_sum_image_operation.numeric_parameters_nodes_list;
-
-		NODE_SCALAR<double> * src_parameter_pointer = this->numeric_parameters_nodes_list.getNodeValue(0);
-
-		if (src_parameter_pointer == &src_sum_image_operation.parameter)
-		{
-			this->parameter.setScalarValue(src_parameter_pointer->getScalarValue());
-			this->numeric_parameters_nodes_list.assignNodeValue(0, &this->parameter);
-		}
-
-
 	}
 
 	return *this;
@@ -61,27 +38,6 @@ SQROOT_IMAGE_OPERATION::~SQROOT_IMAGE_OPERATION()
 	// Nothing to deallocate
 }
 
-
-
-void SQROOT_IMAGE_OPERATION::setParameter(const double src_parameter)
-{
-	parameter.setScalarValue(src_parameter);
-	parameters_have_changed = true;
-}
-
-void SQROOT_IMAGE_OPERATION::setParameter(NODE_SCALAR<double>* src_node)
-{
-	if (src_node)
-	{
-		numeric_parameters_nodes_list.assignNodeValue(0, src_node);
-		parameters_have_changed = true;
-	}
-	else
-	{
-		parameter.setScalarValue(numeric_parameters_nodes_list.getNodeValue(0)->getScalarValue());
-		numeric_parameters_nodes_list.assignNodeValue(0, &parameter);
-	}
-}
 
 
 
@@ -111,7 +67,7 @@ void SQROOT_IMAGE_OPERATION::performOperation()
 			{
 				for (int x = roi_x_ini; x <= roi_x_end; x++)
 				{
-					const double d_intensity = sqrt((numeric_parameters_nodes_list.getNodeValue(0)->getScalarValue()) * *(src_img_A->image_data + (y - ULa_y)* width_A + x - ULa_x));
+					const double d_intensity = sqrt((numeric_nodes_list.getNodeValue(0)->getScalarValue()) * *(src_img_A->image_data + (y - ULa_y)* width_A + x - ULa_x));
 
 					*(dst_img->image_data + (y - ULg_y) * computable_width + x - ULg_x) = d_intensity;
 				}
