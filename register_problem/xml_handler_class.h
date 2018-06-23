@@ -38,6 +38,7 @@ public:
 
 	XML_NODE_LEAF * getFirstChild();
 	XML_NODE_LEAF * getNextChild();
+	XML_NODE_LEAF * findChild(const char * src_attribute);
 
 	char * getValue();
 	char * getIdentifier();
@@ -59,6 +60,7 @@ private:
 	void assignSibling(XML_NODE_LEAF * src_new_sibling);
 	void assignSiblingToArray(XML_NODE_LEAF ** src_nodes_array, const unsigned int src_previous_sibling_nodes_count);
 	void dumpChildrenListToArray();
+	XML_NODE_LEAF * matchSearchingCriteria(const char * src_attribute);
 };
 
 

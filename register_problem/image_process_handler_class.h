@@ -47,58 +47,63 @@ private:
 	typedef enum OPERATION_TYPE
 	{
 		/* Base oepration types: */
-		OT_NODE_SCALAR = 0,
-		OT_NODES_SCALAR_OPERATION = 1,
-		OT_IMAGE_OPERATION = 2,
-		OT_IMAGE_SCALAR_OPERATION = 3,
+		OT_NODE_SCALAR = 899,
+		OT_NODES_SCALAR_OPERATION = 1844,
+		OT_IMAGE_OPERATION = 1428,
+		OT_IMAGE_SCALAR_OPERATION = 2026,
 
 		/* Derived operation types: */
 		/* Node Value */
-		NV_NUMERIC = 4,
-		NV_STRING = 5,
+		NV_NUMERIC = 790,
+		NV_STRING = 730,
 
 		/* Node Scalar Operation */
-		NOV_SUM = 6,
-		NOV_SUB = 7,
-		NOV_MULT = 8,
-		NOV_DIV = 9,
-		NOV_SQRT = 10,
+		NOV_SUM = 583,
+		NOV_SUB = 572,
+		NOV_MULT = 660,
+		NOV_DIV = 565,
+		NOV_SQRT = 668,
 
 		/* Image Operation */
-		IO_DIV = 11,
-		IO_MULT = 12,
-		IO_SUM = 13,
-		IO_LOAD = 14,
-		IO_SAVE = 15,
-		IO_FILTER = 16,
-		IO_ROTATE = 17,
-		IO_TRANSLATE = 18,
-		IO_SQRT = 19,
-		IO_ONES = 20,
+		IO_DIV = 474,
+		IO_MULT = 569,
+		IO_SUM = 492,
+		IO_LOAD = 535,
+		IO_SAVE = 550,
+		IO_FILTER = 701,
+		IO_ROTATE = 710,
+		IO_TRANSLATE = 933,
+		IO_SQRT = 577,
+		IO_ONES = 556,
 
 		/* Image Scalar Operation */
-		ISO_SUM = 21,
-		ISO_MAX = 22,
-		ISO_MIN = 23,
-		ISO_WIDTH = 24,
-		ISO_HEIGHT = 25
+		ISO_SUM = 575,
+		ISO_MAX = 560,
+		ISO_MIN = 558,
+		ISO_WIDTH = 714,
+		ISO_HEIGHT = 771
 	};
 
 	char filename[1024];
 
 	GENERIC_LIST<NODE_SCALAR<char*>*> string_node_scalar_list;
+	GENERIC_LIST<int> string_node_scalar_position_list;
 	unsigned int string_node_scalar_count;
 
 	GENERIC_LIST<NODE_SCALAR<double>*> numeric_node_scalar_list;
+	GENERIC_LIST<int> numeric_node_scalar_position_list;
 	unsigned int numeric_node_scalar_count;
 
 	GENERIC_LIST<NODES_SCALAR_OPERATION*> nodes_operation_list;
+	GENERIC_LIST<int> nodes_operation_position_list;
 	unsigned int nodes_operation_count;
 
 	GENERIC_LIST<IMAGE_OPERATION*> image_operation_list;
+	GENERIC_LIST<int> image_operation_position_list;
 	unsigned int image_operation_count;
 
 	GENERIC_LIST<IMAGE_SCALAR_OPERATION*> image_scalar_operation_list;
+	GENERIC_LIST<int> image_scalar_operation_position_list;
 	unsigned int image_scalar_operation_count;
 
 	XML_HANDLER xml_file_handler;

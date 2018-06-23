@@ -496,6 +496,7 @@ void XML_NODE_LEAF::dumpChildrenListToArray()
 }
 
 
+
 void XML_NODE_LEAF::assignIdentifier(const char * src_identifier)
 {
 	if (link_name) 
@@ -559,10 +560,43 @@ XML_NODE_LEAF * XML_NODE_LEAF::getNextChild()
 	return *(node_children_array + children_position);
 }
 
+
+XML_NODE_LEAF * XML_NODE_LEAF::matchSearchingCriteria(const char * src_attribute)
+{
+	int comparison_result = strcmp(link_name, src_attribute);
+
+	if (comparison_result == 0)
+	{
+		return this;
+	}
+	else if (comparison_result < 0)
+	{
+		return left_branch->matchSearchingCriteria(src_attribute);
+	}
+	else
+	{
+		return right_branch->matchSearchingCriteria(src_attribute);
+	}
+
+	return NULL;
+}
+
+
+XML_NODE_LEAF * XML_NODE_LEAF::findChild(const char * src_attribute)
+{
+	if (children_count == 0)
+	{
+		return NULL;
+	}
+
+	return node_children->matchSearchingCriteria(src_attribute);
+}
+
 char * XML_NODE_LEAF::getValue()
 {
 	return link_value;
 }
+
 
 char * XML_NODE_LEAF::getIdentifier()
 {
