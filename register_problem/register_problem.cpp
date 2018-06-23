@@ -12,5 +12,7 @@ int main(int argc, char * argv[])
 	IMAGE_PROCESS_HANDLER image_process_1;
 	image_process_1.setFilename("single_image_sumation.xml");
 	image_process_1.loadProcess();
+
+
 	return 0;
 }

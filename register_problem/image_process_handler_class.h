@@ -6,7 +6,7 @@
 #include <string.h>
 
 #include "generic_list_class.h"
-
+#include "xml_handler_class.h"
 #include "div_image_operation_class.h"
 #include "mult_image_operation_class.h"
 #include "sum_image_operation_class.h"
@@ -84,27 +84,6 @@ private:
 		ISO_HEIGHT = 25
 	};
 
-	typedef enum LINK_TYPE
-	{
-		NT_HEADER = 0,
-		NT_VARIABLE = 1,
-		NT_VALUE = 2,
-		NT_EQUAL_SIGN = 3,
-		NT_TAIL = 4
-	};
-
-	typedef struct CHAIN_LINK
-	{
-		char string_value[1024];
-		unsigned int lenght;
-		LINK_TYPE link_node_type;
-		CHAIN_LINK * previous_link;
-		CHAIN_LINK * next_link;
-	};
-
-	CHAIN_LINK chain_head;
-	CHAIN_LINK * chain_tail;
-
 	char filename[1024];
 
 	GENERIC_LIST<NODE_SCALAR<char*>*> string_node_scalar_list;
@@ -121,15 +100,8 @@ private:
 
 	GENERIC_LIST<IMAGE_SCALAR_OPERATION*> image_scalar_operation_list;
 	unsigned int image_scalar_operation_count;
-	
-	void loadProcessFile();
-	CHAIN_LINK * dumpLinkToList(CHAIN_LINK * src_root);
 
-	CHAIN_LINK * dumpLinkValues(CHAIN_LINK * src_node, NODE_SCALAR<double>* src_numeric_node);
-	CHAIN_LINK * dumpLinkValues(CHAIN_LINK * src_node, NODE_SCALAR<char*>* src_string_node);
-	CHAIN_LINK * dumpLinkValues(CHAIN_LINK * src_node, NODES_SCALAR_OPERATION * src_nodes_scalar_operation);
-	CHAIN_LINK * dumpLinkValues(CHAIN_LINK * src_node, IMAGE_OPERATION * src_image_operation);
-	CHAIN_LINK * dumpLinkValues(CHAIN_LINK * src_node, IMAGE_SCALAR_OPERATION * src_image_scalar_operation);
+	XML_HANDLER xml_file_handler;
 };
 
 #endif //IMAGE_PROCESS_HANDLER_CLASS_H_INCLUDED

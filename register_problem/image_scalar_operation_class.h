@@ -66,7 +66,24 @@ public:
 		input_has_changed = true;
 	}
 
-	void assignNodePointer(const unsigned int src_node_position, NODE_SCALAR<double> * src_node_pointer)
+	void assignNodeValue(const unsigned int src_node_position, const double src_node_value)
+	{
+		local_numeric_nodes_list.getNodeValue(src_node_position)->setScalarValue(src_node_value);
+		numeric_node_is_local_list.assignNodeValue(src_node_position, true);
+		numeric_nodes_list.assignNodeValue(src_node_position, local_numeric_nodes_list.getNodeValue(src_node_position));
+		parameters_have_changed = true;
+	}
+
+
+	void assignNodeValue(const unsigned int src_node_position, const char* src_node_value)
+	{
+		local_string_nodes_list.getNodeValue(src_node_position)->setScalarValue(src_node_value);
+		string_node_is_local_list.assignNodeValue(src_node_position, true);
+		string_nodes_list.assignNodeValue(src_node_position, local_string_nodes_list.getNodeValue(src_node_position));
+		parameters_have_changed = true;
+	}
+
+	void assignNodeValue(const unsigned int src_node_position, NODE_SCALAR<double> * src_node_pointer)
 	{
 		if (src_node_position >= input_numeric_nodes_required)
 		{
@@ -87,7 +104,7 @@ public:
 	}
 
 
-	void assignNodePointer(const unsigned int src_node_position, NODE_SCALAR<char*> * src_node_pointer)
+	void assignNodeValue(const unsigned int src_node_position, NODE_SCALAR<char*> * src_node_pointer)
 	{
 		if (src_node_position >= input_string_nodes_required)
 		{

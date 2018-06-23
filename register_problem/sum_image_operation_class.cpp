@@ -2,11 +2,21 @@
 
 SUM_IMAGE_OPERATION::SUM_IMAGE_OPERATION()
 {
-	parameter_A.setScalarValue(1.0);
-	parameter_B.setScalarValue(1.0);
+	input_numeric_nodes_required = 2;
+	nodes_names_list.assignNodeValue(0, "node_A");
+	nodes_names_list.assignNodeValue(1, "node_B");
 
-	numeric_parameters_nodes_list.assignNodeValue(0, &parameter_A);
-	numeric_parameters_nodes_list.assignNodeValue(1, &parameter_B);
+	NODE_SCALAR<double> * local_node_A = (NODE_SCALAR<double>*)malloc(sizeof(NODE_SCALAR<double>));
+	local_node_A->setScalarValue(0.0);
+	local_numeric_nodes_list.assignNodeValue(0, local_node_A);
+	numeric_nodes_list.assignNodeValue(0, local_node_A);
+	numeric_node_is_local_list.assignNodeValue(0, true);
+
+	NODE_SCALAR<double> * local_node_B = (NODE_SCALAR<double>*)malloc(sizeof(NODE_SCALAR<double>));
+	local_node_B->setScalarValue(0.0);
+	local_numeric_nodes_list.assignNodeValue(1, local_node_B);
+	numeric_nodes_list.assignNodeValue(1, local_node_B);
+	numeric_node_is_local_list.assignNodeValue(1, true);
 }
 
 
@@ -14,26 +24,6 @@ SUM_IMAGE_OPERATION::SUM_IMAGE_OPERATION()
 SUM_IMAGE_OPERATION::SUM_IMAGE_OPERATION(const SUM_IMAGE_OPERATION & src_sum_image_operation)
 {
 	copyFromImageOperation(src_sum_image_operation);
-
-	/* Verify if the parameters are connected to an outer node pointer,
-	or if them are connected to the default nodes of the source:
-	*/
-	this->numeric_parameters_nodes_list = src_sum_image_operation.numeric_parameters_nodes_list;
-
-	NODE_SCALAR<double> * src_parameter_A_pointer = this->numeric_parameters_nodes_list.getNodeValue(0);
-	NODE_SCALAR<double> * src_parameter_B_pointer = this->numeric_parameters_nodes_list.getNodeValue(1);
-
-	if (src_parameter_A_pointer == &src_sum_image_operation.parameter_A)
-	{
-		this->parameter_A.setScalarValue(src_parameter_A_pointer->getScalarValue());
-		this->numeric_parameters_nodes_list.assignNodeValue(0, &this->parameter_A);
-	}
-
-	if (src_parameter_B_pointer == &src_sum_image_operation.parameter_B)
-	{
-		this->parameter_B.setScalarValue(src_parameter_B_pointer->getScalarValue());
-		this->numeric_parameters_nodes_list.assignNodeValue(1, &this->parameter_B);
-	}
 }
 
 
@@ -43,26 +33,6 @@ SUM_IMAGE_OPERATION SUM_IMAGE_OPERATION::operator=(const SUM_IMAGE_OPERATION & s
 	if (this != &src_sum_image_operation)
 	{
 		copyFromImageOperation(src_sum_image_operation);
-
-		/* Verify if the parameters are connected to an outer node pointer,
-		or if them are connected to the default nodes of the source:
-		*/
-		this->numeric_parameters_nodes_list = src_sum_image_operation.numeric_parameters_nodes_list;
-
-		NODE_SCALAR<double> * src_parameter_A_pointer = this->numeric_parameters_nodes_list.getNodeValue(0);
-		NODE_SCALAR<double> * src_parameter_B_pointer = this->numeric_parameters_nodes_list.getNodeValue(1);
-
-		if (src_parameter_A_pointer == &src_sum_image_operation.parameter_A)
-		{
-			this->parameter_A.setScalarValue(src_parameter_A_pointer->getScalarValue());
-			this->numeric_parameters_nodes_list.assignNodeValue(0, &this->parameter_A);
-		}
-
-		if (src_parameter_B_pointer == &src_sum_image_operation.parameter_B)
-		{
-			this->parameter_B.setScalarValue(src_parameter_B_pointer->getScalarValue());
-			this->numeric_parameters_nodes_list.assignNodeValue(1, &this->parameter_B);
-		}
 	}
 
 	return *this;
@@ -72,47 +42,6 @@ SUM_IMAGE_OPERATION::~SUM_IMAGE_OPERATION()
 {
 	// Nothing to deallocate
 }
-
-void SUM_IMAGE_OPERATION::setParameterA(const double src_parameter_A)
-{
-	parameter_A.setScalarValue(src_parameter_A);
-	parameters_have_changed = true;
-}
-
-void SUM_IMAGE_OPERATION::setParameterA(NODE_SCALAR<double>* src_node_A)
-{
-	if (src_node_A)
-	{
-		numeric_parameters_nodes_list.assignNodeValue(0, src_node_A);
-		parameters_have_changed = true;
-	}
-	else
-	{
-		parameter_A.setScalarValue(numeric_parameters_nodes_list.getNodeValue(0)->getScalarValue());
-		numeric_parameters_nodes_list.assignNodeValue(0, &parameter_A);
-	}
-}
-
-void SUM_IMAGE_OPERATION::setParameterB(const double src_parameter_B)
-{
-	parameter_B.setScalarValue(src_parameter_B);
-	parameters_have_changed = true;
-}
-
-void SUM_IMAGE_OPERATION::setParameterB(NODE_SCALAR<double>* src_node_B)
-{
-	if (src_node_B)
-	{
-		numeric_parameters_nodes_list.assignNodeValue(1, src_node_B);
-		parameters_have_changed = true;
-	}
-	else
-	{
-		parameter_B.setScalarValue(numeric_parameters_nodes_list.getNodeValue(1)->getScalarValue());
-		numeric_parameters_nodes_list.assignNodeValue(1, &parameter_B);
-	}
-}
-
 
 
 void SUM_IMAGE_OPERATION::performOperation()
@@ -140,8 +69,8 @@ void SUM_IMAGE_OPERATION::performOperation()
 				for (int x = roi_x_ini; x <= roi_x_end; x++)
 				{
 					const double d_intensity = 
-						(numeric_parameters_nodes_list.getNodeValue(1)->getScalarValue()) * *(src_img_B->image_data + (y - ULb_y)* width_B + x - ULb_x) + 
-						(numeric_parameters_nodes_list.getNodeValue(0)->getScalarValue()) * *(src_img_A->image_data + (y - ULa_y)* width_A + x - ULa_x);
+						(numeric_nodes_list.getNodeValue(1)->getScalarValue()) * *(src_img_B->image_data + (y - ULb_y)* width_B + x - ULb_x) + 
+						(numeric_nodes_list.getNodeValue(0)->getScalarValue()) * *(src_img_A->image_data + (y - ULa_y)* width_A + x - ULa_x);
 
 					*(dst_img->image_data + (y - ULg_y) * computable_width + x - ULg_x) = d_intensity;
 				}
@@ -153,7 +82,7 @@ void SUM_IMAGE_OPERATION::performOperation()
 			{
 				for (int x = roi_x_ini; x <= roi_x_end; x++)
 				{
-					const double d_intensity = (numeric_parameters_nodes_list.getNodeValue(1)->getScalarValue()) * *(src_img_B->image_data + (y - ULb_y)* width_B + x - ULb_x);
+					const double d_intensity = (numeric_nodes_list.getNodeValue(1)->getScalarValue()) * *(src_img_B->image_data + (y - ULb_y)* width_B + x - ULb_x);
 
 					*(dst_img->image_data + (y - ULg_y) * computable_width + x - ULg_x) = d_intensity;
 				}
@@ -165,7 +94,7 @@ void SUM_IMAGE_OPERATION::performOperation()
 			{
 				for (int x = roi_x_ini; x <= roi_x_end; x++)
 				{
-					const double d_intensity = (numeric_parameters_nodes_list.getNodeValue(0)->getScalarValue()) * *(src_img_A->image_data + (y - ULa_y) * width_A + x - ULa_x);
+					const double d_intensity = (numeric_nodes_list.getNodeValue(0)->getScalarValue()) * *(src_img_A->image_data + (y - ULa_y) * width_A + x - ULa_x);
 
 					*(dst_img->image_data + (y - ULg_y) * computable_width + x - ULg_x) = d_intensity;
 				}
