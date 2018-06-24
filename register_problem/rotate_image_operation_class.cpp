@@ -3,33 +3,36 @@
 ROTATE_IMAGE_OPERATION::ROTATE_IMAGE_OPERATION()
 {
 	input_numeric_nodes_required = 4;
-	nodes_names_list.assignNodeValue(0, "node_11");
-	nodes_names_list.assignNodeValue(1, "node_12");
-	nodes_names_list.assignNodeValue(2, "node_21");
-	nodes_names_list.assignNodeValue(3, "node_22");
+	NODE_SCALAR<char*> node_identifier("node_11");
+	numeric_nodes_names_list.assignNodeValue(0, node_identifier);
 
-	NODE_SCALAR<double> * local_node_A = (NODE_SCALAR<double>*)malloc(sizeof(NODE_SCALAR<double>));
-	local_node_A->setScalarValue(1.0);
+	node_identifier.setScalarValue("node_12");
+	numeric_nodes_names_list.assignNodeValue(1, node_identifier);
+
+	node_identifier.setScalarValue("node_21");
+	numeric_nodes_names_list.assignNodeValue(2, node_identifier);
+
+	node_identifier.setScalarValue("node_22");
+	numeric_nodes_names_list.assignNodeValue(3, node_identifier);
+
+	NODE_SCALAR<double> local_node_A(1.0);
 	local_numeric_nodes_list.assignNodeValue(0, local_node_A);
-	numeric_nodes_list.assignNodeValue(0, local_node_A);
+	numeric_nodes_list.assignNodeValue(0, &local_numeric_nodes_list.getNodeValue(0));
 	numeric_node_is_local_list.assignNodeValue(0, true);
 
-	NODE_SCALAR<double> * local_node_B = (NODE_SCALAR<double>*)malloc(sizeof(NODE_SCALAR<double>));
-	local_node_B->setScalarValue(0.0);
+	NODE_SCALAR<double> local_node_B(0.0);
 	local_numeric_nodes_list.assignNodeValue(1, local_node_B);
-	numeric_nodes_list.assignNodeValue(1, local_node_B);
+	numeric_nodes_list.assignNodeValue(1, &local_numeric_nodes_list.getNodeValue(1));
 	numeric_node_is_local_list.assignNodeValue(1, true);
 
-	NODE_SCALAR<double> * local_node_C = (NODE_SCALAR<double>*)malloc(sizeof(NODE_SCALAR<double>));
-	local_node_C->setScalarValue(0.0);
+	NODE_SCALAR<double> local_node_C(0.0);
 	local_numeric_nodes_list.assignNodeValue(2, local_node_C);
-	numeric_nodes_list.assignNodeValue(2, local_node_C);
+	numeric_nodes_list.assignNodeValue(2, &local_numeric_nodes_list.getNodeValue(2));
 	numeric_node_is_local_list.assignNodeValue(2, true);
 
-	NODE_SCALAR<double> * local_node_D = (NODE_SCALAR<double>*)malloc(sizeof(NODE_SCALAR<double>));
-	local_node_D->setScalarValue(1.0);
+	NODE_SCALAR<double> local_node_D(1.0);
 	local_numeric_nodes_list.assignNodeValue(3, local_node_D);
-	numeric_nodes_list.assignNodeValue(3, local_node_D);
+	numeric_nodes_list.assignNodeValue(3, &local_numeric_nodes_list.getNodeValue(3));
 	numeric_node_is_local_list.assignNodeValue(3, true);
 }
 
@@ -132,8 +135,8 @@ void ROTATE_IMAGE_OPERATION::performOperation()
 	*(y_positions + y_positions_count - 1) = *(y_positions + y_positions_count - 1);// +1;
 
 	// Define bounding box size:
-	const unsigned int max_width = (double)(*(x_positions + x_positions_count - 1) - *(x_positions)) + 1;
-	const unsigned int max_height = (double)(*(y_positions + y_positions_count - 1) - *(y_positions)) + 1;
+	const unsigned int max_width = (unsigned int)(*(x_positions + x_positions_count - 1) - *(x_positions)) + 1;
+	const unsigned int max_height = (unsigned int)(*(y_positions + y_positions_count - 1) - *(y_positions)) + 1;
 
 	const unsigned int half_max_width = max_width / 2;
 	const unsigned int half_max_height = max_height / 2;
@@ -195,9 +198,9 @@ void ROTATE_IMAGE_OPERATION::performOperation()
 	}
 	FILE * fp_points = fopen("points.dat", "w");
 	double interpolation_result;
-	for (int i = 0; i < max_height; i++)
+	for (int i = 0; i < (int)max_height; i++)
 	{
-		for (int j = 0; j < max_width; j++)
+		for (int j = 0; j < (int)max_width; j++)
 		{
 			const double src_x = half_src_width +
 				numeric_nodes_list.getNodeValue(0)->getScalarValue() * ((double)j - half_max_width) + numeric_nodes_list.getNodeValue(2)->getScalarValue() * ((double)i - half_max_height);

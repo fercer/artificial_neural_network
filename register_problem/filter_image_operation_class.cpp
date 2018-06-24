@@ -146,8 +146,8 @@ void FILTER_IMAGE_OPERATION::performOperation()
 	}
 
 
-	const int half_width = floor((double)width_A / 2.0);
-	const int half_height = floor((double)height_A / 2.0);
+	const int half_width = (int)floor((double)width_A / 2.0);
+	const int half_height = (int)floor((double)height_A / 2.0);
 
 	dst_img->head_roi.ROI_type = RBT_AREA;
 	dst_img->head_roi.UL_x = -half_width;

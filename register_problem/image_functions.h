@@ -14,7 +14,7 @@ typedef enum ROI_BBOX_TYPE {
 	RBT_SOURCE = 2,
 	RBT_TARGET = 4,
 	RBT_INTERSECTION = 6
-};
+} ROI_BBOX_TYPE;
 
 typedef struct ROI_BBOX /* [R]egion [O]f [I]nterest [B]ounding [BOX]*/
 {
@@ -24,14 +24,14 @@ typedef struct ROI_BBOX /* [R]egion [O]f [I]nterest [B]ounding [BOX]*/
 	int LR_x, LR_y;
 	int LL_x, LL_y;
 	ROI_BBOX * next_roi;
-};
+} ROI_BBOX;
 
 typedef struct IMG_DATA {
 	unsigned int width, height;
 	ROI_BBOX head_roi;
 	ROI_BBOX * tail_roi;
 	double * image_data;
-};
+} IMG_DATA;
 
 typedef struct POSITION_NODE
 {
@@ -40,7 +40,7 @@ typedef struct POSITION_NODE
 	unsigned int count_left_leaves;
 	POSITION_NODE * left_leaf;
 	POSITION_NODE * right_leaf;
-};
+} POSITION_NODE;
 
 IMG_DATA * loadImagePGM(const char * filename);
 void saveImagePGM(const char * filename, IMG_DATA * src_img);

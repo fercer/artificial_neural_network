@@ -3,19 +3,20 @@
 TRANSLATE_IMAGE_OPERATION::TRANSLATE_IMAGE_OPERATION()
 {
 	input_numeric_nodes_required = 2;
-	nodes_names_list.assignNodeValue(0, "node_dx");
-	nodes_names_list.assignNodeValue(1, "node_dy");
+	NODE_SCALAR<char*> node_identifier("node_dx");
+	numeric_nodes_names_list.assignNodeValue(0, node_identifier);
 
-	NODE_SCALAR<double> * local_node_A = (NODE_SCALAR<double>*)malloc(sizeof(NODE_SCALAR<double>));
-	local_node_A->setScalarValue(0.0);
+	node_identifier.setScalarValue("node_dy");
+	numeric_nodes_names_list.assignNodeValue(1, node_identifier);
+
+	NODE_SCALAR<double> local_node_A(0.0);
 	local_numeric_nodes_list.assignNodeValue(0, local_node_A);
-	numeric_nodes_list.assignNodeValue(0, local_node_A);
+	numeric_nodes_list.assignNodeValue(0, &local_numeric_nodes_list.getNodeValue(0));
 	numeric_node_is_local_list.assignNodeValue(0, true);
 
-	NODE_SCALAR<double> * local_node_B = (NODE_SCALAR<double>*)malloc(sizeof(NODE_SCALAR<double>));
-	local_node_B->setScalarValue(0.0);
+	NODE_SCALAR<double> local_node_B(0.0);
 	local_numeric_nodes_list.assignNodeValue(1, local_node_B);
-	numeric_nodes_list.assignNodeValue(1, local_node_B);
+	numeric_nodes_list.assignNodeValue(1, &local_numeric_nodes_list.getNodeValue(1));
 	numeric_node_is_local_list.assignNodeValue(1, true);
 }
 
@@ -62,14 +63,14 @@ void TRANSLATE_IMAGE_OPERATION::performOperation()
 	
 	// Modify only the ROI boundaries:
 	/// Modify the area ROI:
-	dst_img->head_roi.UL_x += (numeric_nodes_list.getNodeValue(0))->getScalarValue();
-	dst_img->head_roi.UL_y += (numeric_nodes_list.getNodeValue(1))->getScalarValue();
-	dst_img->head_roi.UR_x += (numeric_nodes_list.getNodeValue(0))->getScalarValue();
-	dst_img->head_roi.UR_y += (numeric_nodes_list.getNodeValue(1))->getScalarValue();
-	dst_img->head_roi.LR_x += (numeric_nodes_list.getNodeValue(0))->getScalarValue();
-	dst_img->head_roi.LR_y += (numeric_nodes_list.getNodeValue(1))->getScalarValue();
-	dst_img->head_roi.LL_x += (numeric_nodes_list.getNodeValue(0))->getScalarValue();
-	dst_img->head_roi.LL_y += (numeric_nodes_list.getNodeValue(1))->getScalarValue();
+	dst_img->head_roi.UL_x += (unsigned int)floor((numeric_nodes_list.getNodeValue(0))->getScalarValue());
+	dst_img->head_roi.UL_y += (unsigned int)floor((numeric_nodes_list.getNodeValue(1))->getScalarValue());
+	dst_img->head_roi.UR_x += (unsigned int)floor((numeric_nodes_list.getNodeValue(0))->getScalarValue());
+	dst_img->head_roi.UR_y += (unsigned int)floor((numeric_nodes_list.getNodeValue(1))->getScalarValue());
+	dst_img->head_roi.LR_x += (unsigned int)floor((numeric_nodes_list.getNodeValue(0))->getScalarValue());
+	dst_img->head_roi.LR_y += (unsigned int)floor((numeric_nodes_list.getNodeValue(1))->getScalarValue());
+	dst_img->head_roi.LL_x += (unsigned int)floor((numeric_nodes_list.getNodeValue(0))->getScalarValue());
+	dst_img->head_roi.LL_y += (unsigned int)floor((numeric_nodes_list.getNodeValue(1))->getScalarValue());
 
 	ROI_BBOX * next_roi_node = dst_img->head_roi.next_roi;
 	ROI_BBOX * current_roi_node;
@@ -79,13 +80,13 @@ void TRANSLATE_IMAGE_OPERATION::performOperation()
 		current_roi_node = next_roi_node;
 		next_roi_node = current_roi_node->next_roi;
 
-		current_roi_node->UL_x += (numeric_nodes_list.getNodeValue(0))->getScalarValue();
-		current_roi_node->UL_y += (numeric_nodes_list.getNodeValue(1))->getScalarValue();;
-		current_roi_node->UR_x += (numeric_nodes_list.getNodeValue(0))->getScalarValue();
-		current_roi_node->UR_y += (numeric_nodes_list.getNodeValue(1))->getScalarValue();;
-		current_roi_node->LR_x += (numeric_nodes_list.getNodeValue(0))->getScalarValue();
-		current_roi_node->LR_y += (numeric_nodes_list.getNodeValue(1))->getScalarValue();;
-		current_roi_node->LL_x += (numeric_nodes_list.getNodeValue(0))->getScalarValue();
-		current_roi_node->LL_y += (numeric_nodes_list.getNodeValue(1))->getScalarValue();;
+		current_roi_node->UL_x += (unsigned int)floor((numeric_nodes_list.getNodeValue(0))->getScalarValue());
+		current_roi_node->UL_y += (unsigned int)floor((numeric_nodes_list.getNodeValue(1))->getScalarValue());
+		current_roi_node->UR_x += (unsigned int)floor((numeric_nodes_list.getNodeValue(0))->getScalarValue());
+		current_roi_node->UR_y += (unsigned int)floor((numeric_nodes_list.getNodeValue(1))->getScalarValue());
+		current_roi_node->LR_x += (unsigned int)floor((numeric_nodes_list.getNodeValue(0))->getScalarValue());
+		current_roi_node->LR_y += (unsigned int)floor((numeric_nodes_list.getNodeValue(1))->getScalarValue());
+		current_roi_node->LL_x += (unsigned int)floor((numeric_nodes_list.getNodeValue(0))->getScalarValue());
+		current_roi_node->LL_y += (unsigned int)floor((numeric_nodes_list.getNodeValue(1))->getScalarValue());
 	}
 }

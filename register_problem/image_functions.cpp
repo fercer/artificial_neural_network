@@ -19,7 +19,7 @@ void saveImagePGM(const char * filename, IMG_DATA * src_img)
 	fprintf(fp_img, "255\n");
 
 	unsigned char pix_intensity;
-	for (unsigned int pix_position = 0; pix_position < (width*height); pix_position++)
+	for (unsigned int pix_position = 0; pix_position < (unsigned int)(width*height); pix_position++)
 	{
 		fprintf(fp_img, "%u\n", (unsigned int)floor(255.0 * *(src_img->image_data + pix_position)));
 	}

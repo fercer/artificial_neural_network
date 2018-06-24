@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "generic_list_class.h"
+#include "generic_list_class.cpp"
 #include "xml_handler_class.h"
 #include "div_image_operation_class.h"
 #include "mult_image_operation_class.h"
@@ -44,7 +44,7 @@ public:
 	void loadProcess();
 	
 private:
-	typedef enum OPERATION_TYPE
+	typedef enum _OPERATION_TYPE
 	{
 		/* Base oepration types: */
 		OT_NODE_SCALAR = 899,
@@ -82,7 +82,7 @@ private:
 		ISO_MIN = 558,
 		ISO_WIDTH = 714,
 		ISO_HEIGHT = 771
-	};
+	} OPERATION_TYPE;
 
 	char filename[1024];
 

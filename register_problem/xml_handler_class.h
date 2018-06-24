@@ -5,12 +5,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "generic_list_class.h"
+#include "generic_list_class.cpp"
 
 class XML_NODE_LEAF
 {
 public:
-	typedef enum NODE_TYPE
+	typedef enum _NODE_TYPE
 	{
 		NT_UNDEFINED = 0,
 		NT_HEADER = 1,			/* < */
@@ -18,7 +18,7 @@ public:
 		NT_ATTRIBUTE = 3,		/* any character */
 		NT_VALUE = 4,			/* " */
 		NT_TAIL = 5				/* </ */
-	};
+	} NODE_TYPE;
 
 	XML_NODE_LEAF();
 	XML_NODE_LEAF(const char * src_identifier, NODE_TYPE src_type = NT_UNDEFINED);
@@ -42,6 +42,7 @@ public:
 
 	char * getValue();
 	char * getIdentifier();
+	unsigned int getChildPosition();
 
 private:
 	char * link_name;
@@ -60,7 +61,7 @@ private:
 	void assignSibling(XML_NODE_LEAF * src_new_sibling);
 	void assignSiblingToArray(XML_NODE_LEAF ** src_nodes_array, const unsigned int src_previous_sibling_nodes_count);
 	void dumpChildrenListToArray();
-	XML_NODE_LEAF * matchSearchingCriteria(const char * src_attribute);
+	XML_NODE_LEAF * matchSearchingCriteria(const char * src_attribute, unsigned int * src_children_position_pointer);
 };
 
 

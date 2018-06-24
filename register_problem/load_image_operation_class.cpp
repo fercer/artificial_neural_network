@@ -3,12 +3,12 @@
 LOAD_IMAGE_OPERATION::LOAD_IMAGE_OPERATION()
 {
 	input_string_nodes_required = 1;
-	nodes_names_list.assignNodeValue(0, "filename");
+	NODE_SCALAR<char*> node_identifier("filename");
+	string_nodes_names_list.assignNodeValue(0, node_identifier);
 
-	NODE_SCALAR<char*> * local_node_A = (NODE_SCALAR<char*>*)malloc(sizeof(NODE_SCALAR<char*>));
-	local_node_A->setScalarValue("NOT-DEFINED");
+	NODE_SCALAR<char*> local_node_A("NOT-DEFINED");
 	local_string_nodes_list.assignNodeValue(0, local_node_A);
-	string_nodes_list.assignNodeValue(0, local_node_A);
+	string_nodes_list.assignNodeValue(0, &local_string_nodes_list.getNodeValue(0));
 	string_node_is_local_list.assignNodeValue(0, true);
 }
 
@@ -106,7 +106,7 @@ void LOAD_IMAGE_OPERATION::performOperation()
 	}
 
 	unsigned int pix_intensity;
-	for (unsigned int pix_position = 0; pix_position < (width*height); pix_position++)
+	for (unsigned int pix_position = 0; pix_position < (unsigned int)(width*height); pix_position++)
 	{
 		fscanf(fp_img, "%u", &pix_intensity);
 		*(dst_img->image_data + pix_position) = (double)(unsigned int)pix_intensity / (double)max_intensity;

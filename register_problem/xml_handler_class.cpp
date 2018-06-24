@@ -89,7 +89,7 @@ void XML_HANDLER::loadXMLFile()
 
 XML_NODE_LEAF * XML_HANDLER::getRoot()
 {
-	return tree_root;
+	return tree_root->getFirstChild();
 }
 
 
@@ -561,7 +561,7 @@ XML_NODE_LEAF * XML_NODE_LEAF::getNextChild()
 }
 
 
-XML_NODE_LEAF * XML_NODE_LEAF::matchSearchingCriteria(const char * src_attribute)
+XML_NODE_LEAF * XML_NODE_LEAF::matchSearchingCriteria(const char * src_attribute, unsigned int * src_children_position_pointer)
 {
 	int comparison_result = strcmp(link_name, src_attribute);
 
@@ -571,11 +571,12 @@ XML_NODE_LEAF * XML_NODE_LEAF::matchSearchingCriteria(const char * src_attribute
 	}
 	else if (comparison_result < 0)
 	{
-		return left_branch->matchSearchingCriteria(src_attribute);
+		return left_branch->matchSearchingCriteria(src_attribute, src_children_position_pointer);
 	}
 	else
 	{
-		return right_branch->matchSearchingCriteria(src_attribute);
+		*src_children_position_pointer = *src_children_position_pointer + 1 + previous_sibling_nodes_count;
+		return right_branch->matchSearchingCriteria(src_attribute, src_children_position_pointer);
 	}
 
 	return NULL;
@@ -589,8 +590,10 @@ XML_NODE_LEAF * XML_NODE_LEAF::findChild(const char * src_attribute)
 		return NULL;
 	}
 
-	return node_children->matchSearchingCriteria(src_attribute);
+	children_position = 0;
+	return node_children->matchSearchingCriteria(src_attribute, &children_position);
 }
+
 
 char * XML_NODE_LEAF::getValue()
 {
@@ -601,4 +604,9 @@ char * XML_NODE_LEAF::getValue()
 char * XML_NODE_LEAF::getIdentifier()
 {
 	return link_name;
+}
+
+unsigned int XML_NODE_LEAF::getChildPosition()
+{
+	return previous_sibling_nodes_count;
 }

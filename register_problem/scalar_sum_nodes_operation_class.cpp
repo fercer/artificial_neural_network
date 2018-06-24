@@ -3,21 +3,22 @@
 SCALAR_SUM_NODES_OPERATION::SCALAR_SUM_NODES_OPERATION()
 {
 	input_numeric_nodes_required = 2;
-	nodes_names_list.assignNodeValue(0, "node_A");
-	nodes_names_list.assignNodeValue(1, "node_B");
+	NODE_SCALAR<char*> node_identifier("node_A");
+	numeric_nodes_names_list.assignNodeValue(0, node_identifier);
+
+	node_identifier.setScalarValue("node_B");
+	numeric_nodes_names_list.assignNodeValue(1, node_identifier);
 
 
-	NODE_SCALAR<double> * local_node_A = (NODE_SCALAR<double>*)malloc(sizeof(NODE_SCALAR<double>));
-	local_node_A->setScalarValue(0.0);
+	NODE_SCALAR<double> local_node_A(0.0);
 	local_numeric_nodes_list.assignNodeValue(0, local_node_A);
-	numeric_nodes_list.assignNodeValue(0, local_node_A);
+	numeric_nodes_list.assignNodeValue(0, &local_numeric_nodes_list.getNodeValue(0));
 	numeric_node_is_local_list.assignNodeValue(0, true);
 
 
-	NODE_SCALAR<double> * local_node_B = (NODE_SCALAR<double>*)malloc(sizeof(NODE_SCALAR<double>));
-	local_node_B->setScalarValue(0.0);
+	NODE_SCALAR<double> local_node_B(0.0);
 	local_numeric_nodes_list.assignNodeValue(1, local_node_B);
-	numeric_nodes_list.assignNodeValue(1, local_node_B);
+	numeric_nodes_list.assignNodeValue(1, &local_numeric_nodes_list.getNodeValue(1));
 	numeric_node_is_local_list.assignNodeValue(1, true);
 }
 

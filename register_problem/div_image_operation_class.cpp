@@ -3,19 +3,20 @@
 DIV_IMAGE_OPERATION::DIV_IMAGE_OPERATION()
 {
 	input_numeric_nodes_required = 2;
-	nodes_names_list.assignNodeValue(0, "node_A");
-	nodes_names_list.assignNodeValue(1, "node_B");
+	NODE_SCALAR<char*> node_identifier("node_A");
+	numeric_nodes_names_list.assignNodeValue(0, node_identifier);
+	
+	node_identifier.setScalarValue("node_B");
+	numeric_nodes_names_list.assignNodeValue(1, node_identifier);
 
-	NODE_SCALAR<double> * local_node_A = (NODE_SCALAR<double>*)malloc(sizeof(NODE_SCALAR<double>));
-	local_node_A->setScalarValue(0.0);
+	NODE_SCALAR<double> local_node_A(0.0);
 	local_numeric_nodes_list.assignNodeValue(0, local_node_A);
-	numeric_nodes_list.assignNodeValue(0, local_node_A);
+	numeric_nodes_list.assignNodeValue(0, &local_numeric_nodes_list.getNodeValue(0));
 	numeric_node_is_local_list.assignNodeValue(0, true);
 
-	NODE_SCALAR<double> * local_node_B = (NODE_SCALAR<double>*)malloc(sizeof(NODE_SCALAR<double>));
-	local_node_B->setScalarValue(1.0);
+	NODE_SCALAR<double> local_node_B(1.0);
 	local_numeric_nodes_list.assignNodeValue(1, local_node_B);
-	numeric_nodes_list.assignNodeValue(1, local_node_B);
+	numeric_nodes_list.assignNodeValue(1, &local_numeric_nodes_list.getNodeValue(1));
 	numeric_node_is_local_list.assignNodeValue(1, true);
 }
 
@@ -57,10 +58,10 @@ void DIV_IMAGE_OPERATION::performOperation()
 		current_roi = next_roi;
 		next_roi = current_roi->next_roi;
 
-		const unsigned int roi_x_ini = current_roi->UL_x;
-		const unsigned int roi_x_end = current_roi->LR_x;
-		const unsigned int roi_y_ini = current_roi->UL_y;
-		const unsigned int roi_y_end = current_roi->LR_y;
+		const int roi_x_ini = current_roi->UL_x;
+		const int roi_x_end = current_roi->LR_x;
+		const int roi_y_ini = current_roi->UL_y;
+		const int roi_y_end = current_roi->LR_y;
 
 		switch (current_roi->ROI_type)
 		{
