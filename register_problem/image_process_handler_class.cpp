@@ -23,7 +23,30 @@ IMAGE_PROCESS_HANDLER IMAGE_PROCESS_HANDLER::operator=(const IMAGE_PROCESS_HANDL
 
 IMAGE_PROCESS_HANDLER::~IMAGE_PROCESS_HANDLER()
 {
+	for (unsigned int operation_index = 0; operation_index < numeric_node_scalar_count; operation_index++)
+	{
+		delete numeric_node_scalar_list.getNodeValue(operation_index);
+	}
 
+	for (unsigned int operation_index = 0; operation_index < string_node_scalar_count; operation_index++)
+	{
+		delete string_node_scalar_list.getNodeValue(operation_index);
+	}
+
+	for (unsigned int operation_index = 0; operation_index < nodes_operation_count; operation_index++)
+	{
+		delete nodes_operation_list.getNodeValue(operation_index);
+	}
+
+	for (unsigned int operation_index = 0; operation_index < image_operation_count; operation_index++)
+	{
+		delete image_operation_list.getNodeValue(operation_index);
+	}
+
+	for (unsigned int operation_index = 0; operation_index < image_scalar_operation_count; operation_index++)
+	{
+		delete image_scalar_operation_list.getNodeValue(operation_index);
+	}
 }
 
 
@@ -120,6 +143,22 @@ void IMAGE_PROCESS_HANDLER::loadProcess()
 			new_node_operation = new SCALAR_SQRT_NODES_OPERATION;
 			break;
 
+		case NOV_ATANGENT:
+			new_node_operation = new SCALAR_ATAN_NODES_OPERATION;
+			break;
+
+		case NOV_TANGENT:
+			new_node_operation = new SCALAR_TAN_NODES_OPERATION;
+			break;
+
+		case NOV_SINUS:
+			new_node_operation = new SCALAR_SIN_NODES_OPERATION;
+			break;
+
+		case NOV_COSINUS:
+			new_node_operation = new SCALAR_COS_NODES_OPERATION;
+			break;
+
 		case IO_DIV:
 			new_image_operation = new DIV_IMAGE_OPERATION;
 			break;
@@ -208,18 +247,25 @@ void IMAGE_PROCESS_HANDLER::loadProcess()
 			for (unsigned int node_index = 0; node_index < numeric_nodes_required; node_index++)
 			{
 				XML_NODE_LEAF * current_node_child = current_node->getFirstChild();
-				while (current_node_child && 
-					!strcmp(current_node_child->getIdentifier(), "Node") &&
-					!strcmp(current_node_child->findChild("id")->getValue(), new_node_operation->getNumericInputName(node_index))
-					)
+				char * current_required_node_identifier = new_node_operation->getNumericInputName(node_index);
+				while (current_node_child)
 				{
+					if (!strcmp(current_node_child->getIdentifier(), "Node") && 
+						current_node_child->findChild("id") &&
+						!strcmp(current_node_child->findChild("id")->getValue(), current_required_node_identifier)
+						)
+					{
+						break;
+					}
+
 					current_node_child = current_node->getNextChild();
 				}
 
 				/* If the children actually exists, and the type is SELF:
 				take the value as locally defined, else, the value will be assigned in the following assignation cycle:
 				*/
-				if (current_node_child && current_node_child->findChild("type")->getValue() &&
+				if (current_node_child && current_node->findChild("type") && 
+					current_node->findChild("type") &&
 					!strcmp(current_node_child->findChild("type")->getValue(), "SELF"))
 				{
 					new_node_operation->assignNodeValue(node_index, atof(current_node_child->getValue()));
@@ -230,9 +276,10 @@ void IMAGE_PROCESS_HANDLER::loadProcess()
 			for (unsigned int node_index = 0; node_index < string_nodes_required; node_index++)
 			{
 				XML_NODE_LEAF * current_node_child = current_node->getFirstChild();
+				char * current_required_node_identifier = new_node_operation->getStringInputName(node_index);
 				while (current_node_child &&
 					!strcmp(current_node_child->getIdentifier(), "Node") &&
-					!strcmp(current_node_child->findChild("id")->getValue(), new_node_operation->getStringInputName(node_index))
+					!strcmp(current_node_child->findChild("id")->getValue(), current_required_node_identifier)
 					)
 				{
 					current_node_child = current_node->getNextChild();
@@ -241,7 +288,7 @@ void IMAGE_PROCESS_HANDLER::loadProcess()
 				/* If the children actually exists, and the type is SELF:
 				take the value as locally defined, else, the value will be assigned in the following assignation cycle:
 				*/
-				if (current_node_child && current_node_child->findChild("type")->getValue() &&
+				if (current_node_child && current_node_child->findChild("type") &&
 					!strcmp(current_node_child->findChild("type")->getValue(), "SELF"))
 				{
 					new_node_operation->assignNodeValue(node_index, current_node_child->getValue());
@@ -259,21 +306,28 @@ void IMAGE_PROCESS_HANDLER::loadProcess()
 			for (unsigned int node_index = 0; node_index < numeric_nodes_required; node_index++)
 			{
 				XML_NODE_LEAF * current_node_child = current_node->getFirstChild();
-				while (current_node_child &&
-					!strcmp(current_node_child->getIdentifier(), "Node") &&
-					!strcmp(current_node_child->findChild("id")->getValue(), new_image_operation->getNumericInputName(node_index))
-					)
+				char * current_required_node_identifier = new_image_operation->getNumericInputName(node_index);
+				while (current_node_child)
 				{
+					if (!strcmp(current_node_child->getIdentifier(), "Node") &&
+						current_node_child->findChild("id") &&
+						!strcmp(current_node_child->findChild("id")->getValue(), current_required_node_identifier)
+						)
+					{
+						break;
+					}
+
 					current_node_child = current_node->getNextChild();
 				}
 
 				/* If the children actually exists, and the type is SELF:
 				take the value as locally defined, else, the value will be assigned in the following assignation cycle:
 				*/
-				if (current_node_child && current_node_child->findChild("type")->getValue() &&
+				if (current_node_child && current_node->findChild("type") &&
+					current_node->findChild("type") &&
 					!strcmp(current_node_child->findChild("type")->getValue(), "SELF"))
 				{
-					new_node_operation->assignNodeValue(node_index, atof(current_node_child->getValue()));
+					new_image_operation->assignNodeValue(node_index, atof(current_node_child->getValue()));
 				}
 			}
 
@@ -281,21 +335,27 @@ void IMAGE_PROCESS_HANDLER::loadProcess()
 			for (unsigned int node_index = 0; node_index < string_nodes_required; node_index++)
 			{
 				XML_NODE_LEAF * current_node_child = current_node->getFirstChild();
-				while (current_node_child &&
-					!strcmp(current_node_child->getIdentifier(), "Node") &&
-					!strcmp(current_node_child->findChild("id")->getValue(), new_image_operation->getStringInputName(node_index))
-					)
+				char * current_required_node_identifier = new_image_operation->getStringInputName(node_index);
+				while (current_node_child)
 				{
+					if (!strcmp(current_node_child->getIdentifier(), "Node") &&
+						current_node_child->findChild("id") &&
+						!strcmp(current_node_child->findChild("id")->getValue(), current_required_node_identifier)
+						)
+					{
+						break;
+					}
+
 					current_node_child = current_node->getNextChild();
 				}
 
 				/* If the children actually exists, and the type is SELF:
 				take the value as locally defined, else, the value will be assigned in the following assignation cycle:
 				*/
-				if (current_node_child && current_node_child->findChild("type")->getValue() &&
+				if (current_node_child && current_node_child->findChild("type") && 
 					!strcmp(current_node_child->findChild("type")->getValue(), "SELF"))
 				{
-					new_node_operation->assignNodeValue(node_index, current_node_child->getValue());
+					new_image_operation->assignNodeValue(node_index, current_node_child->getValue());
 				}
 			}
 
@@ -310,21 +370,28 @@ void IMAGE_PROCESS_HANDLER::loadProcess()
 			for (unsigned int node_index = 0; node_index < numeric_nodes_required; node_index++)
 			{
 				XML_NODE_LEAF * current_node_child = current_node->getFirstChild();
-				while (current_node_child &&
-					!strcmp(current_node_child->getIdentifier(), "Node") &&
-					!strcmp(current_node_child->findChild("id")->getValue(), new_image_scalar_operation->getNumericInputName(node_index))
-					)
+				char * current_required_node_identifier = new_image_scalar_operation->getNumericInputName(node_index);
+				while (current_node_child)
 				{
+					if (!strcmp(current_node_child->getIdentifier(), "Node") &&
+						current_node_child->findChild("id") &&
+						!strcmp(current_node_child->findChild("id")->getValue(), current_required_node_identifier)
+						)
+					{
+						break;
+					}
+
 					current_node_child = current_node->getNextChild();
 				}
 
 				/* If the children actually exists, and the type is SELF:
 				take the value as locally defined, else, the value will be assigned in the following assignation cycle:
 				*/
-				if (current_node_child && current_node_child->findChild("type")->getValue() &&
+				if (current_node_child && current_node->findChild("type") &&
+					current_node->findChild("type") &&
 					!strcmp(current_node_child->findChild("type")->getValue(), "SELF"))
 				{
-					new_node_operation->assignNodeValue(node_index, atof(current_node_child->getValue()));
+					new_image_scalar_operation->assignNodeValue(node_index, atof(current_node_child->getValue()));
 				}
 			}
 
@@ -332,27 +399,32 @@ void IMAGE_PROCESS_HANDLER::loadProcess()
 			for (unsigned int node_index = 0; node_index < string_nodes_required; node_index++)
 			{
 				XML_NODE_LEAF * current_node_child = current_node->getFirstChild();
-				while (current_node_child &&
-					!strcmp(current_node_child->getIdentifier(), "Node") &&
-					!strcmp(current_node_child->findChild("id")->getValue(), new_image_scalar_operation->getStringInputName(node_index))
-					)
+				char * current_required_node_identifier = new_image_scalar_operation->getStringInputName(node_index);
+				while (current_node_child)
 				{
+					if (!strcmp(current_node_child->getIdentifier(), "Node") &&
+						current_node_child->findChild("id") &&
+						!strcmp(current_node_child->findChild("id")->getValue(), current_required_node_identifier)
+						)
+					{
+						break;
+					}
+
 					current_node_child = current_node->getNextChild();
 				}
 
 				/* If the children actually exists, and the type is SELF:
 				take the value as locally defined, else, the value will be assigned in the following assignation cycle:
 				*/
-				if (current_node_child && current_node_child->findChild("type")->getValue() &&
+				if (current_node_child && current_node_child->findChild("type") &&
 					!strcmp(current_node_child->findChild("type")->getValue(), "SELF"))
 				{
-					new_node_operation->assignNodeValue(node_index, current_node_child->getValue());
+					new_image_scalar_operation->assignNodeValue(node_index, current_node_child->getValue());
 				}
 			}
 
-
 			image_scalar_operation_position_list.assignNodeValue(image_scalar_operation_count, current_operation_position);
-			image_scalar_operation_count = image_scalar_operation_list.assignNodeValue(image_operation_count, new_image_scalar_operation);
+			image_scalar_operation_count = image_scalar_operation_list.assignNodeValue(image_scalar_operation_count, new_image_scalar_operation);
 		}
 		
 		// Continue loading the following nodes:
@@ -460,37 +532,59 @@ void IMAGE_PROCESS_HANDLER::loadProcess()
 			for (unsigned int node_index = 0; node_index < numeric_nodes_required; node_index++)
 			{
 				XML_NODE_LEAF * current_node_child = current_node->getFirstChild();
-				while (current_node_child &&
-					!strcmp(current_node_child->getIdentifier(), "Node") &&
-					!strcmp(current_node_child->findChild("id")->getValue(), new_node_operation->getNumericInputName(node_index))
-					)
+				char * current_required_node_identifier = new_node_operation->getNumericInputName(node_index);
+				while (current_node_child)
 				{
+					if (!strcmp(current_node_child->getIdentifier(), "Node") &&
+						current_node_child->findChild("id") &&
+						!strcmp(current_node_child->findChild("id")->getValue(), current_required_node_identifier)
+						)
+					{
+						break;
+					}
+
 					current_node_child = current_node->getNextChild();
 				}
 
-				// If the children actually exists, and the type is node operation:
-				const int linked_operation_position = atoi(current_node_child->getValue());
-				int linked_operation_list_index = 0;
-				if (current_node_child && current_node_child->findChild("type")->getValue())
+				/* If the children actually exists, and the type is defined:
+				Assign the pointer of the defined position:
+				*/
+				if (current_node_child && current_node->findChild("type") &&
+					current_node->findChild("type")->getValue())
 				{
+					const int linking_operation_position = atof(current_node_child->getValue());
+					unsigned int linking_operation_list_index = 0;
+
 					if (!strcmp(current_node_child->findChild("type")->getValue(), "NV"))
 					{
-						while (numeric_node_scalar_position_list.getNodeValue(linked_operation_list_index) != linked_operation_position)
+						while (numeric_node_scalar_position_list.getNodeValue(linking_operation_list_index) != linking_operation_position)
 						{
-							linked_operation_list_index++;
+							linking_operation_list_index++;
 						}
 
-						new_node_operation->assignNodeValue(node_index, numeric_node_scalar_list.getNodeValue(linked_operation_list_index));
+						new_node_operation->assignNodeValue(node_index,
+							numeric_node_scalar_list.getNodeValue(linking_operation_list_index));
 					}
 					else if (!strcmp(current_node_child->findChild("type")->getValue(), "NOV"))
 					{
-
-						while (nodes_operation_position_list.getNodeValue(linked_operation_list_index) != linked_operation_position)
+						while (nodes_operation_position_list.getNodeValue(linking_operation_list_index) != linking_operation_position)
 						{
-							linked_operation_list_index++;
+							linking_operation_list_index++;
 						}
 
-						new_node_operation->assignNodeValue(node_index, nodes_operation_list.getNodeValue(linked_operation_list_index));
+						new_node_operation->assignNodeValue(node_index,
+							nodes_operation_list.getNodeValue(linking_operation_list_index));
+
+					}
+					else if (!strcmp(current_node_child->findChild("type")->getValue(), "ISO"))
+					{
+						while (image_scalar_operation_position_list.getNodeValue(linking_operation_list_index) != linking_operation_position)
+						{
+							linking_operation_list_index++;
+						}
+
+						new_node_operation->assignNodeValue(node_index,
+							image_scalar_operation_list.getNodeValue(linking_operation_list_index));
 					}
 				}
 			}
@@ -499,27 +593,36 @@ void IMAGE_PROCESS_HANDLER::loadProcess()
 			for (unsigned int node_index = 0; node_index < string_nodes_required; node_index++)
 			{
 				XML_NODE_LEAF * current_node_child = current_node->getFirstChild();
+				char * current_required_node_identifier = new_node_operation->getStringInputName(node_index);
 				while (current_node_child &&
 					!strcmp(current_node_child->getIdentifier(), "Node") &&
-					!strcmp(current_node_child->findChild("id")->getValue(), new_node_operation->getNumericInputName(node_index))
+					!strcmp(current_node_child->findChild("id")->getValue(), current_required_node_identifier)
 					)
 				{
 					current_node_child = current_node->getNextChild();
 				}
 
-				// If the children actually exists, and the type is node operation:
-				const int linked_operation_position = atoi(current_node_child->getValue());
-				int linked_operation_list_index = 0;
-				if (current_node_child && current_node_child->findChild("type")->getValue() && !strcmp(current_node_child->findChild("type")->getValue(), "NV"))
+				/* If the children actually exists, and the type is defined:
+				Assign the pointer of the defined position:
+				*/
+				if (current_node_child && current_node->findChild("type") &&
+					current_node->findChild("type")->getValue())
 				{
-					while (string_node_scalar_position_list.getNodeValue(linked_operation_list_index) != linked_operation_position)
-					{
-						linked_operation_list_index++;
-					}
+					const int linking_operation_position = atof(current_node_child->getValue());
+					unsigned int linking_operation_list_index = 0;
 
-					new_node_operation->assignNodeValue(node_index, string_node_scalar_list.getNodeValue(linked_operation_list_index));
+					if (!strcmp(current_node_child->findChild("type")->getValue(), "NV"))
+					{
+						while (string_node_scalar_position_list.getNodeValue(linking_operation_list_index) != linking_operation_position)
+						{
+							linking_operation_list_index++;
+						}
+
+						new_node_operation->assignNodeValue(node_index,
+							string_node_scalar_list.getNodeValue(linking_operation_list_index));
+					}
 				}
-			}			
+			}				
 		}
 		else if (new_image_operation)
 		{
@@ -527,37 +630,59 @@ void IMAGE_PROCESS_HANDLER::loadProcess()
 			for (unsigned int node_index = 0; node_index < numeric_nodes_required; node_index++)
 			{
 				XML_NODE_LEAF * current_node_child = current_node->getFirstChild();
-				while (current_node_child &&
-					!strcmp(current_node_child->getIdentifier(), "Node") &&
-					!strcmp(current_node_child->findChild("id")->getValue(), new_image_operation->getNumericInputName(node_index))
-					)
+				char * current_required_node_identifier = new_image_operation->getNumericInputName(node_index);
+				while (current_node_child)
 				{
+					if (!strcmp(current_node_child->getIdentifier(), "Node") &&
+						current_node_child->findChild("id") &&
+						!strcmp(current_node_child->findChild("id")->getValue(), current_required_node_identifier)
+						)
+					{
+						break;
+					}
+
 					current_node_child = current_node->getNextChild();
 				}
 
-				// If the children actually exists, and the type is node operation:
-				const int linked_operation_position = atoi(current_node_child->getValue());
-				int linked_operation_list_index = 0;
-				if (current_node_child && current_node_child->findChild("type")->getValue())
+				/* If the children actually exists, and the type is defined:
+				Assign the pointer of the defined position:
+				*/
+				if (current_node_child && current_node->findChild("type") &&
+					current_node->findChild("type")->getValue())
 				{
+					const int linking_operation_position = atof(current_node_child->getValue());
+					unsigned int linking_operation_list_index = 0;
+
 					if (!strcmp(current_node_child->findChild("type")->getValue(), "NV"))
 					{
-						while (numeric_node_scalar_position_list.getNodeValue(linked_operation_list_index) != linked_operation_position)
+						while (numeric_node_scalar_position_list.getNodeValue(linking_operation_list_index) != linking_operation_position)
 						{
-							linked_operation_list_index++;
+							linking_operation_list_index++;
 						}
 
-						new_image_operation->assignNodeValue(node_index, numeric_node_scalar_list.getNodeValue(linked_operation_list_index));
+						new_image_operation->assignNodeValue(node_index,
+							numeric_node_scalar_list.getNodeValue(linking_operation_list_index));
 					}
 					else if (!strcmp(current_node_child->findChild("type")->getValue(), "NOV"))
 					{
-
-						while (nodes_operation_position_list.getNodeValue(linked_operation_list_index) != linked_operation_position)
+						while (nodes_operation_position_list.getNodeValue(linking_operation_list_index) != linking_operation_position)
 						{
-							linked_operation_list_index++;
+							linking_operation_list_index++;
 						}
 
-						new_image_operation->assignNodeValue(node_index, nodes_operation_list.getNodeValue(linked_operation_list_index));
+						new_image_operation->assignNodeValue(node_index,
+							nodes_operation_list.getNodeValue(linking_operation_list_index));
+
+					}
+					else if (!strcmp(current_node_child->findChild("type")->getValue(), "ISO"))
+					{
+						while (image_scalar_operation_position_list.getNodeValue(linking_operation_list_index) != linking_operation_position)
+						{
+							linking_operation_list_index++;
+						}
+
+						new_image_operation->assignNodeValue(node_index,
+							image_scalar_operation_list.getNodeValue(linking_operation_list_index));
 					}
 				}
 			}
@@ -566,26 +691,105 @@ void IMAGE_PROCESS_HANDLER::loadProcess()
 			for (unsigned int node_index = 0; node_index < string_nodes_required; node_index++)
 			{
 				XML_NODE_LEAF * current_node_child = current_node->getFirstChild();
-				while (current_node_child &&
-					!strcmp(current_node_child->getIdentifier(), "Node") &&
-					!strcmp(current_node_child->findChild("id")->getValue(), new_image_operation->getNumericInputName(node_index))
-					)
+				char * current_required_node_identifier = new_image_operation->getStringInputName(node_index);
+				while (current_node_child)
 				{
+					if (!strcmp(current_node_child->getIdentifier(), "Node") &&
+						current_node_child->findChild("id") &&
+						!strcmp(current_node_child->findChild("id")->getValue(), current_required_node_identifier)
+						)
+					{
+						break;
+					}
+
 					current_node_child = current_node->getNextChild();
 				}
 
-				// If the children actually exists, and the type is node operation:
-				const int linked_operation_position = atoi(current_node_child->getValue());
-				int linked_operation_list_index = 0;
-				if (current_node_child && current_node_child->findChild("type")->getValue() && !strcmp(current_node_child->findChild("type")->getValue(), "NV"))
+				/* If the children actually exists, and the type is defined:
+				Assign the pointer of the defined position:
+				*/
+				if (current_node_child && current_node->findChild("type") &&
+					current_node->findChild("type")->getValue())
 				{
-					while (string_node_scalar_position_list.getNodeValue(linked_operation_list_index) != linked_operation_position)
-					{
-						linked_operation_list_index++;
-					}
+					const int linking_operation_position = atof(current_node_child->getValue());
+					unsigned int linking_operation_list_index = 0;
 
-					new_image_operation->assignNodeValue(node_index, string_node_scalar_list.getNodeValue(linked_operation_list_index));
+					if (!strcmp(current_node_child->findChild("type")->getValue(), "NV"))
+					{
+						while (string_node_scalar_position_list.getNodeValue(linking_operation_list_index) != linking_operation_position)
+						{
+							linking_operation_list_index++;
+						}
+
+						new_image_operation->assignNodeValue(node_index,
+							string_node_scalar_list.getNodeValue(linking_operation_list_index));
+					}
 				}
+			}
+
+			// Look for the operation nodes:
+			XML_NODE_LEAF * current_node_child = current_node->getFirstChild();
+			char current_required_node_identifier[] = "operation_A";
+			while (current_node_child)
+			{
+				if (!strcmp(current_node_child->getIdentifier(), "Operation") &&
+					current_node_child->findChild("id") &&
+					!strcmp(current_node_child->findChild("id")->getValue(), current_required_node_identifier)
+					)
+				{
+					break;
+				}
+
+				current_node_child = current_node->getNextChild();
+			}
+
+			/* If the children actually exists, and the type is defined:
+			Assign the pointer of the defined position:
+			*/
+			if (current_node_child)
+			{
+				const int linking_operation_position = atof(current_node_child->getValue());
+				unsigned int linking_operation_list_index = 0;
+
+				while (image_operation_position_list.getNodeValue(linking_operation_list_index) != linking_operation_position)
+				{
+					linking_operation_list_index++;
+				}
+
+				new_image_operation->setInputOperationA(image_operation_list.getNodeValue(linking_operation_list_index));
+			}
+
+
+			// Look for the operation nodes:
+			current_node_child = current_node->getFirstChild();
+			strcpy(current_required_node_identifier, "operation_B");
+			while (current_node_child)
+			{
+				if (!strcmp(current_node_child->getIdentifier(), "Operation") &&
+					current_node_child->findChild("id") &&
+					!strcmp(current_node_child->findChild("id")->getValue(), current_required_node_identifier)
+					)
+				{
+					break;
+				}
+
+				current_node_child = current_node->getNextChild();
+			}
+
+			/* If the children actually exists, and the type is defined:
+			Assign the pointer of the defined position:
+			*/
+			if (current_node_child)
+			{
+				const int linking_operation_position = atof(current_node_child->getValue());
+				unsigned int linking_operation_list_index = 0;
+
+				while (image_operation_position_list.getNodeValue(linking_operation_list_index) != linking_operation_position)
+				{
+					linking_operation_list_index++;
+				}
+
+				new_image_operation->setInputOperationB(image_operation_list.getNodeValue(linking_operation_list_index));
 			}
 		}
 		else if (new_image_scalar_operation)
@@ -594,37 +798,59 @@ void IMAGE_PROCESS_HANDLER::loadProcess()
 			for (unsigned int node_index = 0; node_index < numeric_nodes_required; node_index++)
 			{
 				XML_NODE_LEAF * current_node_child = current_node->getFirstChild();
-				while (current_node_child &&
-					!strcmp(current_node_child->getIdentifier(), "Node") &&
-					!strcmp(current_node_child->findChild("id")->getValue(), new_image_scalar_operation->getNumericInputName(node_index))
-					)
+				char * current_required_node_identifier = new_image_scalar_operation->getNumericInputName(node_index);
+				while (current_node_child)
 				{
+					if (!strcmp(current_node_child->getIdentifier(), "Node") &&
+						current_node_child->findChild("id") &&
+						!strcmp(current_node_child->findChild("id")->getValue(), current_required_node_identifier)
+						)
+					{
+						break;
+					}
+
 					current_node_child = current_node->getNextChild();
 				}
 
-				// If the children actually exists, and the type is node operation:
-				const int linked_operation_position = atoi(current_node_child->getValue());
-				int linked_operation_list_index = 0;
-				if (current_node_child && current_node_child->findChild("type")->getValue())
+				/* If the children actually exists, and the type is defined:
+				Assign the pointer of the defined position:
+				*/
+				if (current_node_child && current_node->findChild("type") &&
+					current_node->findChild("type")->getValue())
 				{
+					const int linking_operation_position = atof(current_node_child->getValue());
+					unsigned int linking_operation_list_index = 0;
+
 					if (!strcmp(current_node_child->findChild("type")->getValue(), "NV"))
 					{
-						while (numeric_node_scalar_position_list.getNodeValue(linked_operation_list_index) != linked_operation_position)
+						while (numeric_node_scalar_position_list.getNodeValue(linking_operation_list_index) != linking_operation_position)
 						{
-							linked_operation_list_index++;
+							linking_operation_list_index++;
 						}
 
-						new_image_scalar_operation->assignNodeValue(node_index, numeric_node_scalar_list.getNodeValue(linked_operation_list_index));
+						new_image_scalar_operation->assignNodeValue(node_index,
+							numeric_node_scalar_list.getNodeValue(linking_operation_list_index));
 					}
 					else if (!strcmp(current_node_child->findChild("type")->getValue(), "NOV"))
 					{
-
-						while (nodes_operation_position_list.getNodeValue(linked_operation_list_index) != linked_operation_position)
+						while (nodes_operation_position_list.getNodeValue(linking_operation_list_index) != linking_operation_position)
 						{
-							linked_operation_list_index++;
+							linking_operation_list_index++;
 						}
 
-						new_image_scalar_operation->assignNodeValue(node_index, nodes_operation_list.getNodeValue(linked_operation_list_index));
+						new_image_scalar_operation->assignNodeValue(node_index,
+							nodes_operation_list.getNodeValue(linking_operation_list_index));
+
+					}
+					else if (!strcmp(current_node_child->findChild("type")->getValue(), "ISO"))
+					{
+						while (image_scalar_operation_position_list.getNodeValue(linking_operation_list_index) != linking_operation_position)
+						{
+							linking_operation_list_index++;
+						}
+
+						new_image_scalar_operation->assignNodeValue(node_index,
+							image_scalar_operation_list.getNodeValue(linking_operation_list_index));
 					}
 				}
 			}
@@ -633,30 +859,179 @@ void IMAGE_PROCESS_HANDLER::loadProcess()
 			for (unsigned int node_index = 0; node_index < string_nodes_required; node_index++)
 			{
 				XML_NODE_LEAF * current_node_child = current_node->getFirstChild();
-				while (current_node_child &&
-					!strcmp(current_node_child->getIdentifier(), "Node") &&
-					!strcmp(current_node_child->findChild("id")->getValue(), new_image_scalar_operation->getNumericInputName(node_index))
-					)
+				char * current_required_node_identifier = new_image_scalar_operation->getStringInputName(node_index);
+				while (current_node_child)
 				{
+					if (!strcmp(current_node_child->getIdentifier(), "Node") &&
+						current_node_child->findChild("id") &&
+						!strcmp(current_node_child->findChild("id")->getValue(), current_required_node_identifier)
+						)
+					{
+						break;
+					}
+
 					current_node_child = current_node->getNextChild();
 				}
 
-				// If the children actually exists, and the type is node operation:
-				const int linked_operation_position = atoi(current_node_child->getValue());
-				int linked_operation_list_index = 0;
-				if (current_node_child && current_node_child->findChild("type")->getValue() && !strcmp(current_node_child->findChild("type")->getValue(), "NV"))
+				/* If the children actually exists, and the type is defined:
+				Assign the pointer of the defined position:
+				*/
+				if (current_node_child && current_node->findChild("type") &&
+					current_node->findChild("type")->getValue())
 				{
-					while (string_node_scalar_position_list.getNodeValue(linked_operation_list_index) != linked_operation_position)
-					{
-						linked_operation_list_index++;
-					}
+					const int linking_operation_position = atof(current_node_child->getValue());
+					unsigned int linking_operation_list_index = 0;
 
-					new_image_scalar_operation->assignNodeValue(node_index, string_node_scalar_list.getNodeValue(linked_operation_list_index));
+					if (!strcmp(current_node_child->findChild("type")->getValue(), "NV"))
+					{
+						while (string_node_scalar_position_list.getNodeValue(linking_operation_list_index) != linking_operation_position)
+						{
+							linking_operation_list_index++;
+						}
+
+						new_image_scalar_operation->assignNodeValue(node_index,
+							string_node_scalar_list.getNodeValue(linking_operation_list_index));
+					}
 				}
+			}
+
+			// Look for the operation nodes:
+			XML_NODE_LEAF * current_node_child = current_node->getFirstChild();
+			char current_required_node_identifier[] = "operation_A";
+			while (current_node_child)
+			{
+				if (!strcmp(current_node_child->getIdentifier(), "Operation") &&
+					current_node_child->findChild("id") &&
+					!strcmp(current_node_child->findChild("id")->getValue(), current_required_node_identifier)
+					)
+				{
+					break;
+				}
+
+				current_node_child = current_node->getNextChild();
+			}
+
+			/* If the children actually exists, and the type is defined:
+			Assign the pointer of the defined position:
+			*/
+			if (current_node_child)
+			{
+				const int linking_operation_position = atof(current_node_child->getValue());
+				unsigned int linking_operation_list_index = 0;
+
+				while (image_operation_position_list.getNodeValue(linking_operation_list_index) != linking_operation_position)
+				{
+					linking_operation_list_index++;
+				}
+
+				new_image_scalar_operation->setInputOperation(image_operation_list.getNodeValue(linking_operation_list_index));
 			}
 		}
 
 		// Continue loading the following nodes:
 		current_node = file_root->getNextChild();
+	}
+}
+
+
+
+void IMAGE_PROCESS_HANDLER::runProcess()
+{
+	for (unsigned int node_index = 0; node_index < nodes_operation_count; node_index++)
+	{
+		printf("Numeric node: %i\n", node_index);
+		nodes_operation_list.getNodeValue(node_index)->getScalarValue();
+	}
+
+	for (unsigned int node_index = 0; node_index < image_operation_count; node_index++)
+	{
+		printf("Image operation: %i\n", node_index);
+		image_operation_list.getNodeValue(node_index)->getImageData();
+	}
+
+	for (unsigned int node_index = 0; node_index < image_scalar_operation_count; node_index++)
+	{
+		printf("Image scalar operation: %i\n", node_index);
+		image_scalar_operation_list.getNodeValue(node_index)->getScalarValue();
+	}
+}
+
+
+
+void IMAGE_PROCESS_HANDLER::runNodeOperation(const unsigned int src_node_index)
+{
+	unsigned int position_node_index = 0;
+	while (nodes_operation_position_list.getNodeValue(position_node_index) != src_node_index)
+	{
+		position_node_index++;
+	}
+
+	if (nodes_operation_list.getNodeValue(position_node_index))
+	{
+		nodes_operation_list.getNodeValue(position_node_index)->getScalarValue();
+	}
+}
+
+
+
+void IMAGE_PROCESS_HANDLER::runImageOperation(const unsigned int src_node_index)
+{
+	unsigned int position_node_index = 0;
+	while (image_operation_position_list.getNodeValue(position_node_index) != src_node_index)
+	{
+		position_node_index++;
+	}
+
+	if (image_operation_list.getNodeValue(position_node_index))
+	{
+		image_operation_list.getNodeValue(position_node_index)->getImageData();
+	}
+}
+
+
+
+void IMAGE_PROCESS_HANDLER::runImageScalarOperation(const unsigned int src_node_index)
+{
+	unsigned int position_node_index = 0;
+	while (nodes_operation_position_list.getNodeValue(position_node_index) != src_node_index)
+	{
+		position_node_index++;
+	}
+
+	if (image_scalar_operation_position_list.getNodeValue(position_node_index))
+	{
+		image_scalar_operation_list.getNodeValue(position_node_index)->getScalarValue();
+	}
+}
+
+
+
+void IMAGE_PROCESS_HANDLER::setInputNodeValue(const unsigned int src_node_index, const double src_numeric_value)
+{
+	unsigned int position_node_index = 0;
+	while (numeric_node_scalar_position_list.getNodeValue(position_node_index) != src_node_index)
+	{
+		position_node_index++;
+	}
+
+	if (numeric_node_scalar_list.getNodeValue(position_node_index))
+	{
+		numeric_node_scalar_list.getNodeValue(position_node_index)->setScalarValue(src_numeric_value);
+	}
+}
+
+
+
+void IMAGE_PROCESS_HANDLER::setInputNodeValue(const unsigned int src_node_index, const char * src_string_value)
+{
+	unsigned int position_node_index = 0;
+	while (string_node_scalar_position_list.getNodeValue(position_node_index) != src_node_index)
+	{
+		position_node_index++;
+	}
+
+	if (string_node_scalar_list.getNodeValue(position_node_index))
+	{
+		string_node_scalar_list.getNodeValue(position_node_index)->setScalarValue(src_string_value);
 	}
 }

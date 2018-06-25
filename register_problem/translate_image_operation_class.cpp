@@ -3,20 +3,20 @@
 TRANSLATE_IMAGE_OPERATION::TRANSLATE_IMAGE_OPERATION()
 {
 	input_numeric_nodes_required = 2;
-	NODE_SCALAR<char*> node_identifier("node_dx");
-	numeric_nodes_names_list.assignNodeValue(0, node_identifier);
+	NODE_SCALAR<char*> * node_dx_identifier = new NODE_SCALAR<char*>("node_dx");
+	numeric_nodes_names_list.assignNodeValue(0, node_dx_identifier);
 
-	node_identifier.setScalarValue("node_dy");
-	numeric_nodes_names_list.assignNodeValue(1, node_identifier);
+	NODE_SCALAR<char*> * node_dy_identifier = new NODE_SCALAR<char*>("node_dy");
+	numeric_nodes_names_list.assignNodeValue(1, node_dy_identifier);
 
-	NODE_SCALAR<double> local_node_A(0.0);
+	NODE_SCALAR<double> * local_node_A = new NODE_SCALAR<double>(0.0);
 	local_numeric_nodes_list.assignNodeValue(0, local_node_A);
-	numeric_nodes_list.assignNodeValue(0, &local_numeric_nodes_list.getNodeValue(0));
+	numeric_nodes_list.assignNodeValue(0, local_numeric_nodes_list.getNodeValue(0));
 	numeric_node_is_local_list.assignNodeValue(0, true);
 
-	NODE_SCALAR<double> local_node_B(0.0);
+	NODE_SCALAR<double> * local_node_B = new NODE_SCALAR<double>(0.0);
 	local_numeric_nodes_list.assignNodeValue(1, local_node_B);
-	numeric_nodes_list.assignNodeValue(1, &local_numeric_nodes_list.getNodeValue(1));
+	numeric_nodes_list.assignNodeValue(1, local_numeric_nodes_list.getNodeValue(1));
 	numeric_node_is_local_list.assignNodeValue(1, true);
 }
 
@@ -24,6 +24,23 @@ TRANSLATE_IMAGE_OPERATION::TRANSLATE_IMAGE_OPERATION()
 
 TRANSLATE_IMAGE_OPERATION::TRANSLATE_IMAGE_OPERATION(const TRANSLATE_IMAGE_OPERATION & src_translate_image_operation)
 {
+	input_numeric_nodes_required = 2;
+	NODE_SCALAR<char*> * node_dx_identifier = new NODE_SCALAR<char*>("node_dx");
+	numeric_nodes_names_list.assignNodeValue(0, node_dx_identifier);
+
+	NODE_SCALAR<char*> * node_dy_identifier = new NODE_SCALAR<char*>("node_dy");
+	numeric_nodes_names_list.assignNodeValue(1, node_dy_identifier);
+
+	NODE_SCALAR<double> * local_node_A = new NODE_SCALAR<double>(0.0);
+	local_numeric_nodes_list.assignNodeValue(0, local_node_A);
+	numeric_nodes_list.assignNodeValue(0, local_numeric_nodes_list.getNodeValue(0));
+	numeric_node_is_local_list.assignNodeValue(0, true);
+
+	NODE_SCALAR<double> * local_node_B = new NODE_SCALAR<double>(0.0);
+	local_numeric_nodes_list.assignNodeValue(1, local_node_B);
+	numeric_nodes_list.assignNodeValue(1, local_numeric_nodes_list.getNodeValue(1));
+	numeric_node_is_local_list.assignNodeValue(1, true);
+
 	copyFromImageOperation(src_translate_image_operation);
 }
 
@@ -43,7 +60,7 @@ TRANSLATE_IMAGE_OPERATION TRANSLATE_IMAGE_OPERATION::operator=(const TRANSLATE_I
 
 TRANSLATE_IMAGE_OPERATION::~TRANSLATE_IMAGE_OPERATION()
 {
-	// Nothing to deallocate
+
 }
 
 

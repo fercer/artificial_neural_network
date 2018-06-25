@@ -564,16 +564,15 @@ XML_NODE_LEAF * XML_NODE_LEAF::getNextChild()
 XML_NODE_LEAF * XML_NODE_LEAF::matchSearchingCriteria(const char * src_attribute, unsigned int * src_children_position_pointer)
 {
 	int comparison_result = strcmp(link_name, src_attribute);
-
 	if (comparison_result == 0)
 	{
 		return this;
 	}
-	else if (comparison_result < 0)
+	else if (comparison_result < 0 && left_branch)
 	{
 		return left_branch->matchSearchingCriteria(src_attribute, src_children_position_pointer);
 	}
-	else
+	else if (right_branch)
 	{
 		*src_children_position_pointer = *src_children_position_pointer + 1 + previous_sibling_nodes_count;
 		return right_branch->matchSearchingCriteria(src_attribute, src_children_position_pointer);

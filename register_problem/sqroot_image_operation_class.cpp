@@ -3,12 +3,12 @@
 SQROOT_IMAGE_OPERATION::SQROOT_IMAGE_OPERATION()
 {
 	input_numeric_nodes_required = 1;
-	NODE_SCALAR<char*> node_identifier("node_A");
+	NODE_SCALAR<char*> * node_identifier = new NODE_SCALAR<char*>("node_A");
 	numeric_nodes_names_list.assignNodeValue(0, node_identifier);
 
-	NODE_SCALAR<double> local_node_A(0.0);
+	NODE_SCALAR<double> * local_node_A = new NODE_SCALAR<double>(1.0);
 	local_numeric_nodes_list.assignNodeValue(0, local_node_A);
-	numeric_nodes_list.assignNodeValue(0, &local_numeric_nodes_list.getNodeValue(0));
+	numeric_nodes_list.assignNodeValue(0, local_numeric_nodes_list.getNodeValue(0));
 	numeric_node_is_local_list.assignNodeValue(0, true);
 }
 
@@ -16,6 +16,15 @@ SQROOT_IMAGE_OPERATION::SQROOT_IMAGE_OPERATION()
 
 SQROOT_IMAGE_OPERATION::SQROOT_IMAGE_OPERATION(const SQROOT_IMAGE_OPERATION & src_sum_image_operation)
 {
+	input_numeric_nodes_required = 1;
+	NODE_SCALAR<char*> * node_identifier = new NODE_SCALAR<char*>("node_A");
+	numeric_nodes_names_list.assignNodeValue(0, node_identifier);
+
+	NODE_SCALAR<double> * local_node_A = new NODE_SCALAR<double>(1.0);
+	local_numeric_nodes_list.assignNodeValue(0, local_node_A);
+	numeric_nodes_list.assignNodeValue(0, local_numeric_nodes_list.getNodeValue(0));
+	numeric_node_is_local_list.assignNodeValue(0, true);
+
 	copyFromImageOperation(src_sum_image_operation);
 }
 
@@ -35,7 +44,7 @@ SQROOT_IMAGE_OPERATION SQROOT_IMAGE_OPERATION::operator=(const SQROOT_IMAGE_OPER
 
 SQROOT_IMAGE_OPERATION::~SQROOT_IMAGE_OPERATION()
 {
-	// Nothing to deallocate
+
 }
 
 

@@ -6,6 +6,11 @@
 template<class class_link_type>
 void GENERIC_LIST<class_link_type>::dumpListToArray()
 {
+	if (last_dump_nodes_count == nodes_count)
+	{
+		return;
+	}
+
 	if (array_from_list)
 	{
 		class_link_type * swap_array = array_from_list;
@@ -179,17 +184,14 @@ GENERIC_LIST<class_link_type>::~GENERIC_LIST()
 
 
 template<class class_link_type>
-unsigned int GENERIC_LIST<class_link_type>::assignNodeValue(const unsigned int src_index, const class_link_type src_node)
+unsigned int GENERIC_LIST<class_link_type>::assignNodeValue(const unsigned int src_index, const class_link_type& src_node)
 {
 	if (src_index >= nodes_count)
 	{
 		addNodeToList(src_node);
 	}
-		
-	if(src_index >= last_dump_nodes_count)
-	{
-		dumpListToArray();
-	}
+	
+	dumpListToArray();
 
 	*(array_from_list + src_index) = src_node;
 

@@ -14,7 +14,7 @@ public:
 	~GENERIC_LIST();
 
 
-	unsigned int assignNodeValue(const unsigned int src_index, const class_link_type src_node);
+	unsigned int assignNodeValue(const unsigned int src_index, const class_link_type& src_node);
 	class_link_type getNodeValue(const unsigned int src_node_index);
 	unsigned int getNodesCount();
 

@@ -3,11 +3,12 @@
 SAVE_IMAGE_OPERATION::SAVE_IMAGE_OPERATION()
 {
 	input_string_nodes_required = 1;
-	string_nodes_names_list.assignNodeValue(0, "filename");
+	NODE_SCALAR<char*> * node_filename_identifier = new NODE_SCALAR<char*>("filename");
+	string_nodes_names_list.assignNodeValue(0, node_filename_identifier);
 
-	NODE_SCALAR<char*> local_node_A("NOT-DEFINED");
+	NODE_SCALAR<char*> * local_node_A = new NODE_SCALAR<char*>("NOT-DEFINED");
 	local_string_nodes_list.assignNodeValue(0, local_node_A);
-	string_nodes_list.assignNodeValue(0, &local_string_nodes_list.getNodeValue(0));
+	string_nodes_list.assignNodeValue(0, local_string_nodes_list.getNodeValue(0));
 	string_node_is_local_list.assignNodeValue(0, true);
 }
 
@@ -15,6 +16,15 @@ SAVE_IMAGE_OPERATION::SAVE_IMAGE_OPERATION()
 
 SAVE_IMAGE_OPERATION::SAVE_IMAGE_OPERATION(const SAVE_IMAGE_OPERATION & src_save_image_operation)
 {
+	input_string_nodes_required = 1;
+	NODE_SCALAR<char*> * node_filename_identifier = new NODE_SCALAR<char*>("filename");
+	string_nodes_names_list.assignNodeValue(0, node_filename_identifier);
+
+	NODE_SCALAR<char*> * local_node_A = new NODE_SCALAR<char*>("NOT-DEFINED");
+	local_string_nodes_list.assignNodeValue(0, local_node_A);
+	string_nodes_list.assignNodeValue(0, local_string_nodes_list.getNodeValue(0));
+	string_node_is_local_list.assignNodeValue(0, true);
+
 	copyFromImageOperation(src_save_image_operation);
 }
 
@@ -34,7 +44,7 @@ SAVE_IMAGE_OPERATION SAVE_IMAGE_OPERATION::operator=(const SAVE_IMAGE_OPERATION 
 
 SAVE_IMAGE_OPERATION::~SAVE_IMAGE_OPERATION()
 {
-	// Nothing to deallocate
+
 }
 
 

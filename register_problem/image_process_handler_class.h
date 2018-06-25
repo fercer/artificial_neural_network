@@ -29,6 +29,10 @@
 #include "scalar_sqrt_nodes_operation_class.h"
 #include "scalar_sub_nodes_operation_class.h"
 #include "scalar_sum_nodes_operation_class.h"
+#include "scalar_atan_nodes_operation_class.h"
+#include "scalar_tan_nodes_operation_class.h"
+#include "scalar_sin_nodes_operation_class.h"
+#include "scalar_cos_nodes_operation_class.h"
 
 class IMAGE_PROCESS_HANDLER
 {
@@ -42,7 +46,19 @@ public:
 	void setFilename(const char * src_filename);
 
 	void loadProcess();
+
+	void runProcess();
+
+	void runNodeOperation(const unsigned int src_node_index);
+
+	void runImageOperation(const unsigned int src_node_index);
+
+	void runImageScalarOperation(const unsigned int src_node_index);
 	
+	void setInputNodeValue(const unsigned int src_node_index, const double src_numeric_value);
+
+	void setInputNodeValue(const unsigned int src_node_index, const char * src_string_value);
+
 private:
 	typedef enum _OPERATION_TYPE
 	{
@@ -63,6 +79,10 @@ private:
 		NOV_MULT = 660,
 		NOV_DIV = 565,
 		NOV_SQRT = 668,
+		NOV_ATANGENT = 932,
+		NOV_TANGENT = 867,
+		NOV_SINUS = 740,
+		NOV_COSINUS = 886,
 
 		/* Image Operation */
 		IO_DIV = 474,

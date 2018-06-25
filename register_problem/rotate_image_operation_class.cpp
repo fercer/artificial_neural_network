@@ -3,36 +3,36 @@
 ROTATE_IMAGE_OPERATION::ROTATE_IMAGE_OPERATION()
 {
 	input_numeric_nodes_required = 4;
-	NODE_SCALAR<char*> node_identifier("node_11");
-	numeric_nodes_names_list.assignNodeValue(0, node_identifier);
+	NODE_SCALAR<char*> * node_11_identifier = new NODE_SCALAR<char*>("node_11");
+	numeric_nodes_names_list.assignNodeValue(0, node_11_identifier);
 
-	node_identifier.setScalarValue("node_12");
-	numeric_nodes_names_list.assignNodeValue(1, node_identifier);
+	NODE_SCALAR<char*> * node_12_identifier = new NODE_SCALAR<char*>("node_12");
+	numeric_nodes_names_list.assignNodeValue(1, node_12_identifier);
 
-	node_identifier.setScalarValue("node_21");
-	numeric_nodes_names_list.assignNodeValue(2, node_identifier);
+	NODE_SCALAR<char*> * node_21_identifier = new NODE_SCALAR<char*>("node_21");
+	numeric_nodes_names_list.assignNodeValue(2, node_21_identifier);
 
-	node_identifier.setScalarValue("node_22");
-	numeric_nodes_names_list.assignNodeValue(3, node_identifier);
+	NODE_SCALAR<char*> * node_22_identifier = new NODE_SCALAR<char*>("node_22");
+	numeric_nodes_names_list.assignNodeValue(3, node_22_identifier);
 
-	NODE_SCALAR<double> local_node_A(1.0);
+	NODE_SCALAR<double> * local_node_A = new NODE_SCALAR<double>(1.0);
 	local_numeric_nodes_list.assignNodeValue(0, local_node_A);
-	numeric_nodes_list.assignNodeValue(0, &local_numeric_nodes_list.getNodeValue(0));
+	numeric_nodes_list.assignNodeValue(0, local_numeric_nodes_list.getNodeValue(0));
 	numeric_node_is_local_list.assignNodeValue(0, true);
 
-	NODE_SCALAR<double> local_node_B(0.0);
+	NODE_SCALAR<double> * local_node_B = new NODE_SCALAR<double>(0.0);
 	local_numeric_nodes_list.assignNodeValue(1, local_node_B);
-	numeric_nodes_list.assignNodeValue(1, &local_numeric_nodes_list.getNodeValue(1));
+	numeric_nodes_list.assignNodeValue(1, local_numeric_nodes_list.getNodeValue(1));
 	numeric_node_is_local_list.assignNodeValue(1, true);
 
-	NODE_SCALAR<double> local_node_C(0.0);
+	NODE_SCALAR<double> * local_node_C = new NODE_SCALAR<double>(0.0);
 	local_numeric_nodes_list.assignNodeValue(2, local_node_C);
-	numeric_nodes_list.assignNodeValue(2, &local_numeric_nodes_list.getNodeValue(2));
+	numeric_nodes_list.assignNodeValue(2, local_numeric_nodes_list.getNodeValue(2));
 	numeric_node_is_local_list.assignNodeValue(2, true);
 
-	NODE_SCALAR<double> local_node_D(1.0);
+	NODE_SCALAR<double> * local_node_D = new NODE_SCALAR<double>(1.0);
 	local_numeric_nodes_list.assignNodeValue(3, local_node_D);
-	numeric_nodes_list.assignNodeValue(3, &local_numeric_nodes_list.getNodeValue(3));
+	numeric_nodes_list.assignNodeValue(3, local_numeric_nodes_list.getNodeValue(3));
 	numeric_node_is_local_list.assignNodeValue(3, true);
 }
 
@@ -40,6 +40,39 @@ ROTATE_IMAGE_OPERATION::ROTATE_IMAGE_OPERATION()
 
 ROTATE_IMAGE_OPERATION::ROTATE_IMAGE_OPERATION(const ROTATE_IMAGE_OPERATION & src_rotate_image_operation)
 {
+	input_numeric_nodes_required = 4;
+	NODE_SCALAR<char*> * node_11_identifier = new NODE_SCALAR<char*>("node_11");
+	numeric_nodes_names_list.assignNodeValue(0, node_11_identifier);
+
+	NODE_SCALAR<char*> * node_12_identifier = new NODE_SCALAR<char*>("node_12");
+	numeric_nodes_names_list.assignNodeValue(1, node_12_identifier);
+
+	NODE_SCALAR<char*> * node_21_identifier = new NODE_SCALAR<char*>("node_21");
+	numeric_nodes_names_list.assignNodeValue(2, node_21_identifier);
+
+	NODE_SCALAR<char*> * node_22_identifier = new NODE_SCALAR<char*>("node_22");
+	numeric_nodes_names_list.assignNodeValue(3, node_22_identifier);
+
+	NODE_SCALAR<double> * local_node_A = new NODE_SCALAR<double>(1.0);
+	local_numeric_nodes_list.assignNodeValue(0, local_node_A);
+	numeric_nodes_list.assignNodeValue(0, local_numeric_nodes_list.getNodeValue(0));
+	numeric_node_is_local_list.assignNodeValue(0, true);
+
+	NODE_SCALAR<double> * local_node_B = new NODE_SCALAR<double>(0.0);
+	local_numeric_nodes_list.assignNodeValue(1, local_node_B);
+	numeric_nodes_list.assignNodeValue(1, local_numeric_nodes_list.getNodeValue(1));
+	numeric_node_is_local_list.assignNodeValue(1, true);
+
+	NODE_SCALAR<double> * local_node_C = new NODE_SCALAR<double>(0.0);
+	local_numeric_nodes_list.assignNodeValue(2, local_node_C);
+	numeric_nodes_list.assignNodeValue(2, local_numeric_nodes_list.getNodeValue(2));
+	numeric_node_is_local_list.assignNodeValue(2, true);
+
+	NODE_SCALAR<double> * local_node_D = new NODE_SCALAR<double>(1.0);
+	local_numeric_nodes_list.assignNodeValue(3, local_node_D);
+	numeric_nodes_list.assignNodeValue(3, local_numeric_nodes_list.getNodeValue(3));
+	numeric_node_is_local_list.assignNodeValue(3, true);
+
 	copyFromImageOperation(src_rotate_image_operation);
 }
 
@@ -59,7 +92,7 @@ ROTATE_IMAGE_OPERATION ROTATE_IMAGE_OPERATION::operator=(const ROTATE_IMAGE_OPER
 
 ROTATE_IMAGE_OPERATION::~ROTATE_IMAGE_OPERATION()
 {
-	// Nothing to deallocate
+
 }
 
 

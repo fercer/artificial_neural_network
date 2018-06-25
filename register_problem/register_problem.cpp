@@ -12,7 +12,13 @@ int main(int argc, char * argv[])
 	IMAGE_PROCESS_HANDLER image_process_1;
 	image_process_1.setFilename("single_image_sumation.xml");
 	image_process_1.loadProcess();
+	printf("Running process ...\n");
+	image_process_1.runProcess();
+	printf("Running process ...\n");
 
+	image_process_1.setInputNodeValue(2, "sum_a_b_2.pgm");
+	image_process_1.setInputNodeValue(0, -30.0);
+	image_process_1.runImageOperation(7);
 
 	return 0;
 }
