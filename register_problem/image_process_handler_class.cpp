@@ -960,78 +960,277 @@ void IMAGE_PROCESS_HANDLER::runProcess()
 
 void IMAGE_PROCESS_HANDLER::runNodeOperation(const unsigned int src_node_index)
 {
+	if (src_node_index >= nodes_operation_count)
+	{
+		return;
+	}
+
 	unsigned int position_node_index = 0;
 	while (nodes_operation_position_list.getNodeValue(position_node_index) != src_node_index)
 	{
 		position_node_index++;
 	}
 
-	if (nodes_operation_list.getNodeValue(position_node_index))
-	{
-		nodes_operation_list.getNodeValue(position_node_index)->getScalarValue();
-	}
+	nodes_operation_list.getNodeValue(position_node_index)->getScalarValue();
 }
 
 
 
 void IMAGE_PROCESS_HANDLER::runImageOperation(const unsigned int src_node_index)
 {
+	if (src_node_index >= image_operation_count)
+	{
+		return;
+	}
+
 	unsigned int position_node_index = 0;
 	while (image_operation_position_list.getNodeValue(position_node_index) != src_node_index)
 	{
 		position_node_index++;
 	}
 
-	if (image_operation_list.getNodeValue(position_node_index))
-	{
-		image_operation_list.getNodeValue(position_node_index)->getImageData();
-	}
+	image_operation_list.getNodeValue(position_node_index)->getImageData();
 }
 
 
 
 void IMAGE_PROCESS_HANDLER::runImageScalarOperation(const unsigned int src_node_index)
 {
+	if (src_node_index >= image_scalar_operation_count)
+	{
+		return;
+	}
+
 	unsigned int position_node_index = 0;
-	while (nodes_operation_position_list.getNodeValue(position_node_index) != src_node_index)
+	while (image_scalar_operation_position_list.getNodeValue(position_node_index) != src_node_index)
 	{
 		position_node_index++;
 	}
 
-	if (image_scalar_operation_position_list.getNodeValue(position_node_index))
-	{
-		image_scalar_operation_list.getNodeValue(position_node_index)->getScalarValue();
-	}
+	image_scalar_operation_list.getNodeValue(position_node_index)->getScalarValue();
 }
 
 
 
 void IMAGE_PROCESS_HANDLER::setInputNodeValue(const unsigned int src_node_index, const double src_numeric_value)
 {
+	if (src_node_index >= numeric_node_scalar_count)
+	{
+		return;
+	}
+
 	unsigned int position_node_index = 0;
 	while (numeric_node_scalar_position_list.getNodeValue(position_node_index) != src_node_index)
 	{
 		position_node_index++;
 	}
 
-	if (numeric_node_scalar_list.getNodeValue(position_node_index))
-	{
-		numeric_node_scalar_list.getNodeValue(position_node_index)->setScalarValue(src_numeric_value);
-	}
+	numeric_node_scalar_list.getNodeValue(position_node_index)->setScalarValue(src_numeric_value);
 }
 
 
 
 void IMAGE_PROCESS_HANDLER::setInputNodeValue(const unsigned int src_node_index, const char * src_string_value)
 {
+	if (src_node_index >= string_node_scalar_count)
+	{
+		return;
+	}
+
 	unsigned int position_node_index = 0;
 	while (string_node_scalar_position_list.getNodeValue(position_node_index) != src_node_index)
 	{
 		position_node_index++;
 	}
 
-	if (string_node_scalar_list.getNodeValue(position_node_index))
+	string_node_scalar_list.getNodeValue(position_node_index)->setScalarValue(src_string_value);
+}
+
+
+
+void IMAGE_PROCESS_HANDLER::setInputNodeValue(const unsigned int src_node_index, const unsigned int src_operation_index, NODE_SCALAR<double>* src_new_link)
+{
+	if (src_node_index >= nodes_operation_count)
 	{
-		string_node_scalar_list.getNodeValue(position_node_index)->setScalarValue(src_string_value);
+		return;
 	}
+	
+	unsigned int position_node_index = 0;
+	while (nodes_operation_position_list.getNodeValue(position_node_index) != src_node_index)
+	{
+		position_node_index++;
+	}
+
+	if (src_operation_index >= nodes_operation_list.getNodeValue(position_node_index)->getInputNumericNodesRequired())
+	{
+		return;
+	}
+
+	nodes_operation_list.getNodeValue(position_node_index)->assignNodeValue(src_operation_index, src_new_link);
+}
+
+
+
+void IMAGE_PROCESS_HANDLER::setInputNodeValue(const unsigned int src_node_index, const unsigned int src_operation_index, NODE_SCALAR<char*>* src_new_link)
+{
+	if (src_node_index >= nodes_operation_count)
+	{
+		return;
+	}
+
+	unsigned int position_node_index = 0;
+	while (nodes_operation_position_list.getNodeValue(position_node_index) != src_node_index)
+	{
+		position_node_index++;
+	}
+
+	if (src_operation_index >= nodes_operation_list.getNodeValue(position_node_index)->getInputStringNodesRequired())
+	{
+		return;
+	}
+
+	nodes_operation_list.getNodeValue(position_node_index)->assignNodeValue(src_operation_index, src_new_link);
+}
+
+
+
+void IMAGE_PROCESS_HANDLER::setInputNodeToImageOperation(const unsigned int src_node_index, const unsigned int src_operation_index, NODE_SCALAR<double>* src_new_link)
+{
+	if (src_node_index >= image_operation_count)
+	{
+		return;
+	}
+
+	unsigned int position_node_index = 0;
+	while (image_operation_position_list.getNodeValue(position_node_index) != src_node_index)
+	{
+		position_node_index++;
+	}
+
+	if (src_operation_index >= image_operation_list.getNodeValue(position_node_index)->getInputNumericNodesRequired())
+	{
+		return;
+	}
+
+	image_operation_list.getNodeValue(position_node_index)->assignNodeValue(src_operation_index, src_new_link);
+}
+
+
+
+void IMAGE_PROCESS_HANDLER::setInputNodeToImageOperation(const unsigned int src_node_index, const unsigned int src_operation_index, NODE_SCALAR<char*>* src_new_link)
+{
+	if (src_node_index >= image_operation_count)
+	{
+		return;
+	}
+
+	unsigned int position_node_index = 0;
+	while (image_operation_position_list.getNodeValue(position_node_index) != src_node_index)
+	{
+		position_node_index++;
+	}
+
+	if (src_operation_index >= image_operation_list.getNodeValue(position_node_index)->getInputStringNodesRequired())
+	{
+		return;
+	}
+
+	image_operation_list.getNodeValue(position_node_index)->assignNodeValue(src_operation_index, src_new_link);
+}
+
+
+void IMAGE_PROCESS_HANDLER::setInputNodeToImageOperation(const unsigned int src_node_index, const unsigned int src_operation_index, IMAGE_OPERATION * src_new_link)
+{
+	if (src_node_index >= image_operation_count)
+	{
+		return;
+	}
+
+	unsigned int position_node_index = 0;
+	while (image_operation_position_list.getNodeValue(position_node_index) != src_node_index)
+	{
+		position_node_index++;
+	}
+
+	switch (src_operation_index)
+	{
+	case 0:
+		image_operation_list.getNodeValue(position_node_index)->setInputOperationA(src_new_link);
+		break;
+
+	case 1:
+		image_operation_list.getNodeValue(position_node_index)->setInputOperationB(src_new_link);
+		break;
+
+	default:
+		break;
+	}
+}
+
+
+void IMAGE_PROCESS_HANDLER::setInputNodeToImageScalarOperation(const unsigned int src_node_index, const unsigned int src_operation_index, NODE_SCALAR<double>* src_new_link)
+{
+	if (src_node_index >= image_scalar_operation_count)
+	{
+		return;
+	}
+
+	unsigned int position_node_index = 0;
+	while (image_scalar_operation_position_list.getNodeValue(position_node_index) != src_node_index)
+	{
+		position_node_index++;
+	}
+
+	if (src_operation_index >= image_scalar_operation_list.getNodeValue(position_node_index)->getInputNumericNodesRequired())
+	{
+		return;
+	}
+
+	image_scalar_operation_list.getNodeValue(position_node_index)->assignNodeValue(src_operation_index, src_new_link);
+}
+
+
+
+void IMAGE_PROCESS_HANDLER::setInputNodeToImageScalarOperation(const unsigned int src_node_index, const unsigned int src_operation_index, NODE_SCALAR<char*>* src_new_link)
+{
+	if (src_node_index >= image_scalar_operation_count)
+	{
+		return;
+	}
+
+	unsigned int position_node_index = 0;
+	while (image_scalar_operation_position_list.getNodeValue(position_node_index) != src_node_index)
+	{
+		position_node_index++;
+	}
+
+	if (src_operation_index >= image_scalar_operation_list.getNodeValue(position_node_index)->getInputStringNodesRequired())
+	{
+		return;
+	}
+
+	image_scalar_operation_list.getNodeValue(position_node_index)->assignNodeValue(src_operation_index, src_new_link);
+}
+
+
+
+void IMAGE_PROCESS_HANDLER::setInputNodeToImageScalarOperation(const unsigned int src_node_index, const unsigned int src_operation_index, IMAGE_OPERATION* src_new_link)
+{
+	if (src_node_index >= image_scalar_operation_count)
+	{
+		return;
+	}
+
+	unsigned int position_node_index = 0;
+	while (image_scalar_operation_position_list.getNodeValue(position_node_index) != src_node_index)
+	{
+		position_node_index++;
+	}
+
+	if (src_operation_index > 0)
+	{
+		return;
+	}
+
+	image_scalar_operation_list.getNodeValue(position_node_index)->setInputOperation(src_new_link);
 }

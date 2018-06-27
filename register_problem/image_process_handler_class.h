@@ -55,9 +55,20 @@ public:
 
 	void runImageScalarOperation(const unsigned int src_node_index);
 	
-	void setInputNodeValue(const unsigned int src_node_index, const double src_numeric_value);
 
+
+	void setInputNodeValue(const unsigned int src_node_index, const double src_numeric_value);
+	void setInputNodeValue(const unsigned int src_node_index, const unsigned int src_operation_index, NODE_SCALAR<double> * src_new_link);
 	void setInputNodeValue(const unsigned int src_node_index, const char * src_string_value);
+	void setInputNodeValue(const unsigned int src_node_index, const unsigned int src_operation_index, NODE_SCALAR<char*> * src_new_link);
+	
+	void setInputNodeToImageOperation(const unsigned int src_node_index, const unsigned int src_operation_index, NODE_SCALAR<double> * src_new_link);
+	void setInputNodeToImageOperation(const unsigned int src_node_index, const unsigned int src_operation_index, NODE_SCALAR<char*> * src_new_link);
+	void setInputNodeToImageOperation(const unsigned int src_node_index, const unsigned int src_operation_index, IMAGE_OPERATION * src_new_link);
+	
+	void setInputNodeToImageScalarOperation(const unsigned int src_node_index, const unsigned int src_operation_index, NODE_SCALAR<double> * src_new_link);
+	void setInputNodeToImageScalarOperation(const unsigned int src_node_index, const unsigned int src_operation_index, NODE_SCALAR<char*> * src_new_link);
+	void setInputNodeToImageScalarOperation(const unsigned int src_node_index, const unsigned int src_operation_index, IMAGE_OPERATION * src_new_link);
 
 private:
 	typedef enum _OPERATION_TYPE

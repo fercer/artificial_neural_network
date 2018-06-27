@@ -103,8 +103,8 @@ void ROTATE_IMAGE_OPERATION::performOperation()
 	const double half_src_height = height_A / 2;
 
 	const double rotation_matrix_determinant =
-		numeric_nodes_list.getNodeValue(0)->getScalarValue() * numeric_nodes_list.getNodeValue(2)->getScalarValue() -
-		numeric_nodes_list.getNodeValue(1)->getScalarValue() * numeric_nodes_list.getNodeValue(3)->getScalarValue();
+		numeric_nodes_list.getNodeValue(0)->getScalarValue() * numeric_nodes_list.getNodeValue(3)->getScalarValue() -
+		numeric_nodes_list.getNodeValue(1)->getScalarValue() * numeric_nodes_list.getNodeValue(2)->getScalarValue();
 
 	const double inv_parameter_A = numeric_nodes_list.getNodeValue(3)->getScalarValue() / rotation_matrix_determinant;
 	const double inv_parameter_B = -numeric_nodes_list.getNodeValue(1)->getScalarValue() / rotation_matrix_determinant;

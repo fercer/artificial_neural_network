@@ -204,6 +204,11 @@ unsigned int GENERIC_LIST<class_link_type>::assignNodeValue(const unsigned int s
 template<class class_link_type>
 class_link_type GENERIC_LIST<class_link_type>::getNodeValue(const unsigned int src_node_index)
 {
+	if (src_node_index >= nodes_count)
+	{
+		return (class_link_type)0;
+	}
+
 	return (this->*get_node_value_method)(src_node_index);
 }
 

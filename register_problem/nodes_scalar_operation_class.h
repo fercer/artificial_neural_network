@@ -28,6 +28,16 @@ public:
 
 	double getScalarValue() 
 	{
+		for (unsigned int node_index = 0; node_index < input_numeric_nodes_required; node_index++)
+		{
+			parameters_have_changed |= numeric_nodes_list.getNodeValue(node_index)->getValueHasChanged();
+		}
+
+		for (unsigned int node_index = 0; node_index < input_string_nodes_required; node_index++)
+		{
+			parameters_have_changed |= string_nodes_list.getNodeValue(node_index)->getValueHasChanged();
+		}
+
 		if (parameters_have_changed)
 		{
 			*(*scalar_pointer_manager + array_position) = performScalarOperation();

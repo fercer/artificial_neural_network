@@ -16,9 +16,19 @@ int main(int argc, char * argv[])
 	image_process_1.runProcess();
 	printf("Running process ...\n");
 
-	image_process_1.setInputNodeValue(2, "sum_a_b_2.pgm");
-	image_process_1.setInputNodeValue(0, -30.0);
-	image_process_1.runImageOperation(7);
+	image_process_1.setInputNodeValue(1, "save_B.pgm");
+	image_process_1.setInputNodeValue(0, 0.0);
+	image_process_1.runImageOperation(3);
+
+
+	image_process_1.setInputNodeValue(1, "save_C.pgm");
+	NODE_SCALAR<double> cos_phi(cos(15.0));
+	NODE_SCALAR<double> sin_phi(sin(15.0));
+	image_process_1.setInputNodeValue(0, 30.0);
+	image_process_1.setInputNodeToImageOperation(2, 1, &sin_phi);
+	image_process_1.setInputNodeToImageOperation(2, 3, &cos_phi);
+	image_process_1.runImageOperation(3);
+
 
 	return 0;
 }
