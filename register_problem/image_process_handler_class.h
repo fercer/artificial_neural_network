@@ -11,7 +11,6 @@
 #include "mult_image_operation_class.h"
 #include "sum_image_operation_class.h"
 #include "load_image_operation_class.h"
-#include "save_image_operation_class.h"
 #include "filter_image_operation_class.h"
 #include "rotate_image_operation_class.h"
 #include "translate_image_operation_class.h"
@@ -23,6 +22,7 @@
 #include "min_image_scalar_operation_class.h"
 #include "width_image_scalar_operation_class.h"
 #include "height_image_scalar_operation_class.h"
+#include "save_image_scalar_operation_class.h"
 
 #include "scalar_div_nodes_operation_class.h"
 #include "scalar_mult_nodes_operation_class.h"
@@ -89,7 +89,6 @@ private:
 		IO_MULT = 569,
 		IO_SUM = 492,
 		IO_LOAD = 535,
-		IO_SAVE = 550,
 		IO_FILTER = 701,
 		IO_ROTATE = 710,
 		IO_TRANSLATE = 933,
@@ -101,7 +100,8 @@ private:
 		ISO_MAX = 560,
 		ISO_MIN = 558,
 		ISO_WIDTH = 714,
-		ISO_HEIGHT = 771
+		ISO_HEIGHT = 771,
+		ISO_SAVE = 633
 	} OPERATION_TYPE;
 
 	char filename[1024];
