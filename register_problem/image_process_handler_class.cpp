@@ -175,10 +175,6 @@ void IMAGE_PROCESS_HANDLER::loadProcess()
 			new_image_operation = new LOAD_IMAGE_OPERATION;
 			break;
 
-		case IO_SAVE:
-			new_image_operation = new SAVE_IMAGE_OPERATION;
-			break;
-
 		case IO_FILTER:
 			new_image_operation = new FILTER_IMAGE_OPERATION;
 			break;
@@ -217,6 +213,10 @@ void IMAGE_PROCESS_HANDLER::loadProcess()
 
 		case ISO_HEIGHT:
 			new_image_scalar_operation = new HEIGHT_IMAGE_SCALAR_OPERATION;
+			break;
+
+		case ISO_SAVE:
+			new_image_scalar_operation = new SAVE_IMAGE_SCALAR_OPERATION;
 			break;
 
 		default:
