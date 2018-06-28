@@ -35,8 +35,6 @@ public:
 		this->scalar_pointer_manager = &scalar_pointer;
 		this->scalar_pointer = &scalar_value;
 		this->array_position = 0;
-		strcpy(this->node_scalar_name, "unnamed");
-
 		this->copyFromNodeScalar(src_node_scalar);
 	}
 
@@ -47,8 +45,6 @@ public:
 			this->scalar_pointer_manager = &scalar_pointer;
 			this->scalar_pointer = &scalar_value;
 			this->array_position = 0;
-			strcpy(this->node_scalar_name, "unnamed");
-
 			this->copyFromNodeScalar(src_node_scalar);
 		}
 		return *this;
@@ -81,8 +77,11 @@ public:
 
 	virtual void setScalarValue(const class_value_type src_scalar_value)
 	{
-		*(*scalar_pointer_manager + array_position) = src_scalar_value;
-		scalar_value_has_changed = true;
+		if (*(*scalar_pointer_manager + array_position) != src_scalar_value)
+		{
+			*(*scalar_pointer_manager + array_position) = src_scalar_value;
+			scalar_value_has_changed = true;
+		}
 	}
 
 	void setNodeScalarName(const char * src_name)
@@ -113,6 +112,7 @@ protected:
 		}
 
 		this->scalar_value_has_changed = src_node_scalar.scalar_value_has_changed;
+
 		sprintf(node_scalar_name, "%s-copy", src_node_scalar.node_scalar_name);
 	}
 
@@ -169,8 +169,6 @@ public:
 		this->scalar_pointer = &this->scalar_value;
 		this->scalar_value = NULL;
 		this->array_position = 0;
-		strcpy(this->node_scalar_name, "unnamed");
-
 		this->copyFromNodeScalar(src_node_scalar);
 	}
 
@@ -183,8 +181,6 @@ public:
 			this->scalar_pointer = &this->scalar_value;
 			this->scalar_value = NULL;
 			this->array_position = 0;
-			strcpy(this->node_scalar_name, "unnamed");
-
 			this->copyFromNodeScalar(src_node_scalar);
 		}
 
@@ -225,6 +221,11 @@ public:
 
 	virtual void setScalarValue(const char * src_scalar_value)
 	{
+		if (*(*scalar_pointer_manager + array_position) && (strcmp(src_scalar_value, *(*scalar_pointer_manager + array_position)) == 0))
+		{
+			return;
+		}
+
 		const unsigned int string_length = strlen(src_scalar_value) + 1;
 
 		if (string_length == 1)
@@ -273,6 +274,7 @@ protected:
 		}
 
 		this->scalar_value_has_changed = src_node_scalar.scalar_value_has_changed;
+
 		sprintf(node_scalar_name, "%s-copy", src_node_scalar.node_scalar_name);
 	}
 

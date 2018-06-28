@@ -19,6 +19,8 @@ public:
 	{
 		input_has_changed = false;
 		parameters_have_changed = true;
+		operation_is_assigned = false;
+		output_has_changed = false;
 
 		operation = NULL;
 
@@ -28,36 +30,43 @@ public:
 		input_string_nodes_required = 0;
 	}
 
+
 	virtual ~IMAGE_SCALAR_OPERATION() 
 	{
 		emptyImageScalarOperation();
 	}
 	
+
 	double getScalarValue() 
 	{
-		if (input_has_changed)
-		{
-			if (operation)
-			{
-				src_img = operation->getImageData();
-				width = src_img->width;
-				height = src_img->height;
-			}
-
-			*(*scalar_pointer_manager + array_position) = performScalarOperation();
-			input_has_changed = false;
-		}
+		performImageScalarOperation();
 		return *(*scalar_pointer_manager + array_position);
 	}
 
+
 	void setInputOperation(IMAGE_OPERATION * src_operation)
 	{
-		operation = src_operation;
-		input_has_changed = true;
+		if (src_operation && (src_operation != operation))
+		{
+			operation = src_operation;
+			input_has_changed = true;
+		}
+		else if (!src_operation)
+		{
+			input_has_changed = false;
+			operation = NULL;
+			src_img = NULL;
+		}
 	}
+
 
 	void assignNodeValue(const unsigned int src_node_position, const double src_node_value)
 	{
+		if (numeric_node_is_local_list.getNodeValue(src_node_position) && (src_node_value != local_numeric_nodes_list.getNodeValue(src_node_position)->getScalarValue()))
+		{
+			return;
+		}
+
 		local_numeric_nodes_list.getNodeValue(src_node_position)->setScalarValue(src_node_value);
 		numeric_node_is_local_list.assignNodeValue(src_node_position, true);
 		numeric_nodes_list.assignNodeValue(src_node_position, local_numeric_nodes_list.getNodeValue(src_node_position));
@@ -67,11 +76,17 @@ public:
 
 	void assignNodeValue(const unsigned int src_node_position, const char* src_node_value)
 	{
+		if (string_node_is_local_list.getNodeValue(src_node_position) && (strcmp(src_node_value, local_string_nodes_list.getNodeValue(src_node_position)->getScalarValue()) == 0))
+		{
+			return;
+		}
+
 		local_string_nodes_list.getNodeValue(src_node_position)->setScalarValue(src_node_value);
 		string_node_is_local_list.assignNodeValue(src_node_position, true);
 		string_nodes_list.assignNodeValue(src_node_position, local_string_nodes_list.getNodeValue(src_node_position));
 		parameters_have_changed = true;
 	}
+
 
 	void assignNodeValue(const unsigned int src_node_position, NODE_SCALAR<double> * src_node_pointer)
 	{
@@ -80,13 +95,13 @@ public:
 			return;
 		}
 
-		if (src_node_pointer)
+		if (src_node_pointer && (src_node_pointer != numeric_nodes_list.getNodeValue(src_node_position)))
 		{
 			numeric_node_is_local_list.assignNodeValue(src_node_position, false);
 			numeric_nodes_list.assignNodeValue(src_node_position, src_node_pointer);
 			parameters_have_changed = true;
 		}
-		else
+		else if (!src_node_pointer)
 		{
 			numeric_node_is_local_list.assignNodeValue(src_node_position, true);
 			local_numeric_nodes_list.getNodeValue(src_node_position)->setScalarValue(numeric_nodes_list.getNodeValue(src_node_position)->getScalarValue());
@@ -102,13 +117,13 @@ public:
 			return;
 		}
 
-		if (src_node_pointer)
+		if (src_node_pointer && (src_node_pointer != string_nodes_list.getNodeValue(src_node_position)))
 		{
 			string_node_is_local_list.assignNodeValue(src_node_position, false);
 			string_nodes_list.assignNodeValue(src_node_position, src_node_pointer);
 			parameters_have_changed = true;
 		}
-		else
+		else if (!src_node_pointer)
 		{
 			string_node_is_local_list.assignNodeValue(src_node_position, true);
 			local_string_nodes_list.getNodeValue(src_node_position)->setScalarValue(string_nodes_list.getNodeValue(src_node_position)->getScalarValue());
@@ -139,16 +154,16 @@ public:
 protected:
 	unsigned int width;
 	unsigned int height;
-
+	unsigned int operation_is_assigned;
 	unsigned int input_numeric_nodes_required;
 	unsigned int input_string_nodes_required;
 
 	GENERIC_LIST<NODE_SCALAR<char*>*> numeric_nodes_names_list;
-	GENERIC_LIST<NODE_SCALAR<bool>> numeric_node_is_local_list;
+	GENERIC_LIST<bool> numeric_node_is_local_list;
 	GENERIC_LIST<NODE_SCALAR<double>*> local_numeric_nodes_list;
 
 	GENERIC_LIST<NODE_SCALAR<char*>*> string_nodes_names_list;
-	GENERIC_LIST<NODE_SCALAR<bool>> string_node_is_local_list;
+	GENERIC_LIST<bool> string_node_is_local_list;
 	GENERIC_LIST<NODE_SCALAR<char*>*> local_string_nodes_list;
 
 	GENERIC_LIST<NODE_SCALAR<double>*> numeric_nodes_list;
@@ -175,9 +190,10 @@ protected:
 	// Use this function when implementing the copy constructor, and assignation operator (operator =), in derived classes:
 	void copyFromImageScalarOperation(const IMAGE_SCALAR_OPERATION& src_image_scalar_operation)
 	{
-		copyFromNodeScalar(src_image_scalar_operation);
+		this->copyFromNodeScalar(src_image_scalar_operation);
 
 		this->parameters_have_changed = src_image_scalar_operation.parameters_have_changed;
+		this->operation_is_assigned = src_image_scalar_operation.operation_is_assigned;
 
 		this->input_numeric_nodes_required = src_image_scalar_operation.input_numeric_nodes_required;
 		this->input_string_nodes_required = src_image_scalar_operation.input_string_nodes_required;
@@ -192,7 +208,7 @@ protected:
 			this->local_numeric_nodes_list.getNodeValue(node_index)->setScalarValue(this->numeric_nodes_list.getNodeValue(node_index)->getScalarValue());
 
 			// Verify if the source list is linked to an external node, or to its local node:
-			if (this->numeric_node_is_local_list.getNodeValue(node_index).getScalarValue())
+			if (this->numeric_node_is_local_list.getNodeValue(node_index))
 			{
 				this->numeric_nodes_list.assignNodeValue(node_index, this->local_numeric_nodes_list.getNodeValue(node_index));
 			}
@@ -208,16 +224,14 @@ protected:
 			this->local_string_nodes_list.getNodeValue(node_index)->setScalarValue(this->string_nodes_list.getNodeValue(node_index)->getScalarValue());
 
 			// Verify if the source list is linked to an external node, or to its local node:
-			if (this->string_node_is_local_list.getNodeValue(node_index).getScalarValue())
+			if (this->string_node_is_local_list.getNodeValue(node_index))
 			{
 				this->string_nodes_list.assignNodeValue(node_index, this->local_string_nodes_list.getNodeValue(node_index));
 			}
 		}
 
 		this->input_has_changed = src_image_scalar_operation.input_has_changed;
-
 		this->operation = src_image_scalar_operation.operation;
-
 		this->src_img = this->operation->getImageData();
 		
 		this->width = src_image_scalar_operation.width;
@@ -229,8 +243,47 @@ protected:
 	
 private:
 	bool input_has_changed;
+	bool output_has_changed;
 	bool parameters_have_changed;
 	IMAGE_OPERATION * operation;
+
+	void performImageScalarOperation()
+	{
+		if (!operation_is_assigned)
+		{
+			output_has_changed = false;
+			return;
+		}
+		else
+		{
+			input_has_changed |= operation->getOutputHasChanged();
+		}
+
+		for (unsigned int node_index = 0; node_index < input_numeric_nodes_required; node_index++)
+		{
+			parameters_have_changed |= numeric_nodes_list.getNodeValue(node_index)->getValueHasChanged();
+		}
+
+		for (unsigned int node_index = 0; node_index < input_string_nodes_required; node_index++)
+		{
+			parameters_have_changed |= string_nodes_list.getNodeValue(node_index)->getValueHasChanged();
+		}
+
+		if (!input_has_changed && !parameters_have_changed)
+		{
+			output_has_changed = false;
+			return;
+		}
+
+		src_img = operation->getImageData();
+		width = src_img->width;
+		height = src_img->height;
+
+		*(*scalar_pointer_manager + array_position) = performScalarOperation();
+		parameters_have_changed = false;
+		input_has_changed = false;
+		output_has_changed = true;
+	}
 };
 
 #endif // IMAGE_OPERATION_CLASS_H_INCLUDED

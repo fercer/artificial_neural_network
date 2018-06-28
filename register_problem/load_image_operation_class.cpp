@@ -2,6 +2,9 @@
 
 LOAD_IMAGE_OPERATION::LOAD_IMAGE_OPERATION()
 {
+	minimum_input_operations_required = 0;
+	input_operations_required = 0;
+
 	input_string_nodes_required = 1;
 	NODE_SCALAR<char*> * node_filename_identifier = new NODE_SCALAR<char*> ("filename");
 	string_nodes_names_list.assignNodeValue(0, node_filename_identifier);
@@ -16,6 +19,9 @@ LOAD_IMAGE_OPERATION::LOAD_IMAGE_OPERATION()
 
 LOAD_IMAGE_OPERATION::LOAD_IMAGE_OPERATION(const LOAD_IMAGE_OPERATION & src_load_image_operation)
 {
+	minimum_input_operations_required = 0;
+	input_operations_required = 0;
+
 	input_string_nodes_required = 1;
 	NODE_SCALAR<char*> * node_filename_identifier = new NODE_SCALAR<char*>("filename");
 	string_nodes_names_list.assignNodeValue(0, node_filename_identifier);

@@ -375,9 +375,15 @@ IMG_DATA * createFromImageData(const IMG_DATA * src_img)
 
 void copyImageData(const IMG_DATA * src_img, IMG_DATA * dst_img)
 {
+	if (!src_img || (src_img->width == 0 && src_img->height == 0))
+	{
+		freeImageData(dst_img);
+		return;
+	}
+
 	const unsigned int width = src_img->width;
 	const unsigned int height = src_img->height;
-
+	
 	if (dst_img->image_data)
 	{
 		if ((dst_img->width != width) || (dst_img->height != height))

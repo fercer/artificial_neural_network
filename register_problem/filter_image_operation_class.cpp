@@ -2,13 +2,16 @@
 
 FILTER_IMAGE_OPERATION::FILTER_IMAGE_OPERATION()
 {
-	// Nothing to define
+	minimum_input_operations_required = 1;
+	input_operations_required = 1;
 }
 
 
 
 FILTER_IMAGE_OPERATION::FILTER_IMAGE_OPERATION(const FILTER_IMAGE_OPERATION & src_filter_image_operation)
 {
+	minimum_input_operations_required = 1;
+	input_operations_required = 1;
 	copyFromImageOperation(src_filter_image_operation);
 }
 

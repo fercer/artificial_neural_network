@@ -16,14 +16,13 @@ class IMAGE_OPERATION
 public:
 	IMAGE_OPERATION()
 	{
-		inputs_have_changed = true;
-		output_has_changed = false;
-		parameters_have_changed = true;
+		operations_loaded = 0;
 
 		operation_A = NULL;
 		operation_B = NULL;
-		src_A_is_assigned = false;
-		src_B_is_assigned = false;
+		src_A_has_changed = false;
+		src_B_has_changed = false;
+		parameters_have_changed = true;
 
 		dst_img = NULL;
 
@@ -39,12 +38,12 @@ public:
 		LRb_x = 0;
 		LRb_y = 0;
 
-
+		input_operations_required = 0;
+		minimum_input_operations_required = 0;
 		input_numeric_nodes_required = 0;
 		input_string_nodes_required = 0;
 
 		strcpy(image_operation_name, "");
-
 	}
 
 	virtual ~IMAGE_OPERATION() 
@@ -54,83 +53,52 @@ public:
 	
 	IMG_DATA * getImageData() 
 	{
-		// Verify if the values of the inputs have changed:
-		for (unsigned int node_index = 0; node_index < input_numeric_nodes_required; node_index++)
-		{
-			parameters_have_changed |= numeric_nodes_list.getNodeValue(node_index)->getValueHasChanged();
-		}
-
-		for (unsigned int node_index = 0; node_index < input_string_nodes_required; node_index++)
-		{
-			parameters_have_changed |= string_nodes_list.getNodeValue(node_index)->getValueHasChanged();
-		}
-
-		if (operation_A)
-		{
-			inputs_have_changed |= operation_A->getOutputHasChanged();
-		}
-
-		if (operation_B)
-		{
-			inputs_have_changed |= operation_B->getOutputHasChanged();
-		}
-
-		if (inputs_have_changed || parameters_have_changed)
-		{
-			printf("\'%s\'\n", image_operation_name);
-			if (operation_A)
-			{
-				src_img_A = operation_A->getImageData();
-
-				width_A = src_img_A->width;
-				height_A = src_img_A->height;
-
-				ULa_x = src_img_A->head_roi.UL_x;
-				ULa_y = src_img_A->head_roi.UL_y;
-				LRa_x = src_img_A->head_roi.LR_x;
-				LRa_y = src_img_A->head_roi.LR_y;
-			}
-
-			if (operation_B)
-			{
-				src_img_B = operation_B->getImageData();
-
-				width_B = src_img_B->width;
-				height_B = src_img_B->height;
-
-				ULb_x = src_img_B->head_roi.UL_x;
-				ULb_y = src_img_B->head_roi.UL_y;
-				LRb_x = src_img_B->head_roi.LR_x;
-				LRb_y = src_img_B->head_roi.LR_y;
-			}
-
-			performOperation();
-
-			output_has_changed = true;
-
-			inputs_have_changed = false;
-			parameters_have_changed = false;
-		}
-		else
-		{
-			output_has_changed = false;
-		}
-
+		performImageOperation();
 		return dst_img;
 	}
 
 	void setInputOperationA(IMAGE_OPERATION * src_operation_A)
 	{
-		operation_A = src_operation_A;
-		inputs_have_changed = true;
-		src_A_is_assigned = true;
+		if (input_operations_required < 1)
+		{
+			return;
+		}
+
+		if (src_operation_A && src_operation_A != operation_A)
+		{
+			operation_A = src_operation_A;
+			src_A_has_changed = true;
+			operations_loaded++;
+		}
+		else if (!src_operation_A)
+		{
+			operation_A = NULL;
+			src_img_A = NULL;
+			src_A_has_changed = false;
+			operations_loaded--;
+		}
 	}
 
 	void setInputOperationB(IMAGE_OPERATION * src_operation_B)
 	{
-		operation_B = src_operation_B;
-		inputs_have_changed = true;
-		src_B_is_assigned = true;
+		if (input_operations_required < 2)
+		{
+			return;
+		}
+		
+		if (src_operation_B && src_operation_B != operation_B)
+		{
+			operation_B = src_operation_B;
+			src_B_has_changed = true;
+			operations_loaded++;
+		}
+		else if (!src_operation_B)
+		{
+			operation_B = NULL;
+			src_img_B = NULL;
+			src_B_has_changed = false;
+			operations_loaded--;
+		}
 	}
 	
 	void setImageName(const char * src_image_name)
@@ -140,6 +108,12 @@ public:
 	
 	void assignNodeValue(const unsigned int src_node_position, const double src_node_value)
 	{
+		if (numeric_node_is_local_list.getNodeValue(src_node_position) && src_node_value == local_numeric_nodes_list.getNodeValue(src_node_position)->getScalarValue())
+		{
+			// If is the same value, nothing changes:
+			return;
+		}
+
 		local_numeric_nodes_list.getNodeValue(src_node_position)->setScalarValue(src_node_value);
 		numeric_node_is_local_list.assignNodeValue(src_node_position, true);
 		numeric_nodes_list.assignNodeValue(src_node_position, local_numeric_nodes_list.getNodeValue(src_node_position));
@@ -149,6 +123,12 @@ public:
 
 	void assignNodeValue(const unsigned int src_node_position, const char* src_node_value)
 	{
+		if (string_node_is_local_list.getNodeValue(src_node_position) && strcmp(src_node_value, local_string_nodes_list.getNodeValue(src_node_position)->getScalarValue()) == 0)
+		{
+			// If is the same value, nothing changes:
+			return;
+		}
+
 		local_string_nodes_list.getNodeValue(src_node_position)->setScalarValue(src_node_value);
 		string_node_is_local_list.assignNodeValue(src_node_position, true);
 		string_nodes_list.assignNodeValue(src_node_position, local_string_nodes_list.getNodeValue(src_node_position));
@@ -163,20 +143,19 @@ public:
 			return;
 		}
 
-		if (src_node_pointer)
+		if (src_node_pointer && src_node_pointer != numeric_nodes_list.getNodeValue(src_node_position))
 		{
 			numeric_node_is_local_list.assignNodeValue(src_node_position, false);
 			numeric_nodes_list.assignNodeValue(src_node_position, src_node_pointer);
 			parameters_have_changed = true;
 		}
-		else
+		else if (!src_node_pointer)
 		{
 			numeric_node_is_local_list.assignNodeValue(src_node_position, true);
 			local_numeric_nodes_list.getNodeValue(src_node_position)->setScalarValue(numeric_nodes_list.getNodeValue(src_node_position)->getScalarValue());
 			numeric_nodes_list.assignNodeValue(src_node_position, local_numeric_nodes_list.getNodeValue(src_node_position));
 		}
 	}
-
 
 	void assignNodeValue(const unsigned int src_node_position, NODE_SCALAR<char*> * src_node_pointer)
 	{
@@ -185,20 +164,20 @@ public:
 			return;
 		}
 
-		if (src_node_pointer)
+		if (src_node_pointer && src_node_pointer != string_nodes_list.getNodeValue(src_node_position))
 		{
 			string_node_is_local_list.assignNodeValue(src_node_position, false);
 			string_nodes_list.assignNodeValue(src_node_position, src_node_pointer);
 			parameters_have_changed = true;
 		}
-		else
+		else if(!src_node_pointer)
 		{
 			string_node_is_local_list.assignNodeValue(src_node_position, true);
 			local_string_nodes_list.getNodeValue(src_node_position)->setScalarValue(string_nodes_list.getNodeValue(src_node_position)->getScalarValue());
 			string_nodes_list.assignNodeValue(src_node_position, local_string_nodes_list.getNodeValue(src_node_position));
 		}
 	}
-	
+
 	unsigned int getInputNumericNodesRequired()
 	{
 		return input_numeric_nodes_required;
@@ -225,15 +204,16 @@ public:
 	}
 
 protected:
-
+	unsigned int minimum_input_operations_required; 
+	unsigned int input_operations_required;
 	unsigned int input_numeric_nodes_required;
 	unsigned int input_string_nodes_required;
 
 	GENERIC_LIST<NODE_SCALAR<char*>*> numeric_nodes_names_list;
-	GENERIC_LIST<NODE_SCALAR<bool>> numeric_node_is_local_list;
+	GENERIC_LIST<bool> numeric_node_is_local_list;
 	GENERIC_LIST<NODE_SCALAR<double>*> local_numeric_nodes_list;
 	GENERIC_LIST<NODE_SCALAR<char*>*> string_nodes_names_list;
-	GENERIC_LIST<NODE_SCALAR<bool>> string_node_is_local_list;
+	GENERIC_LIST<bool> string_node_is_local_list;
 	GENERIC_LIST<NODE_SCALAR<char*>*> local_string_nodes_list;
 
 	GENERIC_LIST<NODE_SCALAR<double>*> numeric_nodes_list;
@@ -241,8 +221,8 @@ protected:
 
 	unsigned int parameters_count;
 
-	bool src_A_is_assigned;
-	bool src_B_is_assigned;
+	bool src_A_has_changed;
+	bool src_B_has_changed;
 
 	IMG_DATA * dst_img;
 	IMG_DATA * src_img_A;
@@ -298,9 +278,8 @@ protected:
 	// Use this function when implementing the copy constructor, and assignation operator (operator =), in derived classes:
 	void copyFromImageOperation(const IMAGE_OPERATION& src_image_operation)
 	{
-		this->inputs_have_changed = src_image_operation.inputs_have_changed;
 		this->output_has_changed = src_image_operation.output_has_changed;
-
+		this->operations_loaded = src_image_operation.operations_loaded;
 		this->parameters_have_changed = src_image_operation.parameters_have_changed;
 
 		this->input_numeric_nodes_required = src_image_operation.input_numeric_nodes_required;
@@ -316,7 +295,7 @@ protected:
 			this->local_numeric_nodes_list.getNodeValue(node_index)->setScalarValue(this->numeric_nodes_list.getNodeValue(node_index)->getScalarValue());
 
 			// Verify if the source list is linked to an external node, or to its local node:
-			if (this->numeric_node_is_local_list.getNodeValue(node_index).getScalarValue())
+			if (this->numeric_node_is_local_list.getNodeValue(node_index))
 			{
 				this->numeric_nodes_list.assignNodeValue(node_index, this->local_numeric_nodes_list.getNodeValue(node_index));
 			}
@@ -332,7 +311,7 @@ protected:
 			this->local_string_nodes_list.getNodeValue(node_index)->setScalarValue(this->string_nodes_list.getNodeValue(node_index)->getScalarValue());
 
 			// Verify if the source list is linked to an external node, or to its local node:
-			if (this->string_node_is_local_list.getNodeValue(node_index).getScalarValue())
+			if (this->string_node_is_local_list.getNodeValue(node_index))
 			{
 				this->string_nodes_list.assignNodeValue(node_index, this->local_string_nodes_list.getNodeValue(node_index));
 			}
@@ -341,16 +320,11 @@ protected:
 		this->operation_A = src_image_operation.operation_A;
 		this->operation_B = src_image_operation.operation_B;
 		
-		if (this->inputs_have_changed)
-		{
-			copyImageData(src_image_operation.dst_img, this->dst_img);
-		}
-
 		this->src_img_A = this->operation_A->getImageData();
 		this->src_img_B = this->operation_B->getImageData();
 
-		this->src_A_is_assigned = src_image_operation.src_A_is_assigned;
-		this->src_B_is_assigned = src_image_operation.src_B_is_assigned;
+		this->src_A_has_changed = src_image_operation.src_A_has_changed;
+		this->src_B_has_changed = src_image_operation.src_B_has_changed;
 		
 		this->width_A = src_image_operation.width_A;
 		this->height_A = src_image_operation.height_A;
@@ -376,8 +350,10 @@ protected:
 
 		this->ULg_x = src_image_operation.ULg_x;
 		this->ULg_y = src_image_operation.ULg_y;
-
+		
 		sprintf(this->image_operation_name, "%s-copy", src_image_operation.image_operation_name);
+
+		copyImageData(src_image_operation.dst_img, this->dst_img);
 	}
 
 	// Each derived class must define this function:
@@ -390,7 +366,7 @@ protected:
 		POSITION_NODE * y_posititons_root = NULL;
 
 		// Compute global computing area:
-		if (src_A_is_assigned && src_B_is_assigned)
+		if (operation_A && operation_B)
 		{
 			ULg_x = (ULa_x < ULb_x) ? ULa_x : ULb_x;
 			ULg_y = (ULa_y < ULb_y) ? ULa_y : ULb_y;
@@ -407,7 +383,7 @@ protected:
 			addPositionLeaf(x_posititons_root, LRb_x);
 			addPositionLeaf(y_posititons_root, LRb_y);
 		}
-		else if (src_A_is_assigned && !src_B_is_assigned)
+		else if (operation_A && !operation_B)
 		{
 			ULg_x = ULa_x;
 			ULg_y = ULa_y;
@@ -433,7 +409,6 @@ protected:
 			addPositionLeaf(x_posititons_root, LRb_x);
 			addPositionLeaf(y_posititons_root, LRb_y);
 		}
-
 
 		const unsigned int x_positions_count = x_posititons_root->tree_depth;
 		const unsigned int y_positions_count = y_posititons_root->tree_depth;
@@ -462,7 +437,6 @@ protected:
 			dst_img->height = computable_height;
 			dst_img->image_data = (double*)calloc(computable_width * computable_height, sizeof(double));
 		}
-
 
 		if (dst_img->head_roi.next_roi)
 		{
@@ -511,13 +485,13 @@ protected:
 				int current_roi_type_int = (int)RBT_UNCOMPUTED;
 				
 				// Verify if the current roi is inside the source image:
-				if (src_A_is_assigned && ULa_x < center_x && ULa_y < center_y && center_x < LRa_x && center_y < LRa_y)
+				if (src_A_has_changed && ULa_x < center_x && ULa_y < center_y && center_x < LRa_x && center_y < LRa_y)
 				{
 					current_roi_type_int += (int)RBT_SOURCE;
 				}
 
 				// Verify if the current roi is inside the target image:
-				if (src_B_is_assigned && ULb_x < center_x && ULb_y < center_y && center_x < LRb_x && center_y < LRb_y)
+				if (src_B_has_changed && ULb_x < center_x && ULb_y < center_y && center_x < LRb_x && center_y < LRb_y)
 				{
 					current_roi_type_int += (int)RBT_TARGET;
 				}
@@ -535,14 +509,82 @@ protected:
 		free(y_positions);
 	}
 
-
 private:
-	bool inputs_have_changed;
+	unsigned int operations_loaded;
 	bool parameters_have_changed;
 	bool output_has_changed;
 
 	IMAGE_OPERATION * operation_A;
 	IMAGE_OPERATION * operation_B;
+
+	void performImageOperation()
+	{
+		if (operations_loaded < minimum_input_operations_required)
+		{
+			output_has_changed = false;
+			return;
+		}
+
+		// Check if the operation sources have changed:
+		if (minimum_input_operations_required > 0 && operation_A)
+		{
+			src_A_has_changed |= operation_A->getOutputHasChanged();
+		}
+
+		if (input_operations_required > 1 && operation_B)
+		{
+			src_B_has_changed |= operation_B->getOutputHasChanged();
+		}
+
+		// Check if the parameters have changed:
+		for (unsigned int node_index = 0; node_index < input_numeric_nodes_required; node_index++)
+		{
+			parameters_have_changed |= numeric_nodes_list.getNodeValue(node_index)->getValueHasChanged();
+		}
+
+		for (unsigned int node_index = 0; node_index < input_string_nodes_required; node_index++)
+		{
+			parameters_have_changed |= string_nodes_list.getNodeValue(node_index)->getValueHasChanged();
+		}
+
+		if (!src_A_has_changed && !src_B_has_changed && !parameters_have_changed)
+		{
+			output_has_changed = false;
+			return;
+		}
+
+		if (src_A_has_changed && operation_A)
+		{
+			src_img_A = operation_A->getImageData();
+			src_A_has_changed = false;
+
+			width_A = src_img_A->width;
+			height_A = src_img_A->height;
+
+			ULa_x = src_img_A->head_roi.UL_x;
+			ULa_y = src_img_A->head_roi.UL_y;
+			LRa_x = src_img_A->head_roi.LR_x;
+			LRa_y = src_img_A->head_roi.LR_y;
+		}
+
+		if (src_B_has_changed && operation_B)
+		{
+			src_img_B = operation_B->getImageData();
+			src_B_has_changed = false;
+
+			width_B = src_img_B->width;
+			height_B = src_img_B->height;
+
+			ULb_x = src_img_B->head_roi.UL_x;
+			ULb_y = src_img_B->head_roi.UL_y;
+			LRb_x = src_img_B->head_roi.LR_x;
+			LRb_y = src_img_B->head_roi.LR_y;
+		}
+		
+		performOperation();
+		output_has_changed = true;
+		parameters_have_changed = false;
+	}
 };
 
 #endif // IMAGE_OPERATION_CLASS_H_INCLUDED

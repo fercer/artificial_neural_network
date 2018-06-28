@@ -18,7 +18,7 @@ int main(int argc, char * argv[])
 
 	image_process_1.setInputNodeValue(1, "save_B.pgm");
 	image_process_1.setInputNodeValue(0, 0.0);
-	image_process_1.runImageOperation(3);
+	image_process_1.runImageScalarOperation(0);
 
 
 	image_process_1.setInputNodeValue(1, "save_C.pgm");
@@ -27,7 +27,7 @@ int main(int argc, char * argv[])
 	image_process_1.setInputNodeValue(0, 30.0);
 	image_process_1.setInputNodeToImageOperation(2, 1, &sin_phi);
 	image_process_1.setInputNodeToImageOperation(2, 3, &cos_phi);
-	image_process_1.runImageOperation(3);
+	image_process_1.runImageScalarOperation(0);
 
 
 	return 0;

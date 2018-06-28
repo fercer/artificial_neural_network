@@ -2,6 +2,9 @@
 
 DIV_IMAGE_OPERATION::DIV_IMAGE_OPERATION()
 {
+	input_operations_required = 2;
+	minimum_input_operations_required = 1;
+
 	input_numeric_nodes_required = 2;
 	NODE_SCALAR<char*> * node_A_identifier = new NODE_SCALAR<char*>("node_A");
 	numeric_nodes_names_list.assignNodeValue(0, node_A_identifier);
@@ -24,6 +27,9 @@ DIV_IMAGE_OPERATION::DIV_IMAGE_OPERATION()
 
 DIV_IMAGE_OPERATION::DIV_IMAGE_OPERATION(const DIV_IMAGE_OPERATION & src_div_image_operation)
 {
+	input_operations_required = 2;
+	minimum_input_operations_required = 1;
+
 	input_numeric_nodes_required = 2;
 	NODE_SCALAR<char*> * node_A_identifier = new NODE_SCALAR<char*>("node_A");
 	numeric_nodes_names_list.assignNodeValue(0, node_A_identifier);

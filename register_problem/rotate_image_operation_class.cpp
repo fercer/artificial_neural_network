@@ -2,6 +2,9 @@
 
 ROTATE_IMAGE_OPERATION::ROTATE_IMAGE_OPERATION()
 {
+	input_operations_required = 1;
+	minimum_input_operations_required = 1;
+
 	input_numeric_nodes_required = 4;
 	NODE_SCALAR<char*> * node_11_identifier = new NODE_SCALAR<char*>("node_11");
 	numeric_nodes_names_list.assignNodeValue(0, node_11_identifier);
@@ -40,6 +43,9 @@ ROTATE_IMAGE_OPERATION::ROTATE_IMAGE_OPERATION()
 
 ROTATE_IMAGE_OPERATION::ROTATE_IMAGE_OPERATION(const ROTATE_IMAGE_OPERATION & src_rotate_image_operation)
 {
+	input_operations_required = 1;
+	minimum_input_operations_required = 1;
+
 	input_numeric_nodes_required = 4;
 	NODE_SCALAR<char*> * node_11_identifier = new NODE_SCALAR<char*>("node_11");
 	numeric_nodes_names_list.assignNodeValue(0, node_11_identifier);

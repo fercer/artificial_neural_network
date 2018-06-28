@@ -2,6 +2,9 @@
 
 SQROOT_IMAGE_OPERATION::SQROOT_IMAGE_OPERATION()
 {
+	input_operations_required = 1;
+	minimum_input_operations_required = 1;
+
 	input_numeric_nodes_required = 1;
 	NODE_SCALAR<char*> * node_identifier = new NODE_SCALAR<char*>("node_A");
 	numeric_nodes_names_list.assignNodeValue(0, node_identifier);
@@ -16,6 +19,9 @@ SQROOT_IMAGE_OPERATION::SQROOT_IMAGE_OPERATION()
 
 SQROOT_IMAGE_OPERATION::SQROOT_IMAGE_OPERATION(const SQROOT_IMAGE_OPERATION & src_sum_image_operation)
 {
+	input_operations_required = 1;
+	minimum_input_operations_required = 1;
+
 	input_numeric_nodes_required = 1;
 	NODE_SCALAR<char*> * node_identifier = new NODE_SCALAR<char*>("node_A");
 	numeric_nodes_names_list.assignNodeValue(0, node_identifier);

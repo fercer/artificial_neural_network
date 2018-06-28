@@ -72,17 +72,26 @@ public:
 
 	void assignNodeValue(const unsigned int src_node_position, const double src_node_value)
 	{	
-		NODE_SCALAR<double> * temp_node = local_numeric_nodes_list.getNodeValue(src_node_position);
+		if (src_node_position >= input_numeric_nodes_required)
+		{
+			return;
+		}
+
 		local_numeric_nodes_list.getNodeValue(src_node_position)->setScalarValue(src_node_value);
 
 		numeric_node_is_local_list.assignNodeValue(src_node_position, true);
-		numeric_nodes_list.assignNodeValue(src_node_position, temp_node);
+		numeric_nodes_list.assignNodeValue(src_node_position, local_numeric_nodes_list.getNodeValue(src_node_position));
 		parameters_have_changed = true;	
 	}
 
 
 	void assignNodeValue(const unsigned int src_node_position, const char* src_node_value)
 	{
+		if (src_node_position >= input_string_nodes_required)
+		{
+			return;
+		}
+
 		local_string_nodes_list.getNodeValue(src_node_position)->setScalarValue(src_node_value);
 		string_node_is_local_list.assignNodeValue(src_node_position, true);
 		string_nodes_list.assignNodeValue(src_node_position, local_string_nodes_list.getNodeValue(src_node_position));
@@ -137,11 +146,11 @@ protected:
 	unsigned int input_string_nodes_required;
 
 	GENERIC_LIST<NODE_SCALAR<char*>*> numeric_nodes_names_list;
-	GENERIC_LIST<NODE_SCALAR<bool>> numeric_node_is_local_list;
+	GENERIC_LIST<bool> numeric_node_is_local_list;
 	GENERIC_LIST<NODE_SCALAR<double>*> local_numeric_nodes_list;
 
 	GENERIC_LIST<NODE_SCALAR<char*>*> string_nodes_names_list;
-	GENERIC_LIST<NODE_SCALAR<bool>> string_node_is_local_list;
+	GENERIC_LIST<bool> string_node_is_local_list;
 	GENERIC_LIST<NODE_SCALAR<char*>*> local_string_nodes_list;
 
 	GENERIC_LIST<NODE_SCALAR<double>*> numeric_nodes_list;
@@ -183,7 +192,7 @@ protected:
 			this->local_numeric_nodes_list.getNodeValue(node_index)->setScalarValue(this->numeric_nodes_list.getNodeValue(node_index)->getScalarValue());
 
 			// Verify if the source list is linked to an external node, or to its local node:
-			if (this->numeric_node_is_local_list.getNodeValue(node_index).getScalarValue())
+			if (this->numeric_node_is_local_list.getNodeValue(node_index))
 			{
 				this->numeric_nodes_list.assignNodeValue(node_index, this->local_numeric_nodes_list.getNodeValue(node_index));
 			}
@@ -199,7 +208,7 @@ protected:
 			this->local_string_nodes_list.getNodeValue(node_index)->setScalarValue(this->string_nodes_list.getNodeValue(node_index)->getScalarValue());
 
 			// Verify if the source list is linked to an external node, or to its local node:
-			if (this->string_node_is_local_list.getNodeValue(node_index).getScalarValue())
+			if (this->string_node_is_local_list.getNodeValue(node_index))
 			{
 				this->string_nodes_list.assignNodeValue(node_index, this->local_string_nodes_list.getNodeValue(node_index));
 			}

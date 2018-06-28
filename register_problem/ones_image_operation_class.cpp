@@ -2,6 +2,9 @@
 
 ONES_IMAGE_OPERATION::ONES_IMAGE_OPERATION()
 {
+	input_operations_required = 0;
+	minimum_input_operations_required = 0;
+
 	input_numeric_nodes_required = 3;
 
 	NODE_SCALAR<char*> * node_width_identifier = new NODE_SCALAR<char*>("node_width");
@@ -33,6 +36,9 @@ ONES_IMAGE_OPERATION::ONES_IMAGE_OPERATION()
 
 ONES_IMAGE_OPERATION::ONES_IMAGE_OPERATION(const ONES_IMAGE_OPERATION & src_ones_image_operation)
 {
+	input_operations_required = 0;
+	minimum_input_operations_required = 0;
+
 	input_numeric_nodes_required = 3;
 
 	NODE_SCALAR<char*> * node_width_identifier = new NODE_SCALAR<char*>("node_width");
