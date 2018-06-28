@@ -13,6 +13,9 @@ SQROOT_IMAGE_OPERATION::SQROOT_IMAGE_OPERATION()
 	local_numeric_nodes_list.assignNodeValue(0, local_node_A);
 	numeric_nodes_list.assignNodeValue(0, local_numeric_nodes_list.getNodeValue(0));
 	numeric_node_is_local_list.assignNodeValue(0, true);
+
+	NODE_SCALAR<double> * local_previous_node_A = new NODE_SCALAR<double>(1.0);
+	local_previous_numeric_nodes_values_list.assignNodeValue(0, local_previous_node_A);
 }
 
 
@@ -30,6 +33,9 @@ SQROOT_IMAGE_OPERATION::SQROOT_IMAGE_OPERATION(const SQROOT_IMAGE_OPERATION & sr
 	local_numeric_nodes_list.assignNodeValue(0, local_node_A);
 	numeric_nodes_list.assignNodeValue(0, local_numeric_nodes_list.getNodeValue(0));
 	numeric_node_is_local_list.assignNodeValue(0, true);
+
+	NODE_SCALAR<double> * local_previous_node_A = new NODE_SCALAR<double>(1.0);
+	local_previous_numeric_nodes_values_list.assignNodeValue(0, local_previous_node_A);
 
 	copyFromImageOperation(src_sum_image_operation);
 }

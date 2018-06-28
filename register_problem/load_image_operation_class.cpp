@@ -13,6 +13,9 @@ LOAD_IMAGE_OPERATION::LOAD_IMAGE_OPERATION()
 	local_string_nodes_list.assignNodeValue(0, local_node_A);
 	string_nodes_list.assignNodeValue(0, local_string_nodes_list.getNodeValue(0));
 	string_node_is_local_list.assignNodeValue(0, true);
+
+	NODE_SCALAR<char*> * local_previous_node_A = new NODE_SCALAR<char*>("NOT-DEFINED");
+	local_previous_string_nodes_values_list.assignNodeValue(0, local_previous_node_A);
 }
 
 
@@ -30,6 +33,9 @@ LOAD_IMAGE_OPERATION::LOAD_IMAGE_OPERATION(const LOAD_IMAGE_OPERATION & src_load
 	local_string_nodes_list.assignNodeValue(0, local_node_A);
 	string_nodes_list.assignNodeValue(0, local_string_nodes_list.getNodeValue(0));
 	string_node_is_local_list.assignNodeValue(0, true);
+	
+	NODE_SCALAR<char*> * local_previous_node_A = new NODE_SCALAR<char*>("NOT-DEFINED");
+	local_previous_string_nodes_values_list.assignNodeValue(0, local_previous_node_A);
 
 	copyFromImageOperation(src_load_image_operation);
 }

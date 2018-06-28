@@ -12,23 +12,15 @@ int main(int argc, char * argv[])
 	IMAGE_PROCESS_HANDLER image_process_1;
 	image_process_1.setFilename("single_image_sumation.xml");
 	image_process_1.loadProcess();
-	printf("Running process ...\n");
+	printf("Running process 1 ...\n");
 	image_process_1.runProcess();
-	printf("Running process ...\n");
 
-	image_process_1.setInputNodeValue(1, "save_B.pgm");
-	image_process_1.setInputNodeValue(0, 0.0);
-	image_process_1.runImageScalarOperation(0);
-
-
-	image_process_1.setInputNodeValue(1, "save_C.pgm");
-	NODE_SCALAR<double> cos_phi(cos(15.0));
-	NODE_SCALAR<double> sin_phi(sin(15.0));
-	image_process_1.setInputNodeValue(0, 30.0);
-	image_process_1.setInputNodeToImageOperation(2, 1, &sin_phi);
-	image_process_1.setInputNodeToImageOperation(2, 3, &cos_phi);
-	image_process_1.runImageScalarOperation(0);
-
+	printf("Running process 2 ...\n");
+	image_process_1.setInputNodeToImageScalarOperation(0, 0, (NODE_SCALAR<char*>*)NULL);
+	image_process_1.setInputNodeValue(0, 0, 15.0);
+	image_process_1.setInputNodeValue(1, "res_B.pgm");
+	image_process_1.setInputNodeToImageScalarOperation(0, 0, (IMAGE_OPERATION*)NULL);
+	image_process_1.runProcess();
 
 	return 0;
 }

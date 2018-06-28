@@ -18,7 +18,6 @@ public:
 	IMAGE_SCALAR_OPERATION()
 	{
 		input_has_changed = false;
-		parameters_have_changed = true;
 		operation_is_assigned = false;
 		output_has_changed = false;
 
@@ -50,10 +49,12 @@ public:
 		{
 			operation = src_operation;
 			input_has_changed = true;
+			operation_is_assigned = true;
 		}
 		else if (!src_operation)
 		{
 			input_has_changed = false;
+			operation_is_assigned = false;
 			operation = NULL;
 			src_img = NULL;
 		}
@@ -70,7 +71,6 @@ public:
 		local_numeric_nodes_list.getNodeValue(src_node_position)->setScalarValue(src_node_value);
 		numeric_node_is_local_list.assignNodeValue(src_node_position, true);
 		numeric_nodes_list.assignNodeValue(src_node_position, local_numeric_nodes_list.getNodeValue(src_node_position));
-		parameters_have_changed = true;
 	}
 
 
@@ -84,7 +84,6 @@ public:
 		local_string_nodes_list.getNodeValue(src_node_position)->setScalarValue(src_node_value);
 		string_node_is_local_list.assignNodeValue(src_node_position, true);
 		string_nodes_list.assignNodeValue(src_node_position, local_string_nodes_list.getNodeValue(src_node_position));
-		parameters_have_changed = true;
 	}
 
 
@@ -99,7 +98,6 @@ public:
 		{
 			numeric_node_is_local_list.assignNodeValue(src_node_position, false);
 			numeric_nodes_list.assignNodeValue(src_node_position, src_node_pointer);
-			parameters_have_changed = true;
 		}
 		else if (!src_node_pointer)
 		{
@@ -121,7 +119,6 @@ public:
 		{
 			string_node_is_local_list.assignNodeValue(src_node_position, false);
 			string_nodes_list.assignNodeValue(src_node_position, src_node_pointer);
-			parameters_have_changed = true;
 		}
 		else if (!src_node_pointer)
 		{
@@ -161,10 +158,12 @@ protected:
 	GENERIC_LIST<NODE_SCALAR<char*>*> numeric_nodes_names_list;
 	GENERIC_LIST<bool> numeric_node_is_local_list;
 	GENERIC_LIST<NODE_SCALAR<double>*> local_numeric_nodes_list;
+	GENERIC_LIST<NODE_SCALAR<double>*> local_previous_numeric_nodes_values_list;
 
 	GENERIC_LIST<NODE_SCALAR<char*>*> string_nodes_names_list;
 	GENERIC_LIST<bool> string_node_is_local_list;
 	GENERIC_LIST<NODE_SCALAR<char*>*> local_string_nodes_list;
+	GENERIC_LIST<NODE_SCALAR<char*>*> local_previous_string_nodes_values_list;
 
 	GENERIC_LIST<NODE_SCALAR<double>*> numeric_nodes_list;
 	GENERIC_LIST<NODE_SCALAR<char*>*> string_nodes_list;
@@ -178,12 +177,14 @@ protected:
 		{
 			delete numeric_nodes_names_list.getNodeValue(node_index);
 			delete local_numeric_nodes_list.getNodeValue(node_index);
+			delete local_previous_numeric_nodes_values_list.getNodeValue(node_index);
 		}
 
 		for (unsigned int node_index = 0; node_index < input_string_nodes_required; node_index++)
 		{
 			delete string_nodes_names_list.getNodeValue(node_index);
 			delete local_string_nodes_list.getNodeValue(node_index);
+			delete local_previous_string_nodes_values_list.getNodeValue(node_index);
 		}
 	}
 
@@ -192,7 +193,6 @@ protected:
 	{
 		this->copyFromNodeScalar(src_image_scalar_operation);
 
-		this->parameters_have_changed = src_image_scalar_operation.parameters_have_changed;
 		this->operation_is_assigned = src_image_scalar_operation.operation_is_assigned;
 
 		this->input_numeric_nodes_required = src_image_scalar_operation.input_numeric_nodes_required;
@@ -244,7 +244,7 @@ protected:
 private:
 	bool input_has_changed;
 	bool output_has_changed;
-	bool parameters_have_changed;
+
 	IMAGE_OPERATION * operation;
 
 	void performImageScalarOperation()
@@ -259,14 +259,25 @@ private:
 			input_has_changed |= operation->getOutputHasChanged();
 		}
 
+		bool parameters_have_changed = false;
 		for (unsigned int node_index = 0; node_index < input_numeric_nodes_required; node_index++)
 		{
-			parameters_have_changed |= numeric_nodes_list.getNodeValue(node_index)->getValueHasChanged();
+			if (numeric_nodes_list.getNodeValue(node_index)->getScalarValue() !=
+				local_previous_numeric_nodes_values_list.getNodeValue(node_index)->getScalarValue())
+			{
+				parameters_have_changed = true;
+				local_previous_numeric_nodes_values_list.getNodeValue(node_index)->setScalarValue(numeric_nodes_list.getNodeValue(node_index)->getScalarValue());
+			}
 		}
 
 		for (unsigned int node_index = 0; node_index < input_string_nodes_required; node_index++)
 		{
-			parameters_have_changed |= string_nodes_list.getNodeValue(node_index)->getValueHasChanged();
+			if (strcmp(string_nodes_list.getNodeValue(node_index)->getScalarValue(),
+				local_previous_string_nodes_values_list.getNodeValue(node_index)->getScalarValue()) != 0)
+			{
+				parameters_have_changed = true;
+				local_previous_string_nodes_values_list.getNodeValue(node_index)->setScalarValue(string_nodes_list.getNodeValue(node_index)->getScalarValue());
+			}
 		}
 
 		if (!input_has_changed && !parameters_have_changed)
@@ -280,7 +291,6 @@ private:
 		height = src_img->height;
 
 		*(*scalar_pointer_manager + array_position) = performScalarOperation();
-		parameters_have_changed = false;
 		input_has_changed = false;
 		output_has_changed = true;
 	}

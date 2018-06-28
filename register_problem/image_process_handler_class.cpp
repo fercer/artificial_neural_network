@@ -1071,6 +1071,29 @@ void IMAGE_PROCESS_HANDLER::setInputNodeValue(const unsigned int src_node_index,
 
 
 
+void IMAGE_PROCESS_HANDLER::setInputNodeValue(const unsigned int src_node_index, const unsigned int src_operation_index, const double src_numeric_value)
+{
+	if (src_node_index >= nodes_operation_count)
+	{
+		return;
+	}
+
+	unsigned int position_node_index = 0;
+	while (nodes_operation_position_list.getNodeValue(position_node_index) != src_node_index)
+	{
+		position_node_index++;
+	}
+
+	if (src_operation_index >= nodes_operation_list.getNodeValue(position_node_index)->getInputNumericNodesRequired())
+	{
+		return;
+	}
+
+	nodes_operation_list.getNodeValue(position_node_index)->assignNodeValue(src_operation_index, src_numeric_value);
+}
+
+
+
 void IMAGE_PROCESS_HANDLER::setInputNodeValue(const unsigned int src_node_index, const unsigned int src_operation_index, NODE_SCALAR<char*>* src_new_link)
 {
 	if (src_node_index >= nodes_operation_count)
@@ -1090,6 +1113,29 @@ void IMAGE_PROCESS_HANDLER::setInputNodeValue(const unsigned int src_node_index,
 	}
 
 	nodes_operation_list.getNodeValue(position_node_index)->assignNodeValue(src_operation_index, src_new_link);
+}
+
+
+
+void IMAGE_PROCESS_HANDLER::setInputNodeValue(const unsigned int src_node_index, const unsigned int src_operation_index, const char* src_string_value)
+{
+	if (src_node_index >= nodes_operation_count)
+	{
+		return;
+	}
+
+	unsigned int position_node_index = 0;
+	while (nodes_operation_position_list.getNodeValue(position_node_index) != src_node_index)
+	{
+		position_node_index++;
+	}
+
+	if (src_operation_index >= nodes_operation_list.getNodeValue(position_node_index)->getInputStringNodesRequired())
+	{
+		return;
+	}
+
+	nodes_operation_list.getNodeValue(position_node_index)->assignNodeValue(src_operation_index, src_string_value);
 }
 
 

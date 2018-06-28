@@ -14,7 +14,6 @@ class NODES_SCALAR_OPERATION :
 public:
 	NODES_SCALAR_OPERATION()
 	{		
-		parameters_have_changed = false;
 		input_numeric_nodes_required = 0;
 		input_string_nodes_required = 0;
 	}
@@ -28,21 +27,7 @@ public:
 
 	double getScalarValue() 
 	{
-		for (unsigned int node_index = 0; node_index < input_numeric_nodes_required; node_index++)
-		{
-			parameters_have_changed |= numeric_nodes_list.getNodeValue(node_index)->getValueHasChanged();
-		}
-
-		for (unsigned int node_index = 0; node_index < input_string_nodes_required; node_index++)
-		{
-			parameters_have_changed |= string_nodes_list.getNodeValue(node_index)->getValueHasChanged();
-		}
-
-		if (parameters_have_changed)
-		{
-			*(*scalar_pointer_manager + array_position) = performScalarOperation();
-			parameters_have_changed = false;
-		}
+		performNodeScalarOperation();
 		return *(*scalar_pointer_manager + array_position);
 	}
 
@@ -81,7 +66,6 @@ public:
 
 		numeric_node_is_local_list.assignNodeValue(src_node_position, true);
 		numeric_nodes_list.assignNodeValue(src_node_position, local_numeric_nodes_list.getNodeValue(src_node_position));
-		parameters_have_changed = true;	
 	}
 
 
@@ -95,7 +79,6 @@ public:
 		local_string_nodes_list.getNodeValue(src_node_position)->setScalarValue(src_node_value);
 		string_node_is_local_list.assignNodeValue(src_node_position, true);
 		string_nodes_list.assignNodeValue(src_node_position, local_string_nodes_list.getNodeValue(src_node_position));
-		parameters_have_changed = true;
 	}
 
 	void assignNodeValue(const unsigned int src_node_position, NODE_SCALAR<double> * src_node_pointer)
@@ -109,7 +92,6 @@ public:
 		{
 			numeric_node_is_local_list.assignNodeValue(src_node_position, false);
 			numeric_nodes_list.assignNodeValue(src_node_position, src_node_pointer);
-			parameters_have_changed = true;
 		}
 		else
 		{
@@ -131,7 +113,6 @@ public:
 		{
 			string_node_is_local_list.assignNodeValue(src_node_position, false);
 			string_nodes_list.assignNodeValue(src_node_position, src_node_pointer);
-			parameters_have_changed = true;
 		}
 		else
 		{
@@ -148,10 +129,12 @@ protected:
 	GENERIC_LIST<NODE_SCALAR<char*>*> numeric_nodes_names_list;
 	GENERIC_LIST<bool> numeric_node_is_local_list;
 	GENERIC_LIST<NODE_SCALAR<double>*> local_numeric_nodes_list;
+	GENERIC_LIST<NODE_SCALAR<double>*> local_previous_numeric_nodes_values_list;
 
 	GENERIC_LIST<NODE_SCALAR<char*>*> string_nodes_names_list;
 	GENERIC_LIST<bool> string_node_is_local_list;
 	GENERIC_LIST<NODE_SCALAR<char*>*> local_string_nodes_list;
+	GENERIC_LIST<NODE_SCALAR<char*>*> local_previous_string_nodes_values_list;
 
 	GENERIC_LIST<NODE_SCALAR<double>*> numeric_nodes_list;
 	GENERIC_LIST<NODE_SCALAR<char*>*> string_nodes_list;
@@ -163,12 +146,14 @@ protected:
 		{
 			delete numeric_nodes_names_list.getNodeValue(node_index);
 			delete local_numeric_nodes_list.getNodeValue(node_index);
+			delete local_previous_numeric_nodes_values_list.getNodeValue(node_index);
 		}
 
 		for (unsigned int node_index = 0; node_index < input_string_nodes_required; node_index++)
 		{
 			delete string_nodes_names_list.getNodeValue(node_index);
 			delete local_string_nodes_list.getNodeValue(node_index);
+			delete local_previous_string_nodes_values_list.getNodeValue(node_index);
 		}
 	}
 
@@ -176,9 +161,7 @@ protected:
 	void copyFromNodesScalarOperation(const NODES_SCALAR_OPERATION& src_nodes_scalar_operation)
 	{
 		copyFromNodeScalar(src_nodes_scalar_operation);
-
-		this->parameters_have_changed = src_nodes_scalar_operation.parameters_have_changed;
-
+		
 		this->input_numeric_nodes_required = src_nodes_scalar_operation.input_numeric_nodes_required;
 		this->input_string_nodes_required = src_nodes_scalar_operation.input_string_nodes_required;
 
@@ -219,8 +202,35 @@ protected:
 	virtual double performScalarOperation() = 0;
 
 private:
-	bool parameters_have_changed;
+	void performNodeScalarOperation()
+	{
 
+		bool parameters_have_changed = false;
+		for (unsigned int node_index = 0; node_index < input_numeric_nodes_required; node_index++)
+		{
+			if (numeric_nodes_list.getNodeValue(node_index)->getScalarValue() !=
+				local_previous_numeric_nodes_values_list.getNodeValue(node_index)->getScalarValue())
+			{
+				local_previous_numeric_nodes_values_list.getNodeValue(node_index)->setScalarValue(numeric_nodes_list.getNodeValue(node_index)->getScalarValue());
+				parameters_have_changed = true;
+			}
+		}
+
+		for (unsigned int node_index = 0; node_index < input_string_nodes_required; node_index++)
+		{
+			if (strcmp(string_nodes_list.getNodeValue(node_index)->getScalarValue(),
+				local_previous_string_nodes_values_list.getNodeValue(node_index)->getScalarValue()) != 0)
+			{
+				local_previous_string_nodes_values_list.getNodeValue(node_index)->setScalarValue(string_nodes_list.getNodeValue(node_index)->getScalarValue());
+				parameters_have_changed = true;
+			}
+		}
+
+		if (parameters_have_changed)
+		{
+			*(*scalar_pointer_manager + array_position) = performScalarOperation();
+		}
+	}
 };
 
 #endif // NODES_SCALAR_OPERATION_CLASS_H_INCLUDED

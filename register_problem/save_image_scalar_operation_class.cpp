@@ -10,6 +10,9 @@ SAVE_IMAGE_SCALAR_OPERATION::SAVE_IMAGE_SCALAR_OPERATION()
 	local_string_nodes_list.assignNodeValue(0, local_node_A);
 	string_nodes_list.assignNodeValue(0, local_string_nodes_list.getNodeValue(0));
 	string_node_is_local_list.assignNodeValue(0, true);
+
+	NODE_SCALAR<char*> * local_previous_node_A = new NODE_SCALAR<char*>("NOT-DEFINED");
+	local_previous_string_nodes_values_list.assignNodeValue(0, local_previous_node_A);
 }
 
 
@@ -24,6 +27,9 @@ SAVE_IMAGE_SCALAR_OPERATION::SAVE_IMAGE_SCALAR_OPERATION(const SAVE_IMAGE_SCALAR
 	local_string_nodes_list.assignNodeValue(0, local_node_A);
 	string_nodes_list.assignNodeValue(0, local_string_nodes_list.getNodeValue(0));
 	string_node_is_local_list.assignNodeValue(0, true);
+
+	NODE_SCALAR<char*> * local_previous_node_A = new NODE_SCALAR<char*>("NOT-DEFINED");
+	local_previous_string_nodes_values_list.assignNodeValue(0, local_previous_node_A);
 
 	copyFromImageScalarOperation(src_save_image_scalar_operation);
 }
@@ -52,7 +58,13 @@ double SAVE_IMAGE_SCALAR_OPERATION::performScalarOperation()
 {
 	if (!src_img)
 	{
-		printf("<<Error: The source image was not assigned>\n");
+		printf("<<Error: The source image was not assigned>>\n");
+		return 0.0;
+	}
+
+	if (strcmp(string_nodes_list.getNodeValue(0)->getScalarValue(), "NOT-DEFINED") == 0)
+	{
+		printf("<<Error: The image filename not assigned>>\n");
 		return 0.0;
 	}
 
@@ -60,7 +72,7 @@ double SAVE_IMAGE_SCALAR_OPERATION::performScalarOperation()
 
 	if (!fp_img)
 	{
-		printf("<Error: The file \"%s\" could not be created>\n", string_nodes_list.getNodeValue(0)->getScalarValue());
+		printf("<Error: The file \"%s\" could not be created>>\n", string_nodes_list.getNodeValue(0)->getScalarValue());
 		return 0.0;
 	}
 

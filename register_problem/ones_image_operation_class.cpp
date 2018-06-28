@@ -30,6 +30,15 @@ ONES_IMAGE_OPERATION::ONES_IMAGE_OPERATION()
 	local_numeric_nodes_list.assignNodeValue(2, local_node_C);
 	numeric_nodes_list.assignNodeValue(2, local_numeric_nodes_list.getNodeValue(2));
 	numeric_node_is_local_list.assignNodeValue(2, true);
+	
+	NODE_SCALAR<double> * local_previous_node_A = new NODE_SCALAR<double>(0.0);
+	local_previous_numeric_nodes_values_list.assignNodeValue(0, local_previous_node_A);
+
+	NODE_SCALAR<double> * local_previous_node_B = new NODE_SCALAR<double>(0.0);
+	local_previous_numeric_nodes_values_list.assignNodeValue(1, local_previous_node_B);
+
+	NODE_SCALAR<double> * local_previous_node_C = new NODE_SCALAR<double>(1.0);
+	local_previous_numeric_nodes_values_list.assignNodeValue(2, local_previous_node_C);
 }
 
 
@@ -65,6 +74,15 @@ ONES_IMAGE_OPERATION::ONES_IMAGE_OPERATION(const ONES_IMAGE_OPERATION & src_ones
 	numeric_nodes_list.assignNodeValue(2, local_numeric_nodes_list.getNodeValue(2));
 	numeric_node_is_local_list.assignNodeValue(2, true);
 
+	NODE_SCALAR<double> * local_previous_node_A = new NODE_SCALAR<double>(0.0);
+	local_previous_numeric_nodes_values_list.assignNodeValue(0, local_previous_node_A);
+
+	NODE_SCALAR<double> * local_previous_node_B = new NODE_SCALAR<double>(0.0);
+	local_previous_numeric_nodes_values_list.assignNodeValue(1, local_previous_node_B);
+
+	NODE_SCALAR<double> * local_previous_node_C = new NODE_SCALAR<double>(1.0);
+	local_previous_numeric_nodes_values_list.assignNodeValue(2, local_previous_node_C);
+	
 	copyFromImageOperation(src_ones_image_operation);
 }
 

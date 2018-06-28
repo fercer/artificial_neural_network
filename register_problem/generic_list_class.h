@@ -31,7 +31,7 @@ private:
 	unsigned int last_dump_nodes_count;
 	LIST_NODE head_node;
 	LIST_NODE * tail_node;
-	class_link_type * array_from_list;
+	LIST_NODE ** array_from_list;
 
 
 	void dumpListToArray();

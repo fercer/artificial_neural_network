@@ -13,14 +13,14 @@ void GENERIC_LIST<class_link_type>::dumpListToArray()
 
 	if (array_from_list)
 	{
-		class_link_type * swap_array = array_from_list;
-		array_from_list = new class_link_type[nodes_count];
-		memmove(array_from_list, swap_array, last_dump_nodes_count * sizeof(class_link_type));
-		delete[] swap_array;
+		LIST_NODE ** swap_array = array_from_list;
+		array_from_list = (LIST_NODE**) malloc(nodes_count * sizeof(LIST_NODE*));
+		memmove(array_from_list, swap_array, last_dump_nodes_count * sizeof(LIST_NODE*));
+		free(swap_array);
 	}
 	else
 	{
-		array_from_list = new class_link_type[nodes_count];
+		array_from_list = (LIST_NODE**)malloc(nodes_count * sizeof(LIST_NODE*));
 	}
 
 	LIST_NODE * next_node_pointer = head_node.next_node;
@@ -31,7 +31,7 @@ void GENERIC_LIST<class_link_type>::dumpListToArray()
 		current_node_pointer = next_node_pointer;
 		next_node_pointer = current_node_pointer->next_node;
 
-		*(array_from_list + current_node_position) = current_node_pointer->node_value;
+		*(array_from_list + current_node_position) = current_node_pointer;
 		current_node_position++;
 	}
 	last_dump_nodes_count = nodes_count;
@@ -44,14 +44,14 @@ class_link_type GENERIC_LIST<class_link_type>::getNodeValue_after_listdump(const
 {
 	dumpListToArray();
 	get_node_value_method = &GENERIC_LIST<class_link_type>::getNodeValue_without_listdump;
-	return *(array_from_list + src_node_index);
+	return (*(array_from_list + src_node_index))->node_value;
 }
 
 
 template<class class_link_type>
 class_link_type GENERIC_LIST<class_link_type>::getNodeValue_without_listdump(const unsigned int src_node_index)
 {
-	return *(array_from_list + src_node_index);
+	return (*(array_from_list + src_node_index))->node_value;
 }
 
 
@@ -74,7 +74,7 @@ void GENERIC_LIST<class_link_type>::emptyList()
 
 	if (array_from_list)
 	{
-		delete[] array_from_list;
+		free(array_from_list);
 	}
 
 	array_from_list = NULL;
@@ -193,7 +193,7 @@ unsigned int GENERIC_LIST<class_link_type>::assignNodeValue(const unsigned int s
 	
 	dumpListToArray();
 
-	*(array_from_list + src_index) = src_node;
+	(*(array_from_list + src_index))->node_value = src_node;
 
 	return nodes_count;
 }

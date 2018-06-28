@@ -15,7 +15,6 @@ public:
 		scalar_pointer = &scalar_value;
 		array_position = 0;
 		strcpy(node_scalar_name, "unnamed");
-		scalar_value_has_changed = true;
 	}
 
 
@@ -25,7 +24,6 @@ public:
 		scalar_pointer = &scalar_value;
 		array_position = 0;
 		strcpy(node_scalar_name, "unnamed");
-		scalar_value_has_changed = true;
 
 		scalar_value = src_value;
 	}
@@ -71,29 +69,19 @@ public:
 	
 	virtual class_value_type getScalarValue()
 	{
-		scalar_value_has_changed = false;
 		return *(*scalar_pointer_manager + array_position);
 	}
 
 	virtual void setScalarValue(const class_value_type src_scalar_value)
 	{
-		if (*(*scalar_pointer_manager + array_position) != src_scalar_value)
-		{
-			*(*scalar_pointer_manager + array_position) = src_scalar_value;
-			scalar_value_has_changed = true;
-		}
+		*(*scalar_pointer_manager + array_position) = src_scalar_value;
 	}
 
 	void setNodeScalarName(const char * src_name)
 	{
 		strcpy(node_scalar_name, src_name);
 	}
-
-	bool getValueHasChanged()
-	{
-		return scalar_value_has_changed;
-	}
-
+	
 protected:
 	class_value_type ** scalar_pointer_manager;
 	unsigned int array_position;
@@ -111,15 +99,12 @@ protected:
 			this->array_position = 0;
 		}
 
-		this->scalar_value_has_changed = src_node_scalar.scalar_value_has_changed;
-
 		sprintf(node_scalar_name, "%s-copy", src_node_scalar.node_scalar_name);
 	}
 
 private:
 	class_value_type * scalar_pointer;
 	class_value_type scalar_value;
-	bool scalar_value_has_changed;
 	char node_scalar_name[64];
 };
 
@@ -135,8 +120,6 @@ public:
 		scalar_pointer = &scalar_value;
 		scalar_value = NULL;
 		array_position = 0;
-		scalar_value_has_changed = true;
-
 		strcpy(node_scalar_name, "unnamed");
 	}
 
@@ -144,8 +127,6 @@ public:
 	{
 		scalar_pointer_manager = &scalar_pointer;
 		scalar_pointer = &scalar_value;
-		scalar_value_has_changed = true;
-
 		strcpy(node_scalar_name, "unnamed");
 
 		const unsigned int string_length = (unsigned int)strlen(src_string) + 1;
@@ -214,7 +195,6 @@ public:
 
 	virtual char * getScalarValue()
 	{
-		scalar_value_has_changed = false;
 		return *(*scalar_pointer_manager + array_position);
 	}
 
@@ -245,18 +225,12 @@ public:
 		}
 
 		strcpy(*(*scalar_pointer_manager + array_position), src_scalar_value);
-		scalar_value_has_changed = true;
 	}
 
 
 	void setNodeScalarName(const char * src_name)
 	{
 		strcpy(node_scalar_name, src_name);
-	}
-
-	bool getValueHasChanged()
-	{
-		return scalar_value_has_changed;
 	}
 
 protected:
@@ -273,8 +247,6 @@ protected:
 			this->array_position = 0;
 		}
 
-		this->scalar_value_has_changed = src_node_scalar.scalar_value_has_changed;
-
 		sprintf(node_scalar_name, "%s-copy", src_node_scalar.node_scalar_name);
 	}
 
@@ -282,7 +254,6 @@ private:
 	char*** scalar_pointer_manager;
 	char** scalar_pointer;
 	char* scalar_value;
-	bool scalar_value_has_changed;
 	unsigned int array_position;
 	char node_scalar_name[64];
 };
