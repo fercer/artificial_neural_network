@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ImageProcessing>
+  <NodeValue position="0" type="NV_STRING" name="charset directory">
+    <Value>"D:/Apps/artificial_neural_network/register_problem/typography"</Value>
+  </NodeValue>
+  
+  <NodeValue position="1" type="NV_STRING" name="text">
+    <Value>"Testing the textbox generation 'using the xml' file?1354970+-*/!·%&$(&){}ḉ+sdfadÜ"</Value>
+  </NodeValue>
+    
+  <NodeValue position="0" type="NV_NUMERIC" name="chars per line">
+    <Value>"14"</Value>
+  </NodeValue>
+  
+  <NodeValue position="1" type="NV_NUMERIC" name="char spacing">
+    <Value>"10"</Value>
+  </NodeValue>
+  
+  <NodeValue position="2" type="NV_STRING" name="char dimension data">
+    <Value>"D:/Apps/artificial_neural_network/register_problem/typography/letter_positions.dat"</Value>
+  </NodeValue>
+  
+  <ImageOperation position="0" type="IO_TEXTBOX" name="test textbox">
+    <Node id="directory" type="NV">"0"</Node>
+    <Node id="text" type="NV">"1"</Node>
+    <Node id="characters_per_line" type="NV">"0"</Node>
+    <Node id="character_spacing" type="NV">"1"</Node>
+    <Node id="character_dimension_data" type="NV">"2"</Node>
+  </ImageOperation>
+  
+  <ImageScalarOperation position="0" type="ISO_SAVE" name="save textbox">
+    <Node id="filename" type="SELF">"test_textbox.pgm"</Node>
+    <Operation id="operation_A">"0"</Operation>
+  </ImageScalarOperation>
+</ImageProcessing>

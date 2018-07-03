@@ -26,7 +26,7 @@ private:
 	LOAD_IMAGE_OPERATION character_loader;
 	bool characters_set_was_loaded;
 	unsigned int max_height;
-
+	ROI_BBOX * character_dimensions;
 
 	void loadCharacters();
 	void addCharacter(const unsigned int src_position_x, const unsigned int src_position_y, const unsigned int src_character_code);

@@ -354,7 +354,6 @@ IMG_DATA * createFromImageData(const IMG_DATA * src_img)
 	dst_img->image_data = (double*)malloc(width * height * sizeof(double*));
 	
 	memcpy(dst_img->image_data, src_img->image_data, width * height * sizeof(double));
-	
 	memcpy(&dst_img->head_roi, &src_img->head_roi, sizeof(ROI_BBOX));
 	dst_img->head_roi.next_roi = NULL;
 	dst_img->tail_roi = &dst_img->head_roi;
