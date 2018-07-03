@@ -68,44 +68,176 @@ void LOAD_IMAGE_OPERATION::performOperation()
 		return;
 	}
 
-	FILE * fp_img = fopen(string_nodes_list.getNodeValue(0)->getScalarValue(), "r");
+	FILE * fp_img = fopen(string_nodes_list.getNodeValue(0)->getScalarValue(), "rb");
 	if (!fp_img)
 	{
 		printf("<<Error: The file \'%s\' could not be opened>>\n", string_nodes_list.getNodeValue(0)->getScalarValue());
 		return;
 	}
 
-	char magic_number[4];
+	char magic_character;
+	char magic_number;
+	magic_character = fgetc(fp_img);
+	magic_number = fgetc(fp_img);
+
+	fclose(fp_img);
+
+	// By now, only PGM files are supported:
+	if (magic_character != 'P')
+	{
+		printf("<<Error: The file \'%s\' is not a PGM file>>\n", string_nodes_list.getNodeValue(0)->getScalarValue());
+		return;
+	}
+
+	switch((int)magic_number)
+	{
+	case (int)'5':
+		loadPGM_raw(string_nodes_list.getNodeValue(0)->getScalarValue());
+		break;
+
+	case (int)'2':
+		loadPGM_ascii(string_nodes_list.getNodeValue(0)->getScalarValue());
+		break;
+
+	default:
+		printf("<<Error: The PGM file has an unknown codification format>>\n");
+		break;
+	}
+}
+
+
+
+void LOAD_IMAGE_OPERATION::loadPGM_ascii(const char * src_filename)
+{
+	FILE * fp_img = fopen(src_filename, "r");
+
+	char magic_number[3];
 
 	// Read magic number:
-	magic_number[0] = fgetc(fp_img);
-	magic_number[1] = fgetc(fp_img);
+	fgets(magic_number, 3, fp_img);
 
-	fpos_t image_body_starting;
-	fgetpos(fp_img, &image_body_starting);
+	// Read the new line character after the magic number:
+	char temporal_characters = fgetc(fp_img);
 
-	magic_number[2] = fgetc(fp_img);
-	magic_number[3] = fgetc(fp_img);
+	// Verify if the file contains a commentary:
+	fpos_t image_body_file_position;
+	fgetpos(fp_img, &image_body_file_position);
 
-
-	if (magic_number[2] == '#' || magic_number[3] == '#')
+	temporal_characters = fgetc(fp_img);
+	if (temporal_characters == '#')
 	{
-		// The file contains a commentary without space between the magic number:
-		char commentary[512];
-		fscanf(fp_img, "%s", commentary);
-		printf("Commentary: \'%s\'", commentary);
+		// The file contains a commentary:
+		while (temporal_characters != '\n')
+		{
+			temporal_characters = fgetc(fp_img);
+		}
 	}
-	else if(magic_number[2] == '\n')
+	else
 	{
-		fsetpos(fp_img, &image_body_starting);
+		fsetpos(fp_img, &image_body_file_position);
 	}
 
+	// Read the width, height and maximum intensity of the image:
 	int width, height;
-	fscanf(fp_img, "%i", &width);
-	fscanf(fp_img, "%i", &height);
+	fscanf(fp_img, "%i %i\n", &width, &height);
 
-	int max_intensity;
-	fscanf(fp_img, "%i\n", &max_intensity);
+	if (!dst_img)
+	{
+		dst_img = createVoidImage(width, height);
+	}
+
+
+	if ((dst_img->width != width) || (dst_img->height != height))
+	{
+		if (dst_img->image_data)
+		{
+			free(dst_img->image_data);
+		}
+		dst_img->width = width;
+		dst_img->height = height;
+		dst_img->image_data = (double*)calloc(width * height, sizeof(double));
+	}
+
+
+	if (dst_img->head_roi.next_roi)
+	{
+		ROI_BBOX * next_roi_node = dst_img->head_roi.next_roi;
+		ROI_BBOX * current_roi_node;
+
+		while (next_roi_node)
+		{
+			current_roi_node = next_roi_node;
+			next_roi_node = current_roi_node->next_roi;
+
+			free(current_roi_node);
+		}
+
+		dst_img->head_roi.next_roi = NULL;
+		dst_img->tail_roi = &dst_img->head_roi;
+	}
+
+	double max_intensity;
+	fscanf(fp_img, "%lf\n", &max_intensity);
+
+	double pix_intensity;
+	for (unsigned int pix_position = 0; pix_position < (unsigned int)(width*height); pix_position++)
+	{
+		fscanf(fp_img, "%lf\n", &pix_intensity);
+		*(dst_img->image_data + pix_position) = pix_intensity / max_intensity;
+	}
+
+	fclose(fp_img);
+}
+
+
+
+void LOAD_IMAGE_OPERATION::loadPGM_raw(const char * src_filename)
+{
+	FILE * fp_img = fopen(src_filename, "rb");
+	
+	char temporal_characters;
+	char magic_number;
+
+	// Read magic number:
+	fread(&temporal_characters, sizeof(char), 1, fp_img);
+	fread(&magic_number, sizeof(char), 1, fp_img);
+
+	// Read the new line character:
+	fread(&temporal_characters, sizeof(char), 1, fp_img);
+
+	// Verify if the file contains a commentary:
+	fpos_t image_body_file_position;
+	fgetpos(fp_img, &image_body_file_position);
+
+	fread(&temporal_characters, sizeof(char), 1, fp_img);
+	if (temporal_characters == '#')
+	{
+		// The file contains a commentary:
+		while (temporal_characters != '\n')
+		{
+			fread(&temporal_characters, sizeof(char), 1, fp_img);
+		}
+	}
+	else
+	{
+		fsetpos(fp_img, &image_body_file_position);
+	}
+
+	// Read the width, height and maximum intensity of the image:
+	char width_string[] = "\0\0\0\0\0\0\0";
+	unsigned int string_position = 0;
+	do
+	{
+		fread(width_string + string_position, sizeof(char), 1, fp_img);
+	} while (*(width_string + string_position++) != ' ');
+	int width = atoi(width_string);
+
+	char height_string[] = "\0\0\0\0\0\0\0";
+	string_position = 0;
+	do {
+		fread(height_string + string_position, sizeof(char), 1, fp_img);
+	} while (*(height_string + string_position++) != '\n');
+	int height = atoi(height_string);
 
 	if (!dst_img)
 	{
@@ -143,25 +275,22 @@ void LOAD_IMAGE_OPERATION::performOperation()
 	}
 
 
-	if (magic_number[1] == '5')
-	{
-		int pix_intensity_character;
-		for (unsigned int pix_position = 0; pix_position < (unsigned int)(width*height); pix_position++)
-		{
-			pix_intensity_character = fgetc(fp_img);
-			printf("%i\n", feof(fp_img));
-			*(dst_img->image_data + pix_position) = (double)(unsigned int)pix_intensity_character / (double)max_intensity;
-		}
-	}
-	else
-	{
-		unsigned int pix_intensity_integer;
-		for (unsigned int pix_position = 0; pix_position < (unsigned int)(width*height); pix_position++)
-		{
-			fscanf(fp_img, "%u", &pix_intensity_integer);
-			*(dst_img->image_data + pix_position) = (double)pix_intensity_integer / (double)max_intensity;
-		}
-	}
+	char max_intensity_string[] = "\0\0\0\0\0\0\0";
+	string_position = 0;
+	do {
+		fread(max_intensity_string + string_position, sizeof(char), 1, fp_img);
+	} while (*(max_intensity_string + string_position++) != '\n');
+	double max_intensity = atof(max_intensity_string);
 
+	unsigned char * pix_intensities = (unsigned char*)malloc(height * width * sizeof(unsigned char));
+
+	fread(pix_intensities, sizeof(unsigned char), width * height, fp_img);
 	fclose(fp_img);
+
+
+	for (unsigned int pix_position = 0; pix_position < (unsigned int)(width*height); pix_position++)
+	{
+		*(dst_img->image_data + pix_position) = (double)*(pix_intensities + pix_position) / max_intensity;
+	}
+	free(pix_intensities);
 }

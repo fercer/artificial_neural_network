@@ -9,18 +9,8 @@
 
 int main(int argc, char * argv[])
 {
-	LOAD_IMAGE_OPERATION load_op;
-	load_op.assignNodeValue(0, "D:/Apps/artificial_neural_network/register_problem/typography/char_67.pgm");
-
-	SAVE_IMAGE_SCALAR_OPERATION save_op;
-	save_op.assignNodeValue(0, "test.pgm");
-	save_op.setInputOperation(&load_op);
-	save_op.getScalarValue();
-
-	return 1;
-
 	IMAGE_PROCESS_HANDLER image_process_1;
-	image_process_1.setFilename("single_text.xml");
+	image_process_1.setFilename("C:/Users/cimat/artificial_neural_network/register_problem/test_cases/test_text_box.xml");
 	image_process_1.loadProcess();
 	printf("Running process 1 ...\n");
 	image_process_1.runProcess();

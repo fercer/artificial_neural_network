@@ -18,6 +18,10 @@ public:
 
 protected:
 	void performOperation();
+
+private:
+	void loadPGM_ascii(const char * src_filename);
+	void loadPGM_raw(const char * src_filename);
 };
 
 #endif // LOAD_IMAGE_OPERATION_CLASS_H_INCLUDED

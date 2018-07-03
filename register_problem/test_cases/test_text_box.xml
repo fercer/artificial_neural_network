@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ImageProcessing>
+  <NODE_SCALAR type="NV_STRING" position="0" name="Character set">
+    <Value>"C:/Users/cimat/artificial_neural_network/register_problem/typography"</Value>
+  </NODE_SCALAR>
+  <NODE_SCALAR type="NV_STRING" position="1" name="Text">
+    <Value>"Testing"</Value>
+  </NODE_SCALAR>
+  <IMAGE_OPERATION type="IO_TEXTBOX" position="0" name="Textbox">
+    <Node id="directory" type="NV">"0"</Node>
+    <Node id="text" type="NV">"1"</Node>
+    <Node id="characters_per_line" type="SELF">"13"</Node>
+  </IMAGE_OPERATION>
+  <NODE_SCALAR type="NV_STRING" position="2" name="Save filename">
+    <Value>"test.pgm"</Value>
+  </NODE_SCALAR>
+  <IMAGE_SCALAR_OPERATION type="ISO_SAVE" position="0" name="Save operation">
+    <Node id="filename" type="NV">"2"</Node>
+    <Operation id="operation_A">"0"</Operation>
+  </IMAGE_SCALAR_OPERATION>
+</ImageProcessing>
