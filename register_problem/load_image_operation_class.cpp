@@ -75,21 +75,37 @@ void LOAD_IMAGE_OPERATION::performOperation()
 		return;
 	}
 
-	char read_line[512];
+	char magic_number[4];
 
 	// Read magic number:
-	fscanf(fp_img, "%s\n", read_line);
+	magic_number[0] = fgetc(fp_img);
+	magic_number[1] = fgetc(fp_img);
 
-	// Read the commentary
-	fgets(read_line, 512, fp_img);
+	fpos_t image_body_starting;
+	fgetpos(fp_img, &image_body_starting);
+
+	magic_number[2] = fgetc(fp_img);
+	magic_number[3] = fgetc(fp_img);
+
+
+	if (magic_number[2] == '#' || magic_number[3] == '#')
+	{
+		// The file contains a commentary without space between the magic number:
+		char commentary[512];
+		fscanf(fp_img, "%s", commentary);
+		printf("Commentary: \'%s\'", commentary);
+	}
+	else if(magic_number[2] == '\n')
+	{
+		fsetpos(fp_img, &image_body_starting);
+	}
 
 	int width, height;
-	fscanf(fp_img, "%i %i", &width, &height);
-
+	fscanf(fp_img, "%i", &width);
+	fscanf(fp_img, "%i", &height);
 
 	int max_intensity;
-	fscanf(fp_img, "%i", &max_intensity);
-
+	fscanf(fp_img, "%i\n", &max_intensity);
 
 	if (!dst_img)
 	{
@@ -126,11 +142,25 @@ void LOAD_IMAGE_OPERATION::performOperation()
 		dst_img->tail_roi = &dst_img->head_roi;
 	}
 
-	unsigned int pix_intensity;
-	for (unsigned int pix_position = 0; pix_position < (unsigned int)(width*height); pix_position++)
+
+	if (magic_number[1] == '5')
 	{
-		fscanf(fp_img, "%u", &pix_intensity);
-		*(dst_img->image_data + pix_position) = (double)(unsigned int)pix_intensity / (double)max_intensity;
+		int pix_intensity_character;
+		for (unsigned int pix_position = 0; pix_position < (unsigned int)(width*height); pix_position++)
+		{
+			pix_intensity_character = fgetc(fp_img);
+			printf("%i\n", feof(fp_img));
+			*(dst_img->image_data + pix_position) = (double)(unsigned int)pix_intensity_character / (double)max_intensity;
+		}
+	}
+	else
+	{
+		unsigned int pix_intensity_integer;
+		for (unsigned int pix_position = 0; pix_position < (unsigned int)(width*height); pix_position++)
+		{
+			fscanf(fp_img, "%u", &pix_intensity_integer);
+			*(dst_img->image_data + pix_position) = (double)pix_intensity_integer / (double)max_intensity;
+		}
 	}
 
 	fclose(fp_img);

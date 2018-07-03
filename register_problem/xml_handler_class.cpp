@@ -7,6 +7,7 @@ XML_HANDLER::XML_HANDLER()
 	filename = NULL;
 	filename_has_changed = false;
 	tree_root = NULL;
+	xml_file_was_loaded = false;
 }
 
 
@@ -49,17 +50,18 @@ void XML_HANDLER::setFilename(const char * src_filename)
 
 
 
-void XML_HANDLER::loadXMLFile()
+bool XML_HANDLER::loadXMLFile()
 {
 	if (!filename_has_changed)
 	{
-		return;
+		return false;
 	}
 
 	if (!filename)
 	{
 		printf("<<Error: The filename has not been defined yet>>\n");
-		return;
+		xml_file_was_loaded = false;
+		return false;
 	}
 
 	FILE * fp_xml_file = fopen(filename, "r");
@@ -67,7 +69,8 @@ void XML_HANDLER::loadXMLFile()
 	if (!fp_xml_file)
 	{
 		printf("<<Error: The filename \'%s\' could not be opened>>\n", filename);
-		return;
+		xml_file_was_loaded = false;
+		return false;
 	}
 
 	const unsigned int max_read_characters = 1023;
@@ -85,10 +88,20 @@ void XML_HANDLER::loadXMLFile()
 	fclose(fp_xml_file);
 
 	filename_has_changed = false;
+
+	xml_file_was_loaded = true;
+	return true;
 }
+
+
 
 XML_NODE_LEAF * XML_HANDLER::getRoot()
 {
+	if (!xml_file_was_loaded)
+	{
+		return NULL;
+	}
+
 	return tree_root->getFirstChild();
 }
 

@@ -75,12 +75,12 @@ public:
 	~XML_HANDLER();
 
 	void setFilename(const char * src_filename);
-	void loadXMLFile();
+	bool loadXMLFile();
 
 	XML_NODE_LEAF * getRoot();
 
 private:
-	
+	bool xml_file_was_loaded;
 	XML_NODE_LEAF * tree_root;
 
 	char * filename;

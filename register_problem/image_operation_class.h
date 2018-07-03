@@ -226,12 +226,7 @@ protected:
 
 	GENERIC_LIST<NODE_SCALAR<double>*> numeric_nodes_list;
 	GENERIC_LIST<NODE_SCALAR<char*>*> string_nodes_list;
-
-	unsigned int parameters_count;
-
-	bool src_A_has_changed;
-	bool src_B_has_changed;
-
+	
 	IMG_DATA * dst_img;
 	IMG_DATA * src_img_A;
 	IMG_DATA * src_img_B;
@@ -521,6 +516,9 @@ protected:
 private:
 	unsigned int operations_loaded;
 	bool output_has_changed;
+
+	bool src_A_has_changed;
+	bool src_B_has_changed;
 
 	IMAGE_OPERATION * operation_A;
 	IMAGE_OPERATION * operation_B;

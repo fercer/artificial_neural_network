@@ -16,6 +16,7 @@
 #include "translate_image_operation_class.h"
 #include "sqroot_image_operation_class.h"
 #include "ones_image_operation_class.h"
+#include "text_image_operation_class.h"
 
 #include "sum_image_scalar_operation_class.h"
 #include "max_image_scalar_operation_class.h"
@@ -108,6 +109,7 @@ private:
 		IO_TRANSLATE = 933,
 		IO_SQRT = 577,
 		IO_ONES = 556,
+		IO_TEXTBOX = 805,
 
 		/* Image Scalar Operation */
 		ISO_SUM = 575,
@@ -118,6 +120,7 @@ private:
 		ISO_SAVE = 633
 	} OPERATION_TYPE;
 
+	bool xml_file_was_loaded;
 	char filename[1024];
 
 	GENERIC_LIST<NODE_SCALAR<char*>*> string_node_scalar_list;

@@ -339,6 +339,11 @@ void dumpPositionLeaf(POSITION_NODE * src_current_leaf, const unsigned int src_c
 
 IMG_DATA * createFromImageData(const IMG_DATA * src_img)
 {
+	if (!src_img)
+	{
+		return NULL;
+	}
+
 	const unsigned int width = src_img->width;
 	const unsigned int height = src_img->height;
 

@@ -3,7 +3,8 @@
 IMAGE_PROCESS_HANDLER::IMAGE_PROCESS_HANDLER()
 {
 	sprintf(filename, "NOT-DEFINED");
-	
+	xml_file_was_loaded = false;
+
 	string_node_scalar_count = 0;
 	numeric_node_scalar_count = 0;
 	nodes_operation_count = 0;
@@ -59,7 +60,13 @@ void IMAGE_PROCESS_HANDLER::setFilename(const char * src_filename)
 void IMAGE_PROCESS_HANDLER::loadProcess()
 {
 	xml_file_handler.setFilename(filename);
-	xml_file_handler.loadXMLFile();
+	xml_file_was_loaded = xml_file_handler.loadXMLFile();
+
+	if (!xml_file_was_loaded)
+	{
+		return;
+	}
+	
 
 	/* Read the root node, it must be an Image Process */
 	XML_NODE_LEAF * file_root = xml_file_handler.getRoot();
@@ -193,6 +200,10 @@ void IMAGE_PROCESS_HANDLER::loadProcess()
 
 		case IO_ONES:
 			new_image_operation = new ONES_IMAGE_OPERATION;
+			break;
+
+		case IO_TEXTBOX:
+			new_image_operation = new TEXT_IMAGE_OPERATION;
 			break;
 
 		case ISO_SUM:
@@ -937,6 +948,11 @@ void IMAGE_PROCESS_HANDLER::loadProcess()
 
 void IMAGE_PROCESS_HANDLER::runProcess()
 {
+	if (!xml_file_was_loaded)
+	{
+		return;
+	}
+
 	for (unsigned int node_index = 0; node_index < nodes_operation_count; node_index++)
 	{
 		printf("Numeric node: %i\n", node_index);
@@ -960,6 +976,11 @@ void IMAGE_PROCESS_HANDLER::runProcess()
 
 void IMAGE_PROCESS_HANDLER::runNodeOperation(const unsigned int src_node_index)
 {
+	if (!xml_file_was_loaded)
+	{
+		return;
+	}
+
 	if (src_node_index >= nodes_operation_count)
 	{
 		return;
@@ -978,6 +999,11 @@ void IMAGE_PROCESS_HANDLER::runNodeOperation(const unsigned int src_node_index)
 
 void IMAGE_PROCESS_HANDLER::runImageOperation(const unsigned int src_node_index)
 {
+	if (!xml_file_was_loaded)
+	{
+		return;
+	}
+
 	if (src_node_index >= image_operation_count)
 	{
 		return;
@@ -996,6 +1022,11 @@ void IMAGE_PROCESS_HANDLER::runImageOperation(const unsigned int src_node_index)
 
 void IMAGE_PROCESS_HANDLER::runImageScalarOperation(const unsigned int src_node_index)
 {
+	if (!xml_file_was_loaded)
+	{
+		return;
+	}
+
 	if (src_node_index >= image_scalar_operation_count)
 	{
 		return;
@@ -1014,6 +1045,11 @@ void IMAGE_PROCESS_HANDLER::runImageScalarOperation(const unsigned int src_node_
 
 void IMAGE_PROCESS_HANDLER::setInputNodeValue(const unsigned int src_node_index, const double src_numeric_value)
 {
+	if (!xml_file_was_loaded)
+	{
+		return;
+	}
+
 	if (src_node_index >= numeric_node_scalar_count)
 	{
 		return;
@@ -1032,6 +1068,11 @@ void IMAGE_PROCESS_HANDLER::setInputNodeValue(const unsigned int src_node_index,
 
 void IMAGE_PROCESS_HANDLER::setInputNodeValue(const unsigned int src_node_index, const char * src_string_value)
 {
+	if (!xml_file_was_loaded)
+	{
+		return;
+	}
+
 	if (src_node_index >= string_node_scalar_count)
 	{
 		return;
@@ -1050,6 +1091,11 @@ void IMAGE_PROCESS_HANDLER::setInputNodeValue(const unsigned int src_node_index,
 
 void IMAGE_PROCESS_HANDLER::setInputNodeValue(const unsigned int src_node_index, const unsigned int src_operation_index, NODE_SCALAR<double>* src_new_link)
 {
+	if (!xml_file_was_loaded)
+	{
+		return;
+	}
+
 	if (src_node_index >= nodes_operation_count)
 	{
 		return;
@@ -1073,6 +1119,11 @@ void IMAGE_PROCESS_HANDLER::setInputNodeValue(const unsigned int src_node_index,
 
 void IMAGE_PROCESS_HANDLER::setInputNodeValue(const unsigned int src_node_index, const unsigned int src_operation_index, const double src_numeric_value)
 {
+	if (!xml_file_was_loaded)
+	{
+		return;
+	}
+
 	if (src_node_index >= nodes_operation_count)
 	{
 		return;
@@ -1096,6 +1147,11 @@ void IMAGE_PROCESS_HANDLER::setInputNodeValue(const unsigned int src_node_index,
 
 void IMAGE_PROCESS_HANDLER::setInputNodeValue(const unsigned int src_node_index, const unsigned int src_operation_index, NODE_SCALAR<char*>* src_new_link)
 {
+	if (!xml_file_was_loaded)
+	{
+		return;
+	}
+
 	if (src_node_index >= nodes_operation_count)
 	{
 		return;
@@ -1119,6 +1175,11 @@ void IMAGE_PROCESS_HANDLER::setInputNodeValue(const unsigned int src_node_index,
 
 void IMAGE_PROCESS_HANDLER::setInputNodeValue(const unsigned int src_node_index, const unsigned int src_operation_index, const char* src_string_value)
 {
+	if (!xml_file_was_loaded)
+	{
+		return;
+	}
+
 	if (src_node_index >= nodes_operation_count)
 	{
 		return;
@@ -1142,6 +1203,11 @@ void IMAGE_PROCESS_HANDLER::setInputNodeValue(const unsigned int src_node_index,
 
 void IMAGE_PROCESS_HANDLER::setInputNodeToImageOperation(const unsigned int src_node_index, const unsigned int src_operation_index, NODE_SCALAR<double>* src_new_link)
 {
+	if (!xml_file_was_loaded)
+	{
+		return;
+	}
+
 	if (src_node_index >= image_operation_count)
 	{
 		return;
@@ -1165,6 +1231,11 @@ void IMAGE_PROCESS_HANDLER::setInputNodeToImageOperation(const unsigned int src_
 
 void IMAGE_PROCESS_HANDLER::setInputNodeToImageOperation(const unsigned int src_node_index, const unsigned int src_operation_index, NODE_SCALAR<char*>* src_new_link)
 {
+	if (!xml_file_was_loaded)
+	{
+		return;
+	}
+
 	if (src_node_index >= image_operation_count)
 	{
 		return;
@@ -1187,6 +1258,11 @@ void IMAGE_PROCESS_HANDLER::setInputNodeToImageOperation(const unsigned int src_
 
 void IMAGE_PROCESS_HANDLER::setInputNodeToImageOperation(const unsigned int src_node_index, const unsigned int src_operation_index, IMAGE_OPERATION * src_new_link)
 {
+	if (!xml_file_was_loaded)
+	{
+		return;
+	}
+
 	if (src_node_index >= image_operation_count)
 	{
 		return;
@@ -1216,6 +1292,11 @@ void IMAGE_PROCESS_HANDLER::setInputNodeToImageOperation(const unsigned int src_
 
 void IMAGE_PROCESS_HANDLER::setInputNodeToImageScalarOperation(const unsigned int src_node_index, const unsigned int src_operation_index, NODE_SCALAR<double>* src_new_link)
 {
+	if (!xml_file_was_loaded)
+	{
+		return;
+	}
+
 	if (src_node_index >= image_scalar_operation_count)
 	{
 		return;
@@ -1239,6 +1320,11 @@ void IMAGE_PROCESS_HANDLER::setInputNodeToImageScalarOperation(const unsigned in
 
 void IMAGE_PROCESS_HANDLER::setInputNodeToImageScalarOperation(const unsigned int src_node_index, const unsigned int src_operation_index, NODE_SCALAR<char*>* src_new_link)
 {
+	if (!xml_file_was_loaded)
+	{
+		return;
+	}
+
 	if (src_node_index >= image_scalar_operation_count)
 	{
 		return;
@@ -1262,6 +1348,11 @@ void IMAGE_PROCESS_HANDLER::setInputNodeToImageScalarOperation(const unsigned in
 
 void IMAGE_PROCESS_HANDLER::setInputNodeToImageScalarOperation(const unsigned int src_node_index, const unsigned int src_operation_index, IMAGE_OPERATION* src_new_link)
 {
+	if (!xml_file_was_loaded)
+	{
+		return;
+	}
+
 	if (src_node_index >= image_scalar_operation_count)
 	{
 		return;
