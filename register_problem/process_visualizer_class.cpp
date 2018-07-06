@@ -34,42 +34,132 @@ void PROCESS_VISUALIZER::showProcess()
 
 void PROCESS_VISUALIZER::initializeGraphicEnvironment()
 {
-	glfwInit();
 
-	glfwWindowHint(GLFW_SAMPLES, 4); // 4x antialiasing
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); // We want OpenGL 3.3
+	if (!glfwInit())
+	{
+		fprintf(stderr, "<<Error: The OpenGL environment (GLFW) could not be initialized>>\n");
+		return;
+	}
+
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // We don't want the old OpenGL 
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
-																   // Open a window and create its OpenGL context
-	GLFWwindow* window; // (In the accompanying source code, this variable is global for simplicity)
-	window = glfwCreateWindow(1024, 768, "Tutorial 01", NULL, NULL);
-	if (window == NULL) {
-		fprintf(stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n");
+	glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
+	GLFWwindow* window = glfwCreateWindow(800, 600, "OpenGL", nullptr, nullptr);
+	if (!window)
+	{
+		glfwTerminate();
+		fprintf(stderr, "<<Error: Could not create a window>>\n");
+		return;
+	}
+
+	glfwMakeContextCurrent(window);
+
+	glewExperimental = GL_TRUE;
+	GLenum glew_is_intialized = glewInit();
+	if(glew_is_intialized != GLEW_OK)
+	{
+		glfwTerminate();
+		fprintf(stderr, "<<Error: The OpenGL environment (GLEW) could not be initialized>>\n");
+		return;
+	}
+	
+
+	/* ----------------------------- Test generating a simple triangle -------------------------------- */
+	float vertices[] = {
+		 0.0f, 0.5f,
+		 0.5f,-0.5f,
+		-0.5f,-0.5f,
+		 0.1f, 0.5f,
+		 0.6f,-0.5f,
+		 1.1f, 0.5f
+	};
+
+	GLuint vao;
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
+
+	GLuint vbo;
+	glGenBuffers(1, &vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	char vertex_shader_string[] =
+		"#version 150\n\
+in vec2 position;\n\
+void main()\n\
+{\n\
+gl_Position = vec4(position, 0.0, 1.0);\n\
+}\n";
+	
+	char const * vertex_shader = vertex_shader_string;
+	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vertexShader, 1, &vertex_shader, NULL);
+	glCompileShader(vertexShader);
+
+	GLint shader_status;
+	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &shader_status);
+
+	if (shader_status != GL_TRUE)
+	{
+		char shader_compile_error[512];
+		glGetShaderInfoLog(vertexShader, 512, NULL, shader_compile_error);
+		fprintf(stderr, "<<Error: Error while compiling the vertex shader, the following error was launched:\n\'%s\'\n>>\n", shader_compile_error);
 		glfwTerminate();
 		return;
 	}
-	glfwMakeContextCurrent(window); // Initialize GLEW
-	glewExperimental = true; // Needed in core profile
-	if (glewInit() != GLEW_OK) {
-		fprintf(stderr, "Failed to initialize GLEW\n");
+
+	char fragment_shader_string[] =
+		"#version 150\n\
+out vec4 outColor;\n\
+void main()\n\
+{\n\
+outColor = vec4(1.0, 0.7, 0.3, 1.0);\n\
+}\n";
+
+	char const *fragment_shader = fragment_shader_string;
+	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragmentShader, 1, &fragment_shader, NULL);
+	glCompileShader(fragmentShader);
+
+	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &shader_status);
+
+	if (shader_status != GL_TRUE)
+	{
+		char shader_compile_error[512];
+		glGetShaderInfoLog(fragmentShader, 512, NULL, shader_compile_error);
+		fprintf(stderr, "<<Error: Error while compiling the fragment shader, the following error was launched:\n\'%s\'\n>>\n", shader_compile_error);
+		glfwTerminate();
 		return;
 	}
-	// Ensure we can capture the escape key being pressed below
-	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 
-	do {
-		// Clear the screen. It's not mentioned before Tutorial 02, but it can cause flickering, so it's there nonetheless.
-		glClear(GL_COLOR_BUFFER_BIT);
+	GLuint shaderProgram = glCreateProgram();
+	glAttachShader(shaderProgram, vertexShader);
+	glAttachShader(shaderProgram, fragmentShader);
 
-		// Draw nothing, see you in tutorial 2 !
+	glBindFragDataLocation(shaderProgram, 0, "outColor");
+	glLinkProgram(shaderProgram);
+	glUseProgram(shaderProgram);
+	
+	GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
+	glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(posAttrib);
 
-		// Swap buffers
+
+	while (!glfwWindowShouldClose(window))
+	{
+
+		glDrawArrays(GL_TRIANGLES, 0, 6);
 		glfwSwapBuffers(window);
 		glfwPollEvents();
+	}
 
-	} // Check if the ESC key was pressed or the window was closed
-	while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
-		glfwWindowShouldClose(window) == 0);
+	glDetachShader(shaderProgram, vertexShader);
+	glDetachShader(shaderProgram, fragmentShader);
+	glDeleteShader(vertexShader);
+	glDeleteShader(fragmentShader);
+
+	glfwTerminate();
 }
