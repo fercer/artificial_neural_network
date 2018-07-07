@@ -65,17 +65,21 @@ void PROCESS_VISUALIZER::initializeGraphicEnvironment()
 		fprintf(stderr, "<<Error: The OpenGL environment (GLEW) could not be initialized>>\n");
 		return;
 	}
-	
+
+	glClearColor(0.3f, 0.3f, 0.3f, 0.0f);
+
 
 	/* ----------------------------- Test generating a simple triangle -------------------------------- */
-	float vertices[] = {
-		 0.0f, 0.5f,
-		 0.5f,-0.5f,
-		-0.5f,-0.5f,
-		 0.1f, 0.5f,
-		 0.6f,-0.5f,
-		 1.1f, 0.5f
-	};
+	NODE_FIGURE node_1;
+	node_1.moveFigure(7.5, 1.0);
+
+	NODE_FIGURE node_2;
+	
+	FIGURE_RENDERER renderer;
+	renderer.addFigure(node_1);
+	renderer.addFigure(node_2);
+
+
 
 	GLuint vao;
 	glGenVertexArrays(1, &vao);
@@ -84,7 +88,7 @@ void PROCESS_VISUALIZER::initializeGraphicEnvironment()
 	GLuint vbo;
 	glGenBuffers(1, &vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(renderer.getVerticesPositions()), renderer.getVerticesPositions(), GL_STATIC_DRAW);
 
 	char vertex_shader_string[] =
 		"#version 150\n\
@@ -141,7 +145,6 @@ outColor = vec4(1.0, 0.7, 0.3, 1.0);\n\
 
 	glBindFragDataLocation(shaderProgram, 0, "outColor");
 	glLinkProgram(shaderProgram);
-	glUseProgram(shaderProgram);
 	
 	GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
 	glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE, 0, 0);
@@ -150,6 +153,8 @@ outColor = vec4(1.0, 0.7, 0.3, 1.0);\n\
 
 	while (!glfwWindowShouldClose(window))
 	{
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glUseProgram(shaderProgram);
 
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		glfwSwapBuffers(window);
@@ -158,6 +163,7 @@ outColor = vec4(1.0, 0.7, 0.3, 1.0);\n\
 
 	glDetachShader(shaderProgram, vertexShader);
 	glDetachShader(shaderProgram, fragmentShader);
+	
 	glDeleteShader(vertexShader);
 	glDeleteShader(fragmentShader);
 

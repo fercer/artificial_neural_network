@@ -11,6 +11,9 @@
 #include <string.h>
 
 #include "generic_list_class.cpp"
+#include "node_graphics/figure_2d_class.h"
+#include "node_graphics/node_figure_class.h"
+#include "node_graphics/figure_renderer_class.h"
 
 class PROCESS_VISUALIZER
 {
