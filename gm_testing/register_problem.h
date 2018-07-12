@@ -54,12 +54,7 @@ IMG_DATA * rotateBicubic(IMG_DATA * src_img, const double theta_11, const double
 
 double computeLoss(IMG_DATA * src_diff_img);
 
-IMG_DATA * computeDerivativesX(IMG_DATA * src_img);
-IMG_DATA * computeDerivativesY(IMG_DATA * src_img);
-
 IMG_DATA * createVoidImage(const unsigned int src_width, const unsigned int src_height);
-
-IMG_DATA * diffImage(IMG_DATA * src_img, IMG_DATA * trg_img, const double delta_x, const double delta_y);
 
 void freeImageData(IMG_DATA * src_img_data_ptr);
 

@@ -118,13 +118,17 @@ void ONES_IMAGE_OPERATION::performOperation()
 
 	if ((dst_img->width != width) || (dst_img->height != height))
 	{
-		if (dst_img->image_data)
+		if (dst_img->image_data_type == IMG_UNSET)
 		{
-			free(dst_img->image_data);
+			dst_img->image_data_type = IMG_DOUBLE;
+		}
+		else if (dst_img->image_data.double_image_data)
+		{
+			free(dst_img->image_data.double_image_data);
 		}
 		dst_img->width = width;
 		dst_img->height = height;
-		dst_img->image_data = (double*)calloc(width * height, sizeof(double));
+		dst_img->image_data.double_image_data = (double*)calloc(width * height, sizeof(double));
 	}
 
 	if (dst_img->head_roi.next_roi)
@@ -159,6 +163,6 @@ void ONES_IMAGE_OPERATION::performOperation()
 	
 	for (unsigned int xy = 0; xy < height*width; xy++)
 	{
-		*(dst_img->image_data + xy) = numeric_nodes_list.getNodeValue(2)->getScalarValue();
+		*(dst_img->image_data.double_image_data + xy) = numeric_nodes_list.getNodeValue(2)->getScalarValue();
 	}
 }

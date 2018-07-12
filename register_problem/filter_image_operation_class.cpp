@@ -57,32 +57,32 @@ void FILTER_IMAGE_OPERATION::performOperation()
 
 	for (unsigned int i = 0; i < height_A; i++)
 	{
-		memcpy(zp_temp->image_data + i * nearest_2p_dim,
-			src_img_A->image_data + i * width_A, width_A * sizeof(double));
+		memcpy(zp_temp->image_data.double_image_data + i * nearest_2p_dim,
+			src_img_A->image_data.double_image_data + i * width_A, width_A * sizeof(double));
 	}
 
 	/* Initialize the function: */
-	dzfft2d(0, nearest_2p_dim, nearest_2p_dim, zp_temp->image_data, fft_zp_img, communication_work_array, &information_integer);
+	dzfft2d(0, nearest_2p_dim, nearest_2p_dim, zp_temp->image_data.double_image_data, fft_zp_img, communication_work_array, &information_integer);
 
 	/* Perform the Fourier Transform: */
-	dzfft2d(1, nearest_2p_dim, nearest_2p_dim, zp_temp->image_data, fft_zp_img, communication_work_array, &information_integer);
+	dzfft2d(1, nearest_2p_dim, nearest_2p_dim, zp_temp->image_data.double_image_data, fft_zp_img, communication_work_array, &information_integer);
 
 	/* Zero pad the kernel: */
 	doublecomplex * fft_zp_kernel = (doublecomplex*)malloc((nearest_2p_dim / 2 + 1)*nearest_2p_dim * sizeof(doublecomplex));
 
-	memset(zp_temp->image_data, 0, nearest_2p_dim * nearest_2p_dim * sizeof(double));
+	memset(zp_temp->image_data.double_image_data, 0, nearest_2p_dim * nearest_2p_dim * sizeof(double));
 
 	for (unsigned int i = 0; i < height_B; i++)
 	{
-		memcpy(zp_temp->image_data + i * nearest_2p_dim,
-			src_img_B->image_data + i * width_B, width_B * sizeof(double));
+		memcpy(zp_temp->image_data.double_image_data + i * nearest_2p_dim,
+			src_img_B->image_data.double_image_data + i * width_B, width_B * sizeof(double));
 	}
 
 	/* Initialize the function: */
-	dzfft2d(0, nearest_2p_dim, nearest_2p_dim, zp_temp->image_data, fft_zp_kernel, communication_work_array, &information_integer);
+	dzfft2d(0, nearest_2p_dim, nearest_2p_dim, zp_temp->image_data.double_image_data, fft_zp_kernel, communication_work_array, &information_integer);
 
 	/* Perform the Fourier Transform: */
-	dzfft2d(1, nearest_2p_dim, nearest_2p_dim, zp_temp->image_data, fft_zp_kernel, communication_work_array, &information_integer);
+	dzfft2d(1, nearest_2p_dim, nearest_2p_dim, zp_temp->image_data.double_image_data, fft_zp_kernel, communication_work_array, &information_integer);
 
 	doublecomplex * fft_resp_to_kernel = (doublecomplex*)malloc(nearest_2p_dim * (nearest_2p_dim / 2 + 1) * sizeof(doublecomplex));
 
@@ -103,11 +103,11 @@ void FILTER_IMAGE_OPERATION::performOperation()
 
 	/* Initialize the function: */
 	zdfft2d(0, nearest_2p_dim, nearest_2p_dim, fft_resp_to_kernel,
-		zp_temp->image_data, communication_work_array, &information_integer);
+		zp_temp->image_data.double_image_data, communication_work_array, &information_integer);
 
 	/* Perform the Fourier Transform: */
 	zdfft2d(2, nearest_2p_dim, nearest_2p_dim, fft_resp_to_kernel,
-		zp_temp->image_data, communication_work_array, &information_integer);
+		zp_temp->image_data.double_image_data, communication_work_array, &information_integer);
 
 	free(fft_zp_img);
 	free(fft_zp_kernel);
@@ -122,13 +122,13 @@ void FILTER_IMAGE_OPERATION::performOperation()
 
 	if ((dst_img->width != width_A) || (dst_img->height != height_A))
 	{
-		if (dst_img->image_data)
+		if (dst_img->image_data.double_image_data)
 		{
-			free(dst_img->image_data);
+			free(dst_img->image_data.double_image_data);
 		}
 		dst_img->width = width_A;
 		dst_img->height = height_A;
-		dst_img->image_data = (double*)calloc(width_A * height_A, sizeof(double));
+		dst_img->image_data.double_image_data = (double*)calloc(width_A * height_A, sizeof(double));
 	}
 
 
@@ -164,7 +164,7 @@ void FILTER_IMAGE_OPERATION::performOperation()
 
 	for (unsigned int i = 0; i < height_A; i++)
 	{
-		memcpy(dst_img->image_data, zp_temp->image_data + (i + offset_y) * nearest_2p_dim + offset_x, width_A * sizeof(double));
+		memcpy(dst_img->image_data.double_image_data, zp_temp->image_data.double_image_data + (i + offset_y) * nearest_2p_dim + offset_x, width_A * sizeof(double));
 	}
 
 	freeImageData(zp_temp);

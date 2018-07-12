@@ -88,7 +88,7 @@ double SAVE_IMAGE_SCALAR_OPERATION::performScalarOperation()
 
 	for (unsigned int pix_position = 0; pix_position < (width*height); pix_position++)
 	{
-		fprintf(fp_img, "%u\n", (unsigned int)floor(255.0 * *(src_img->image_data + pix_position)));
+		fprintf(fp_img, "%u\n", (unsigned int)floor(255.0 * *(src_img->image_data.double_image_data + pix_position)));
 	}
 
 	fclose(fp_img);

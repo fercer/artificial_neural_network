@@ -211,13 +211,17 @@ void ROTATE_IMAGE_OPERATION::performOperation()
 	
 	if ((dst_img->width != max_width) || (dst_img->height != max_height))
 	{
-		if (dst_img->image_data)
+		if (dst_img->image_data_type == IMG_UNSET)
 		{
-			free(dst_img->image_data);
+			dst_img->image_data_type = IMG_DOUBLE;
+		}
+		else if (dst_img->image_data.double_image_data)
+		{
+			free(dst_img->image_data.double_image_data);
 		}
 		dst_img->width = max_width;
 		dst_img->height = max_height;
-		dst_img->image_data = (double*)calloc(max_width * max_height, sizeof(double));
+		dst_img->image_data.double_image_data = (double*)calloc(max_width * max_height, sizeof(double));
 	}
 	
 	if (dst_img->head_roi.next_roi)
@@ -257,7 +261,7 @@ void ROTATE_IMAGE_OPERATION::performOperation()
 	for (unsigned int i = 0; i < height_A; i++)
 	{
 		memcpy(src_temp_image_data + (width_A + 3) * (i + 1) + 1,
-			src_img_A->image_data + i*width_A, width_A * sizeof(double));
+			src_img_A->image_data.double_image_data + i*width_A, width_A * sizeof(double));
 	}
 	FILE * fp_points = fopen("points.dat", "w");
 	double interpolation_result;
@@ -275,13 +279,13 @@ void ROTATE_IMAGE_OPERATION::performOperation()
 				(src_y < 1) ||
 				(src_y > height_A))
 			{
-				*(dst_img->image_data + max_width*i + j) = 0.0;
+				*(dst_img->image_data.double_image_data + max_width*i + j) = 0.0;
 			}
 			else
 			{
 				interpolation_result = bicubicInterpolation(src_temp_image_data, src_x, src_y);
 				fprintf(fp_points, "%f %f\n", src_x, src_y);
-				*(dst_img->image_data + max_width*i + j) = interpolation_result;
+				*(dst_img->image_data.double_image_data + max_width*i + j) = interpolation_result;
 			}
 		}
 	}

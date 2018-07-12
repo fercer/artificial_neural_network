@@ -146,18 +146,20 @@ void LOAD_IMAGE_OPERATION::loadPGM_ascii(const char * src_filename)
 		dst_img = createVoidImage(width, height);
 	}
 
-
 	if ((dst_img->width != width) || (dst_img->height != height))
 	{
-		if (dst_img->image_data)
+		if (dst_img->image_data_type == IMG_UNSET)
 		{
-			free(dst_img->image_data);
+			dst_img->image_data_type = IMG_DOUBLE;
+		}
+		else if (dst_img->image_data.double_image_data)
+		{
+			free(dst_img->image_data.double_image_data);
 		}
 		dst_img->width = width;
 		dst_img->height = height;
-		dst_img->image_data = (double*)calloc(width * height, sizeof(double));
+		dst_img->image_data.double_image_data = (double*)calloc(width * height, sizeof(double));
 	}
-
 
 	if (dst_img->head_roi.next_roi)
 	{
@@ -183,7 +185,7 @@ void LOAD_IMAGE_OPERATION::loadPGM_ascii(const char * src_filename)
 	for (unsigned int pix_position = 0; pix_position < (unsigned int)(width*height); pix_position++)
 	{
 		fscanf(fp_img, "%lf\n", &pix_intensity);
-		*(dst_img->image_data + pix_position) = pix_intensity / max_intensity;
+		*(dst_img->image_data.double_image_data + pix_position) = pix_intensity / max_intensity;
 	}
 
 	fclose(fp_img);
@@ -244,16 +246,19 @@ void LOAD_IMAGE_OPERATION::loadPGM_raw(const char * src_filename)
 		dst_img = createVoidImage(width, height);
 	}
 
-
 	if ((dst_img->width != width) || (dst_img->height != height))
 	{
-		if (dst_img->image_data)
+		if (dst_img->image_data_type == IMG_UNSET)
 		{
-			free(dst_img->image_data);
+			dst_img->image_data_type = IMG_DOUBLE;
+		}
+		else if (dst_img->image_data.double_image_data)
+		{
+			free(dst_img->image_data.double_image_data);
 		}
 		dst_img->width = width;
 		dst_img->height = height;
-		dst_img->image_data = (double*)calloc(width * height, sizeof(double));
+		dst_img->image_data.double_image_data = (double*)calloc(width * height, sizeof(double));
 	}
 
 
@@ -290,7 +295,7 @@ void LOAD_IMAGE_OPERATION::loadPGM_raw(const char * src_filename)
 
 	for (unsigned int pix_position = 0; pix_position < (unsigned int)(width*height); pix_position++)
 	{
-		*(dst_img->image_data + pix_position) = (double)*(pix_intensities + pix_position) / max_intensity;
+		*(dst_img->image_data.double_image_data + pix_position) = (double)*(pix_intensities + pix_position) / max_intensity;
 	}
 	free(pix_intensities);
 }

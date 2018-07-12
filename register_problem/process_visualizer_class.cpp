@@ -31,19 +31,157 @@ void PROCESS_VISUALIZER::showProcess()
 }
 
 
+GLuint PROCESS_VISUALIZER::loadShaderProgram(const char * src_vertex_shader_filename, const char * src_fragment_shader_filename)
+{
+	FILE * vertex_shader_file = fopen(src_vertex_shader_filename, "rb");
+	if (!vertex_shader_file)
+	{
+		fprintf(stderr, "<<Error: The vertex shader file \'%s\' could not be opened>>\n", src_vertex_shader_filename);
+		return 0;
+	}
+
+	fseek(vertex_shader_file, 0L, SEEK_END);
+	long file_size = ftell(vertex_shader_file);
+
+	char * vertex_shader_string = (char*)calloc(file_size + 1, sizeof(char));
+	rewind(vertex_shader_file);
+	fread(vertex_shader_string, sizeof(char), file_size, vertex_shader_file);
+	fclose(vertex_shader_file);
+
+	char const * vertex_shader = vertex_shader_string;
+	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vertexShader, 1, &vertex_shader, NULL);
+	glCompileShader(vertexShader);
+
+	GLint shader_status;
+	int log_length;
+	
+	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &shader_status);
+	glGetShaderiv(vertexShader, GL_INFO_LOG_LENGTH, &log_length);
+
+	if (shader_status != GL_TRUE)
+	{
+		char * shader_compile_error = (char*)calloc(log_length + 1, sizeof(char));
+		glGetShaderInfoLog(vertexShader, log_length, NULL, shader_compile_error);
+		fprintf(stderr, "<<Error: Error while compiling the vertex shader, the following error was launched:\n\'%s\'\n>>\n", shader_compile_error);
+		free(shader_compile_error);
+
+		return 0;
+	}
+
+	FILE * fragment_shader_file = fopen(src_fragment_shader_filename, "rb");
+	if (!fragment_shader_file)
+	{
+		fprintf(stderr, "<<Error: The fragment shader file \'%s\' could not be opened>>\n", src_fragment_shader_filename);
+		free(vertex_shader_string);
+
+		return 0;
+	}
+
+	fseek(fragment_shader_file, 0L, SEEK_END);
+	file_size = ftell(fragment_shader_file);
+
+	char * fragment_shader_string = (char*)calloc(file_size + 1, sizeof(char));
+	rewind(fragment_shader_file);
+	fread(fragment_shader_string, sizeof(char), file_size, fragment_shader_file);
+	fclose(fragment_shader_file);
+
+	char const * fragment_shader = fragment_shader_string;
+	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragmentShader, 1, &fragment_shader, NULL);
+	glCompileShader(fragmentShader);
+
+	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &shader_status);
+	glGetShaderiv(fragmentShader, GL_INFO_LOG_LENGTH, &log_length);
+
+	if (shader_status != GL_TRUE)
+	{
+		char * shader_compile_error = (char*)calloc(log_length + 1, sizeof(char));
+		glGetShaderInfoLog(fragmentShader, log_length, NULL, shader_compile_error);
+		fprintf(stderr, "<<Error: Error while compiling the fragment shader, the following error was launched:\n\'%s\'\n>>\n", shader_compile_error);
+		free(shader_compile_error);
+		free(vertex_shader_string);
+		free(fragment_shader_string);
+
+		return 0;
+	}
+
+	GLuint shaderProgram = glCreateProgram();
+	glAttachShader(shaderProgram, vertexShader);
+	glAttachShader(shaderProgram, fragmentShader);
+	glLinkProgram(shaderProgram);
+
+	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &shader_status);
+	glGetProgramiv(shaderProgram, GL_INFO_LOG_LENGTH, &log_length);
+	if (shader_status != GL_TRUE) {
+		char * shader_compile_error = (char*)calloc(log_length + 1, sizeof(char));
+
+		glGetProgramInfoLog(shaderProgram, log_length, NULL, shader_compile_error);
+		fprintf(stderr, "<<Error: Error while compiling the shader progam, the following error was launched:\n\'%s\'\n>>\n", shader_compile_error);
+		free(shader_compile_error);
+		free(vertex_shader_string);
+		free(fragment_shader_string);
+
+		return 0;
+	}
+
+	glDetachShader(shaderProgram, vertexShader);
+	glDetachShader(shaderProgram, fragmentShader);
+
+	glDeleteShader(vertexShader);
+	glDeleteShader(fragmentShader);
+
+	free(vertex_shader_string);
+	free(fragment_shader_string);
+
+	return shaderProgram;
+}
+
+
+GLuint PROCESS_VISUALIZER::loadTextures(IMG_DATA * src_textures, const unsigned int src_color_channels)
+{
+	GLuint textureID;
+	glGenTextures(1, &textureID);
+
+	glBindTexture(GL_TEXTURE_2D, textureID);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, src_textures->width / src_color_channels, src_textures->height, 0, GL_BGR, GL_UNSIGNED_BYTE, src_textures->image_data.unsigned_character_image_data);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	return textureID;
+}
+
 
 void PROCESS_VISUALIZER::initializeGraphicEnvironment()
 {
 
-	NODE_FIGURE node_1;
-	node_1.moveFigure(1.5, 2.0);
+	FIGURE_RENDERER my_renderer;
+	TYPOGRAPHY_CLASS text_box_1;
+	text_box_1.setBoundingBox(5.0, 1.0);
+	text_box_1.loadTexture("D:/Apps/artificial_neural_network/register_problem/typography/texture_typography_map.ppm");
+	text_box_1.setBackgroundColor(255, 255, 255);
+	text_box_1.setFontColor(255, 127, 27);
+	text_box_1.setCharactersMapFilename("D:/Apps/artificial_neural_network/register_problem/typography/letter_positions.dat");
+	text_box_1.setText("Testing textboxes and other process features");
 
+	NODE_FIGURE node_1;
+	node_1.scaleFigure(0.5);
+	node_1.moveFigure(1.5, 2.0);
+	node_1.loadTexture("D:/Apps/artificial_neural_network/register_problem/node_graphics/link_nodes_raw.ppm");
+	//my_renderer.addFigure(&node_1);
+
+	my_renderer.addFigure(&text_box_1);
+	/*
 	NODE_FIGURE node_2;
 	node_2.moveFigure(2.0, 1.5);
-
-	FIGURE_RENDERER my_renderer;
-	my_renderer.addFigure(&node_1);
+	node_2.loadTexture("D:/Apps/artificial_neural_network/register_problem/node_graphics/link_nodes_raw.ppm");
 	my_renderer.addFigure(&node_2);
+	*/
 	
 
 	if (!glfwInit())
@@ -86,71 +224,7 @@ void PROCESS_VISUALIZER::initializeGraphicEnvironment()
 	glGenVertexArrays(1, &vertex_array_id);
 	glBindVertexArray(vertex_array_id);
 
-	char vertex_shader_string[] =
-		"#version 330 core\n\
-layout(location = 0) in vec3 vertexPosition;\n\
-layout(location = 1) in vec3 vertexColor;\n\
-out vec3 triangleColor;\n\
-uniform mat4 MVP;\n\
-void main()\n\
-{\n\
-gl_Position = MVP * vec4(vertexPosition, 1.0f);\n\
-triangleColor = vertexColor;\n\
-}\n";
-	
-	char const * vertex_shader = vertex_shader_string;
-	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertexShader, 1, &vertex_shader, NULL);
-	glCompileShader(vertexShader);
-
-	GLint shader_status;
-	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &shader_status);
-
-	if (shader_status != GL_TRUE)
-	{
-		char shader_compile_error[512];
-		glGetShaderInfoLog(vertexShader, 512, NULL, shader_compile_error);
-		fprintf(stderr, "<<Error: Error while compiling the vertex shader, the following error was launched:\n\'%s\'\n>>\n", shader_compile_error);
-		glfwTerminate();
-		return;
-	}
-
-	char fragment_shader_string[] =
-		"#version 330 core\n\
-in vec3 triangleColor; \n\
-out vec3 outColor;\n\
-void main()\n\
-{\n\
-outColor = triangleColor;\n\
-}\n";
-
-	char const * fragment_shader = fragment_shader_string;
-	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShader, 1, &fragment_shader, NULL);
-	glCompileShader(fragmentShader);
-
-	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &shader_status);
-
-	if (shader_status != GL_TRUE)
-	{
-		char shader_compile_error[512];
-		glGetShaderInfoLog(fragmentShader, 512, NULL, shader_compile_error);
-		fprintf(stderr, "<<Error: Error while compiling the fragment shader, the following error was launched:\n\'%s\'\n>>\n", shader_compile_error);
-		glfwTerminate();
-		return;
-	}
-	
-
-	GLuint shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glLinkProgram(shaderProgram);
-	
-	glDetachShader(shaderProgram, vertexShader);
-	glDetachShader(shaderProgram, fragmentShader);
-	
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
+	GLuint shaderProgram = loadShaderProgram("D:/Apps/artificial_neural_network/register_problem/shaders/VertexShader.vertexshader", "D:/Apps/artificial_neural_network/register_problem/shaders/FragmentShader.fragmentshader");
 	
 	GLuint MatrixID = glGetUniformLocation(shaderProgram, "MVP");
 
@@ -166,6 +240,9 @@ outColor = triangleColor;\n\
 	);
 
 	glm::mat4 VP_matrix = Projection * View;
+	
+	GLuint texture_data = loadTextures(my_renderer.getTextureData(), my_renderer.getTextureColorChannels());
+	GLuint TextureID = glGetUniformLocation(shaderProgram, "myTextureSampler");
 
 
 	GLuint nodes_positions_buffer;
@@ -178,17 +255,29 @@ outColor = triangleColor;\n\
 	glBindBuffer(GL_ARRAY_BUFFER, nodes_colors_buffer);
 	glBufferData(GL_ARRAY_BUFFER, my_renderer.getTriangesCount() * 3 * 3 * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
 
+	GLuint nodes_uv_buffer;
+	glGenBuffers(1, &nodes_uv_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, nodes_uv_buffer);
+	glBufferData(GL_ARRAY_BUFFER, my_renderer.getTriangesCount() * 2 * 3 * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
+
 	double last_time = glfwGetTime();
 	while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&  !glfwWindowShouldClose(window))
 	{
 		double delta_time = last_time - glfwGetTime();
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
+		node_1.moveFigure(cosf(5.0f*delta_time), sinf(5.0f*delta_time));
+
 		/* Use the shader program: */
 		glUseProgram(shaderProgram);
 
 		/* Send the MVP matrix */
 		glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &VP_matrix[0][0]);
+
+		// Set our "myTextureSampler" sampler to use Texture Unit 0
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture_data);
+		glUniform1i(TextureID, 0);
 
 		/* Update the vertex positions: */
 		glEnableVertexAttribArray(0);
@@ -201,11 +290,18 @@ outColor = triangleColor;\n\
 		glBindBuffer(GL_ARRAY_BUFFER, nodes_colors_buffer);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, my_renderer.getTriangesCount() * 3 * 3 * sizeof(GLfloat), my_renderer.getColorValues());
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-		
+
+		/* Color values */
+		glEnableVertexAttribArray(2);
+		glBindBuffer(GL_ARRAY_BUFFER, nodes_uv_buffer);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, my_renderer.getTriangesCount() * 2 * 3 * sizeof(GLfloat), my_renderer.getUVValues());
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
 		glDrawArrays(GL_TRIANGLES, 0, 3 * my_renderer.getTriangesCount());
 		
 		glDisableVertexAttribArray(0);
 		glDisableVertexAttribArray(1);
+		glDisableVertexAttribArray(2);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -213,7 +309,9 @@ outColor = triangleColor;\n\
 
 	glDeleteBuffers(1, &nodes_positions_buffer);
 	glDeleteBuffers(1, &nodes_colors_buffer);
+	glDeleteBuffers(1, &nodes_uv_buffer);
 	glDeleteProgram(shaderProgram);
+	glDeleteTextures(1, &texture_data);
 	glDeleteVertexArrays(1, &vertex_array_id);
 	
 	glfwTerminate();

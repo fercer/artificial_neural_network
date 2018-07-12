@@ -313,7 +313,7 @@ void data_handler::loadDataXML()
 				char * label_node_character_value = label_node->first_attribute("value")->value();
 
 				*(outputs_list_tail->variable_value.output + current_label) = atoi(label_node_character_value);
-				*(outputs_float_list_tail->variable_value.output + current_label) = atof(label_node_character_value);
+				*(outputs_float_list_tail->variable_value.output + current_label) = atoi(label_node_character_value);
 			}
 		}
 	}

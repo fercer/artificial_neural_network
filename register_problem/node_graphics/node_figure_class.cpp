@@ -13,6 +13,8 @@ NODE_FIGURE::NODE_FIGURE()
 	initializeUVValues();
 }
 
+
+
 NODE_FIGURE::NODE_FIGURE(const NODE_FIGURE& src_node_figure)
 {
 	triangles_count = 8;
@@ -24,16 +26,25 @@ NODE_FIGURE::NODE_FIGURE(const NODE_FIGURE& src_node_figure)
 	copyFigure2d(src_node_figure);
 }
 
+
+
 NODE_FIGURE NODE_FIGURE::operator=(const NODE_FIGURE& src_node_figure)
 {
-	copyFigure2d(src_node_figure);
+	if (this != &src_node_figure)
+	{
+		copyFigure2d(src_node_figure);
+	}
 
 	return *this;
 }
 
+
+
 NODE_FIGURE::~NODE_FIGURE()
 {
 }
+
+
 
 void NODE_FIGURE::initializeVerticesPositions()
 {
@@ -242,146 +253,166 @@ void NODE_FIGURE::initializeColorValues()
 
 void NODE_FIGURE::initializeUVValues()
 {
-	unsigned int current_position = 0;
+	GLfloat * uv_values_ptr = uv_values;
 
 	/* Logo to identify the node type: */
-	uv_values[current_position++] = 0.0f;
-	uv_values[current_position++] = 0.25f;
-	uv_values[current_position++] = 0.0f;
-	uv_values[current_position++] = 0.5f;
-	uv_values[current_position++] = 0.5f;
-	uv_values[current_position++] = 0.25f;
-	uv_values[current_position++] = 0.0f;
-	uv_values[current_position++] = 0.25f;
-	uv_values[current_position++] = 0.0f;
-	uv_values[current_position++] = 0.5f;
-	uv_values[current_position++] = 0.5f;
-	uv_values[current_position++] = 0.25f;
+	*(uv_values_ptr++) = 0.0f;
+	*(uv_values_ptr++) = 1.0f - 0.25f;
+
+	*(uv_values_ptr++) = 0.0f;
+	*(uv_values_ptr++) = 1.0f - 0.5f;
+
+	*(uv_values_ptr++) = 0.5f;
+	*(uv_values_ptr++) = 1.0f - 0.25f;
+
+	*(uv_values_ptr++) = 0.0f;
+	*(uv_values_ptr++) = 1.0f - 0.25f;
+
+	*(uv_values_ptr++) = 0.0f;
+	*(uv_values_ptr++) = 1.0f - 0.5f;
+
+	*(uv_values_ptr++) = 0.5f;
+	*(uv_values_ptr++) = 1.0f - 0.25f;
 
 	/* Node's name background: */
-	uv_values[current_position++] = 0.0f;
-	uv_values[current_position++] = 0.5f;
-	uv_values[current_position++] = 0.5f;
-	uv_values[current_position++] = 0.5f;
-	uv_values[current_position++] = 0.5f;
-	uv_values[current_position++] = 0.25f;
-	uv_values[current_position++] = 0.0f;
-	uv_values[current_position++] = 0.5f;
-	uv_values[current_position++] = 0.5f;
-	uv_values[current_position++] = 0.5f;
-	uv_values[current_position++] = 0.5f;
-	uv_values[current_position++] = 0.25f;
+	*(uv_values_ptr++) = 0.0f;
+	*(uv_values_ptr++) = 1.0f - 0.5f;
+
+	*(uv_values_ptr++) = 0.5f;
+	*(uv_values_ptr++) = 1.0f - 0.5f;
+
+	*(uv_values_ptr++) = 0.5f;
+	*(uv_values_ptr++) = 1.0f - 0.25f;
+
+	*(uv_values_ptr++) = 0.0f;
+	*(uv_values_ptr++) = 1.0f - 0.5f;
+
+	*(uv_values_ptr++) = 0.5f;
+	*(uv_values_ptr++) = 1.0f - 0.5f;
+
+	*(uv_values_ptr++) = 0.5f;
+	*(uv_values_ptr++) = 1.0f - 0.25f;
 
 	/* Node canvas */
-	uv_values[current_position++] = 0.5f;
-	uv_values[current_position++] = 0.25f;
-	uv_values[current_position++] = 0.5f;
-	uv_values[current_position++] = 0.5f;
-	uv_values[current_position++] = 1.0f;
-	uv_values[current_position++] = 0.5f;
-	uv_values[current_position++] = 0.5f;
-	uv_values[current_position++] = 0.25f;
-	uv_values[current_position++] = 0.5f;
-	uv_values[current_position++] = 0.5f;
-	uv_values[current_position++] = 1.0f;
-	uv_values[current_position++] = 0.5f;
+	*(uv_values_ptr++) = 0.5f;
+	*(uv_values_ptr++) = 1.0f - 0.25f;
+
+	*(uv_values_ptr++) = 0.5f;
+	*(uv_values_ptr++) = 1.0f - 0.5f;
+
+	*(uv_values_ptr++) = 1.0f;
+	*(uv_values_ptr++) = 1.0f - 0.5f;
+
+	*(uv_values_ptr++) = 0.5f;
+	*(uv_values_ptr++) = 1.0f - 0.25f;
+
+	*(uv_values_ptr++) = 0.5f;
+	*(uv_values_ptr++) = 1.0f - 0.5f;
+
+	*(uv_values_ptr++) = 1.0f;
+	*(uv_values_ptr++) = 1.0f - 0.5f;
 
 	/* Value background */
-	uv_values[current_position++] = 0.5f;
-	uv_values[current_position++] = 0.25f;
-	uv_values[current_position++] = 1.0f;
-	uv_values[current_position++] = 0.5f;
-	uv_values[current_position++] = 1.0f;
-	uv_values[current_position++] = 0.25f;
-	uv_values[current_position++] = 0.5f;
-	uv_values[current_position++] = 0.25f;
-	uv_values[current_position++] = 1.0f;
-	uv_values[current_position++] = 0.5f;
-	uv_values[current_position++] = 1.0f;
-	uv_values[current_position++] = 0.25f;
+	*(uv_values_ptr++) = 0.5f;
+	*(uv_values_ptr++) = 1.0f - 0.25f;
+
+	*(uv_values_ptr++) = 1.0f;
+	*(uv_values_ptr++) = 1.0f - 0.5f;
+	
+	*(uv_values_ptr++) = 1.0f;
+	*(uv_values_ptr++) = 1.0f - 0.25f;
+
+	*(uv_values_ptr++) = 0.5f;
+	*(uv_values_ptr++) = 1.0f - 0.25f;
+
+	*(uv_values_ptr++) = 1.0f;
+	*(uv_values_ptr++) = 1.0f - 0.5f;
+
+	*(uv_values_ptr++) = 1.0f;
+	*(uv_values_ptr++) = 1.0f - 0.25f;
 }
 
 void NODE_FIGURE::initializeNormalVectors()
 {
-	unsigned int current_position = 0;
+	GLfloat * normal_vectors_ptr = normal_vectors;
 
 	/* Logo to identify the node type: */
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 1.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 1.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 1.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 1.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 1.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 1.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 1.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 1.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 1.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 1.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 1.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 1.0f;
 
 	/* Node's name background: */
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 1.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 1.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 1.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 1.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 1.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 1.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 1.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 1.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 1.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 1.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 1.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 1.0f;
 
 	/* Node canvas */
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 1.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 1.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 1.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 1.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 1.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 1.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 1.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 1.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 1.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 1.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 1.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 1.0f;
 
 	/* Value background */
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 1.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 1.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 1.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 1.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 1.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 0.0f;
-	normal_vectors[current_position++] = 1.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 1.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 1.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 1.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 1.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 1.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 0.0f;
+	*(normal_vectors_ptr++) = 1.0f;
 }

@@ -37,9 +37,9 @@ double MAX_IMAGE_SCALAR_OPERATION::performScalarOperation()
 	double max = std::numeric_limits<double>::lowest();
 	for (unsigned int xy = 0; xy < height * width; xy++)
 	{
-		if (max < *(src_img->image_data + xy))
+		if (max < *(src_img->image_data.double_image_data + xy))
 		{
-			max = *(src_img->image_data + xy);
+			max = *(src_img->image_data.double_image_data + xy);
 		}
 	}
 	

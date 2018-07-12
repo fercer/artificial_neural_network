@@ -14,7 +14,8 @@
 #include "node_graphics/figure_2d_class.h"
 #include "node_graphics/node_figure_class.h"
 #include "node_graphics/figure_renderer_class.h"
-
+#include "node_graphics/typography_class.h"
+#include "image_functions.h"
 
 class PROCESS_VISUALIZER
 {
@@ -25,6 +26,10 @@ public:
 	~PROCESS_VISUALIZER();
 
 	void showProcess();
+
+	GLuint loadShaderProgram(const char * src_vertex_shader_filename, const char * src_fragment_shader_filename);
+
+	GLuint loadTextures(IMG_DATA * src_textures, const unsigned int src_color_channels = 1);
 
 private:
 	bool opengl_initialized;

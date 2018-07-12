@@ -283,7 +283,7 @@ void TEXT_IMAGE_OPERATION::loadCharacters()
 			fscanf(fp_character_dimensions, "%s", headers);
 		}
 	}
-	unsigned int path_length = strlen(string_nodes_list.getNodeValue(0)->getScalarValue()) + 13 + 1;
+	unsigned int path_length = (unsigned int) strlen(string_nodes_list.getNodeValue(0)->getScalarValue()) + 13 + 1;
 	char * char_image_filename = (char*)calloc(path_length, sizeof(char));
 	character_set = (IMG_DATA**)malloc(224 * sizeof(IMG_DATA*));
 
@@ -327,7 +327,7 @@ void TEXT_IMAGE_OPERATION::loadCharacters()
 			(character_dimensions + char_id - 32)->LL_y = (*(character_set + char_id - 32))->height - 1;
 		}
 
-		const int max_y = (character_dimensions + char_id - 32)->LL_y;
+		const unsigned int max_y = (character_dimensions + char_id - 32)->LL_y;
 
 		if (max_height < max_y)
 		{
@@ -359,8 +359,8 @@ void TEXT_IMAGE_OPERATION::addCharacter(const unsigned int src_position_x, const
 	{
 		for (unsigned int x = min_x; x <= max_x; x++)
 		{
-			*(dst_img->image_data + (src_position_y + y) * computable_width + src_position_x + x - min_x) =
-				*((*(character_set + src_character_code))->image_data + y * character_width + x);
+			*(dst_img->image_data.double_image_data + (src_position_y + y) * computable_width + src_position_x + x - min_x) =
+				*((*(character_set + src_character_code))->image_data.double_image_data + y * character_width + x);
 		}
 	}
 }

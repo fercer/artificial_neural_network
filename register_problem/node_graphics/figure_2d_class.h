@@ -12,6 +12,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <string.h>
+#include "../image_functions.h"
 
 class FIGURE_2D
 {
@@ -21,7 +22,7 @@ public:
 	FIGURE_2D(const float initial_position_x, const float initial_position_y, const float initial_position_z = 0.0f, const float src_scale = 1.0);
 
 	FIGURE_2D(const FIGURE_2D& src_node_figure);
-	
+
 	virtual ~FIGURE_2D();
 
 	void moveFigure(const float delta_x, const float delta_y, const float delta_z = 0.0f);
@@ -35,22 +36,22 @@ public:
 	GLfloat * getNormalVectors();
 
 	unsigned int getColorChannels();
-	unsigned int getTextureWidth();
-	unsigned int getTextureHeight();
-	unsigned char * getTextureData();;
-	
+	IMG_DATA * getTextureData();
+
 	void loadTexture(const char * src_filename);
-	
+
 	glm::mat4 getPosition();
 	glm::mat4 getScale();
 
-protected:	
+protected:
 	glm::vec3 * vertices_positions;
 	GLfloat * color_values;
 	GLfloat * uv_values;
 	GLfloat * normal_vectors;
 
 	unsigned int triangles_count;
+	unsigned int color_channels;
+	IMG_DATA * texture_data;
 
 	void copyFigure2d(const FIGURE_2D& src_node_figure);
 
@@ -65,10 +66,6 @@ private:
 	glm::mat4 figure_traslation;
 	glm::mat4 figure_scale;
 
-	unsigned char * texture_data;
-	unsigned int color_channels;
-	unsigned int width;
-	unsigned int height;
 
 	void loadPGM_ascii(const char * src_filename);
 

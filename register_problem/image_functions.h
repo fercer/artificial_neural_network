@@ -26,11 +26,36 @@ typedef struct ROI_BBOX /* [R]egion [O]f [I]nterest [B]ounding [BOX]*/
 	ROI_BBOX * next_roi;
 } ROI_BBOX;
 
+
+typedef enum IMG_TYPE
+{
+	IMG_DOUBLE = 0,
+	IMG_FLOAT = 1,
+	IMG_INT = 2,
+	IMG_UINT = 3,
+	IMG_CHAR = 4,
+	IMG_UCHAR = 5,
+	IMG_UNSET = 6
+} IMG_TYPE;
+
+
+typedef union IMG_DATA_TYPE
+{
+	double * double_image_data;
+	float * float_image_data;
+	int * integer_image_data;
+	unsigned int * unsigned_integer_image_data;
+	char * character_image_data;
+	unsigned char * unsigned_character_image_data;
+} IMG_DATA_TYPE;
+
+
 typedef struct IMG_DATA {
 	unsigned int width, height;
 	ROI_BBOX head_roi;
 	ROI_BBOX * tail_roi;
-	double * image_data;
+	IMG_TYPE image_data_type;
+	IMG_DATA_TYPE image_data;
 } IMG_DATA;
 
 typedef struct POSITION_NODE
@@ -42,14 +67,8 @@ typedef struct POSITION_NODE
 	POSITION_NODE * right_leaf;
 } POSITION_NODE;
 
-IMG_DATA * loadImagePGM(const char * filename);
 void saveImagePGM(const char * filename, IMG_DATA * src_img);
-double computeLoss(IMG_DATA * src_diff_img);
-
-IMG_DATA * computeDerivativesX(IMG_DATA * src_img);
-IMG_DATA * computeDerivativesY(IMG_DATA * src_img);
-IMG_DATA * createVoidImage(const int src_width, const int src_height);
-IMG_DATA * diffImage(IMG_DATA * src_img, IMG_DATA * trg_img, const double delta_x, const double delta_y);
+IMG_DATA * createVoidImage(const int src_width, const int src_height, const IMG_TYPE src_img_type = IMG_DOUBLE);
 
 void freeImageData(IMG_DATA * src_img_data_ptr);
 

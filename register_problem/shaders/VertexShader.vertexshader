@@ -1,0 +1,30 @@
+#version 330 core
+
+// Vertice position:
+layout(location = 0) in vec3 vertexPosition;
+
+// Color of each vertex:
+layout(location = 1) in vec3 vertexColor;
+
+// UV coordinates:
+layout(location = 2) in vec2 vertexUV;
+
+// Interpolated color from the vertices:
+out vec3 triangleColor;
+
+// UV vertices to use the textures:
+out vec2 UV;
+
+// Model, view and projection matrices:
+uniform mat4 MVP;
+
+void main()
+{
+	// Positioning the vertex in the world position:
+	gl_Position = MVP * vec4(vertexPosition, 1.0f);
+
+	// Interpolate the vertex color to the triangle face:
+	triangleColor = vertexColor;
+
+	UV = vertexUV;
+}

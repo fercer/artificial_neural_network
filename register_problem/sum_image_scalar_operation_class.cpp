@@ -1,9 +1,9 @@
 #include "sum_image_scalar_operation_class.h"
 
+
 SUM_IMAGE_SCALAR_OPERATION::SUM_IMAGE_SCALAR_OPERATION()
 {
 }
-
 
 
 SUM_IMAGE_SCALAR_OPERATION::SUM_IMAGE_SCALAR_OPERATION(const SUM_IMAGE_SCALAR_OPERATION & src_sum_image_scalar_operation)
@@ -37,7 +37,7 @@ double SUM_IMAGE_SCALAR_OPERATION::performScalarOperation()
 	double sum = 0.0;
 	for (unsigned int xy = 0; xy < height * width; xy++)
 	{
-		sum += *(src_img->image_data + xy);
+		sum += *(src_img->image_data.double_image_data + xy);
 	}
 	return sum;
 }

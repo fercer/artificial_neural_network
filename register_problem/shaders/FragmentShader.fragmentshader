@@ -1,0 +1,19 @@
+#version 330 core
+
+// Triangle interpolated color from the vertices:
+in vec3 triangleColor;
+
+// The UV coordinates to use a texture:
+in vec2 UV;
+
+// Fragment colored triangle
+out vec3 outColor;
+
+// The texture sampler:
+uniform sampler2D myTextureSampler;
+
+void main()
+{
+	//outColor = triangleColor;
+	outColor = texture(myTextureSampler, UV).rgb;
+}

@@ -14,6 +14,7 @@
 #include <string.h>
 #include <vector>
 
+#include "../image_functions.h"
 #include "figure_2d_class.h"
 
 class FIGURE_RENDERER
@@ -27,11 +28,9 @@ public:
 
 	void addFigure(FIGURE_2D * src_figure);
 	
-	unsigned int getTexturesWidth();
-	unsigned int getTexturesHeight();
 	unsigned int getTextureColorChannels();
 	unsigned int getTriangesCount();
-	unsigned char * getTextureData();
+	IMG_DATA * getTextureData();
 
 	GLfloat * getVerticesPositions();
 	GLfloat * getColorValues();
@@ -59,10 +58,9 @@ private:
 	unsigned int last_triangles_count;
 	unsigned int triangles_count;
 
-	unsigned int width;
-	unsigned int height;
 	unsigned int color_channels;
-	unsigned char * texture_data;
+
+	IMG_DATA * texture_data;
 };
 
 #endif // FIGURE_RENDERER_CLASS_H_INCLUDED

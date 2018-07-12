@@ -17,11 +17,57 @@ void saveImagePGM(const char * filename, IMG_DATA * src_img)
 	fprintf(fp_img, "%i %i\n", width, height);
 	
 	fprintf(fp_img, "255\n");
-
-	unsigned char pix_intensity;
-	for (unsigned int pix_position = 0; pix_position < (unsigned int)(width*height); pix_position++)
+	
+	switch (src_img->image_data_type)
 	{
-		fprintf(fp_img, "%u\n", (unsigned int)floor(255.0 * *(src_img->image_data + pix_position)));
+	case IMG_DOUBLE:
+		for (unsigned int pix_position = 0; pix_position < (unsigned int)(width*height); pix_position++)
+		{
+			fprintf(fp_img, "%u\n", (unsigned int)floor(255.0 * *(src_img->image_data.double_image_data + pix_position)));
+		}
+		break;
+
+	case IMG_FLOAT:
+		for (unsigned int pix_position = 0; pix_position < (unsigned int)(width*height); pix_position++)
+		{
+			fprintf(fp_img, "%u\n", (unsigned int)floorf(255.0f * *(src_img->image_data.float_image_data + pix_position)));
+		}
+		break;
+
+	case IMG_INT:
+		for (unsigned int pix_position = 0; pix_position < (unsigned int)(width*height); pix_position++)
+		{
+			fprintf(fp_img, "%u\n", (unsigned int)*(src_img->image_data.integer_image_data + pix_position));
+		}
+		break;
+
+	case IMG_UINT:
+		for (unsigned int pix_position = 0; pix_position < (unsigned int)(width*height); pix_position++)
+		{
+			fprintf(fp_img, "%u\n", *(src_img->image_data.unsigned_integer_image_data + pix_position));
+		}
+		break;
+
+	case IMG_CHAR:
+		for (unsigned int pix_position = 0; pix_position < (unsigned int)(width*height); pix_position++)
+		{
+			fprintf(fp_img, "%u\n", (unsigned int)*(src_img->image_data.character_image_data + pix_position));
+		}
+		break;
+
+	case IMG_UCHAR:
+		for (unsigned int pix_position = 0; pix_position < (unsigned int)(width*height); pix_position++)
+		{
+			fprintf(fp_img, "%u\n", (unsigned int)*(src_img->image_data.unsigned_character_image_data + pix_position));
+		}
+		break;
+
+	case IMG_UNSET:
+		break;
+
+	default:
+		fprintf(stderr, "<<Error: The source image data type is unknown>>\n");
+		break;
 	}
 
 	fclose(fp_img);
@@ -29,130 +75,7 @@ void saveImagePGM(const char * filename, IMG_DATA * src_img)
 
 
 
-double computeLoss(IMG_DATA * src_diff_img)
-{
-	ROI_BBOX * next_roi = src_diff_img->head_roi.next_roi;
-	ROI_BBOX * current_roi;
-
-	double cost = 0.0;
-
-	while (next_roi)
-	{
-		current_roi = next_roi;
-		next_roi = current_roi->next_roi;
-
-		const unsigned int roi_x_ini = current_roi->UL_x;
-		const unsigned int roi_x_end = current_roi->LR_x;
-		const unsigned int roi_y_ini = current_roi->UL_y;
-		const unsigned int roi_y_end = current_roi->LR_y;
-
-		switch (current_roi->ROI_type)
-		{
-		case RBT_INTERSECTION:
-			for (unsigned int y = roi_y_ini; y < roi_y_end; y++)
-			{
-				for (unsigned int x = roi_x_ini; x < roi_x_end; x++)
-				{
-					const double d_intensity = *(src_diff_img->image_data + y * src_diff_img->width + x);
-					cost += d_intensity*d_intensity;
-				}
-			}
-			break;
-
-		case RBT_AREA:
-		case RBT_TARGET:
-		case RBT_SOURCE:
-		case RBT_UNCOMPUTED:
-			break;
-		}
-	}
-	
-	return cost / 2.0;
-}
-
-
-
-IMG_DATA * computeDerivativesX(IMG_DATA * src_img)
-{
-	const unsigned int src_width = src_img->width;
-	const unsigned int src_height = src_img->height;
-
-	// Extend the boundaries of the source image:
-	double * exp_img = (double*)malloc((src_width + 2) * (src_height + 2) * sizeof(double));
-
-	*(exp_img) = 0.0;
-	*(exp_img + src_width + 1) = 0.0;
-	*(exp_img + (src_height + 1) * (src_width + 2)) = 0.0;
-	*(exp_img + (src_height + 2) * (src_width + 2) - 1) = 0.0;
-	memcpy(exp_img + 1, src_img->image_data, src_width * sizeof(double));
-	for (unsigned int y = 0; y < src_height; y++)
-	{
-		memcpy(exp_img + (y + 1)*(src_width + 2) + 1, src_img->image_data + y*src_width, src_width * sizeof(double));
-
-		*(exp_img + (y + 1)*(src_width + 2)) = *(exp_img + (y + 1)*(src_width + 2) + 1);
-		*(exp_img + (y + 1)*(src_width + 2) + src_width + 1) = *(exp_img + (y + 1)*(src_width + 2) + src_width);
-	}
-	memcpy(exp_img + (src_height + 1) * (src_width + 2) + 1, src_img->image_data + (src_height - 1) * src_width, src_width * sizeof(double));
-
-	IMG_DATA * dst_dx_img = createVoidImage(src_width, src_height);
-
-	// Perform the numeric derivatives:
-	for (unsigned int y = 0; y < src_height; y++)
-	{
-		for (unsigned int x = 0; x < src_width; x++)
-		{
-			const double dx_value = (*(exp_img + (y + 1)*(src_width + 2) + x + 2) - *(exp_img + (y + 1)*(src_width + 2) + x)) / 2.0;
-			*(dst_dx_img->image_data + y * src_width + x) = dx_value;
-		}
-	}
-	
-	free(exp_img);
-	return dst_dx_img;
-}
-
-
-
-IMG_DATA * computeDerivativesY(IMG_DATA * src_img)
-{
-	const unsigned int src_width = src_img->width;
-	const unsigned int src_height = src_img->height;
-
-	// Extend the boundaries of the source image:
-	double * exp_img = (double*)malloc((src_width + 2) * (src_height + 2) * sizeof(double));
-
-	*(exp_img) = 0.0;
-	*(exp_img + src_width + 1) = 0.0;
-	*(exp_img + (src_height + 1) * (src_width + 2)) = 0.0;
-	*(exp_img + (src_height + 2) * (src_width + 2) - 1) = 0.0;
-	memcpy(exp_img + 1, src_img->image_data, src_width * sizeof(double));
-	for (unsigned int y = 0; y < src_height; y++)
-	{
-		memcpy(exp_img + (y + 1)*(src_width + 2) + 1, src_img->image_data + y*src_width, src_width * sizeof(double));
-
-		*(exp_img + (y + 1)*(src_width + 2)) = *(exp_img + (y + 1)*(src_width + 2) + 1);
-		*(exp_img + (y + 1)*(src_width + 2) + src_width + 1) = *(exp_img + (y + 1)*(src_width + 2) + src_width);
-	}
-	memcpy(exp_img + (src_height + 1) * (src_width + 2) + 1, src_img->image_data + (src_height - 1) * src_width, src_width * sizeof(double));
-
-	IMG_DATA * dst_dy_img = createVoidImage(src_width, src_height);
-
-	// Perform the numeric derivatives:
-	for (unsigned int y = 0; y < src_height; y++)
-	{
-		for (unsigned int x = 0; x < src_width; x++)
-		{
-			const double dy_value = (*(exp_img + (y + 2)*(src_width + 2) + x + 1) - *(exp_img + y*(src_width + 2) + x + 1)) / 2.0;
-			*(dst_dy_img->image_data + y * src_width + x) = dy_value;
-		}
-	}
-	free(exp_img);
-
-	return dst_dy_img;
-}
-
-
-
-IMG_DATA * createVoidImage(const int src_width, const int src_height)
+IMG_DATA * createVoidImage(const int src_width, const int src_height, const IMG_TYPE src_img_type)
 {
 	IMG_DATA * new_img = (IMG_DATA*)malloc(sizeof(IMG_DATA));
 
@@ -175,8 +98,44 @@ IMG_DATA * createVoidImage(const int src_width, const int src_height)
 	new_img->head_roi.LL_x = UL_x;
 	new_img->head_roi.LL_y = UL_y + src_height - 1;
 
-	new_img->image_data = (double*)calloc(src_height * src_width, sizeof(double));
-	
+	new_img->image_data_type = src_img_type;
+
+	switch (src_img_type)
+	{
+	case IMG_DOUBLE:
+		new_img->image_data.double_image_data = (double*)malloc(src_width * src_height * sizeof(double*));
+		break;
+
+	case IMG_FLOAT:
+		new_img->image_data.float_image_data = (float*)malloc(src_width * src_height * sizeof(float*));
+		break;
+
+	case IMG_INT:
+		new_img->image_data.integer_image_data = (int*)malloc(src_width * src_height * sizeof(int*));
+		break;
+
+	case IMG_UINT:
+		new_img->image_data.unsigned_integer_image_data = (unsigned int*)malloc(src_width * src_height * sizeof(unsigned int*));
+		break;
+
+	case IMG_CHAR:
+		new_img->image_data.character_image_data = (char*)malloc(src_width * src_height * sizeof(char*));
+		break;
+
+	case IMG_UCHAR:
+		new_img->image_data.unsigned_character_image_data = (unsigned char*)malloc(src_width * src_height * sizeof(unsigned char*));
+		break;
+
+	case IMG_UNSET:
+		break;
+
+	default:
+		fprintf(stderr, "<<Error: The image data type is unknown>>\n");
+		free(new_img);
+		return NULL;
+		break;
+	}
+
 	return new_img;
 }
 
@@ -194,10 +153,41 @@ void freeImageData(IMG_DATA * src_img_data_ptr)
 		free(current_roi_node);
 	}
 
-	if (src_img_data_ptr->image_data)
+	switch (src_img_data_ptr->image_data_type)
 	{
-		free(src_img_data_ptr->image_data);
+	case IMG_DOUBLE:
+		free(src_img_data_ptr->image_data.double_image_data);
+		break;
+
+	case IMG_FLOAT:
+		free(src_img_data_ptr->image_data.float_image_data);
+		break;
+
+	case IMG_INT:
+		free(src_img_data_ptr->image_data.integer_image_data);
+		break;
+
+	case IMG_UINT:
+		free(src_img_data_ptr->image_data.unsigned_integer_image_data);
+		break;
+
+	case IMG_CHAR:
+		free(src_img_data_ptr->image_data.character_image_data);
+		break;
+
+	case IMG_UCHAR:
+		free(src_img_data_ptr->image_data.unsigned_character_image_data);
+		break;
+
+	case IMG_UNSET:
+		break;
+
+	default:
+		fprintf(stderr, "<<Error: The destination image data type is unknown>>\n");
+		return;
+		break;
 	}
+
 	free(src_img_data_ptr);
 }
 
@@ -351,9 +341,45 @@ IMG_DATA * createFromImageData(const IMG_DATA * src_img)
 
 	dst_img->width = width;
 	dst_img->height = height;
-	dst_img->image_data = (double*)malloc(width * height * sizeof(double*));
+	switch (src_img->image_data_type)
+	{
+	case IMG_DOUBLE:
+		dst_img->image_data.double_image_data = (double*)malloc(width * height * sizeof(double*));
+		memcpy(dst_img->image_data.double_image_data, src_img->image_data.double_image_data, width * height * sizeof(double));
+		break;
 	
-	memcpy(dst_img->image_data, src_img->image_data, width * height * sizeof(double));
+	case IMG_FLOAT:
+		dst_img->image_data.float_image_data = (float*)malloc(width * height * sizeof(float*));
+		memcpy(dst_img->image_data.float_image_data, src_img->image_data.float_image_data, width * height * sizeof(float));
+		break;
+	
+	case IMG_INT:
+		dst_img->image_data.integer_image_data = (int*)malloc(width * height * sizeof(int*));
+		memcpy(dst_img->image_data.integer_image_data, src_img->image_data.integer_image_data, width * height * sizeof(int));
+		break;
+	
+	case IMG_UINT:
+		dst_img->image_data.unsigned_integer_image_data = (unsigned int*)malloc(width * height * sizeof(unsigned int*));
+		memcpy(dst_img->image_data.unsigned_integer_image_data, src_img->image_data.unsigned_integer_image_data, width * height * sizeof(unsigned int));
+		break;
+	
+	case IMG_CHAR:
+		dst_img->image_data.character_image_data = (char*)malloc(width * height * sizeof(char*));
+		memcpy(dst_img->image_data.character_image_data, src_img->image_data.character_image_data, width * height * sizeof(char));
+		break;
+	
+	case IMG_UCHAR:
+		dst_img->image_data.unsigned_character_image_data = (unsigned char*)malloc(width * height * sizeof(unsigned char*));
+		memcpy(dst_img->image_data.unsigned_character_image_data, src_img->image_data.unsigned_character_image_data, width * height * sizeof(unsigned char));
+		break;
+	
+	default:
+		fprintf(stderr, "<<Error: The image data type is unknown>>\n");
+		free(dst_img);
+		return NULL;
+		break;
+	}
+
 	memcpy(&dst_img->head_roi, &src_img->head_roi, sizeof(ROI_BBOX));
 	dst_img->head_roi.next_roi = NULL;
 	dst_img->tail_roi = &dst_img->head_roi;
@@ -385,28 +411,153 @@ void copyImageData(const IMG_DATA * src_img, IMG_DATA * dst_img)
 		return;
 	}
 
-	const unsigned int width = src_img->width;
-	const unsigned int height = src_img->height;
-	
-	if (dst_img->image_data)
+	if (dst_img->image_data_type != src_img->image_data_type)
 	{
-		if ((dst_img->width != width) || (dst_img->height != height))
+		switch (dst_img->image_data_type)
 		{
-			free(dst_img->image_data);
-			dst_img->width = width;
-			dst_img->height = height;
-			dst_img->image_data = (double*)malloc(width * height * sizeof(double*));
+		case IMG_DOUBLE:
+			free(dst_img->image_data.double_image_data);
+			break;
+
+		case IMG_FLOAT:
+			free(dst_img->image_data.float_image_data);
+			break;
+
+		case IMG_INT:
+			free(dst_img->image_data.integer_image_data);
+			break;
+
+		case IMG_UINT:
+			free(dst_img->image_data.unsigned_integer_image_data);
+			break;
+
+		case IMG_CHAR:
+			free(dst_img->image_data.character_image_data);
+			break;
+
+		case IMG_UCHAR:
+			free(dst_img->image_data.unsigned_character_image_data);
+			break;
+
+		default:
+			fprintf(stderr, "<<Error: The destination image data type is unknown>>\n");
+			return;
+			break;
 		}
 
-		memcpy(dst_img->image_data, src_img->image_data, width * height * sizeof(double));
+		dst_img->image_data_type = IMG_UNSET;
 	}
-	else
+
+	switch (src_img->image_data_type)
 	{
-		dst_img->width = width;
-		dst_img->height = height;
-		dst_img->image_data = (double*)malloc(width * height * sizeof(double*));
-		memcpy(dst_img->image_data, src_img->image_data, width * height * sizeof(double));
+	case IMG_DOUBLE:
+		if (dst_img->image_data_type == IMG_UNSET || !dst_img->image_data.double_image_data)
+		{
+			dst_img->image_data.double_image_data = (double*)malloc(src_img->width * src_img->height * sizeof(double*));
+		}
+		else if ((dst_img->width != src_img->width) || (dst_img->height != src_img->height))
+		{
+			free(dst_img->image_data.double_image_data);
+			dst_img->image_data.double_image_data = (double*)malloc(src_img->width * src_img->height * sizeof(double*));
+		}
+
+		dst_img->width = src_img->width;
+		dst_img->height = src_img->height;
+		memcpy(dst_img->image_data.double_image_data, src_img->image_data.double_image_data, src_img->width * src_img->height * sizeof(double));
+		
+		break;
+
+	case IMG_FLOAT:
+		if (dst_img->image_data_type == IMG_UNSET || !dst_img->image_data.float_image_data)
+		{
+			dst_img->image_data.float_image_data = (float*)malloc(src_img->width * src_img->height * sizeof(float*));
+		}
+		else if ((dst_img->width != src_img->width) || (dst_img->height != src_img->height))
+		{
+			free(dst_img->image_data.float_image_data);
+			dst_img->image_data.float_image_data = (float*)malloc(src_img->width * src_img->height * sizeof(float*));
+		}
+
+		dst_img->width = src_img->width;
+		dst_img->height = src_img->height;
+		memcpy(dst_img->image_data.float_image_data, src_img->image_data.float_image_data, src_img->width * src_img->height * sizeof(float));
+
+		break;
+
+	case IMG_INT:
+		if (dst_img->image_data_type == IMG_UNSET || !dst_img->image_data.integer_image_data)
+		{
+			dst_img->image_data.integer_image_data = (int*)malloc(src_img->width * src_img->height * sizeof(int*));
+		}
+		else if ((dst_img->width != src_img->width) || (dst_img->height != src_img->height))
+		{
+			free(dst_img->image_data.integer_image_data);
+			dst_img->image_data.integer_image_data = (int*)malloc(src_img->width * src_img->height * sizeof(int*));
+		}
+
+		dst_img->width = src_img->width;
+		dst_img->height = src_img->height;
+		memcpy(dst_img->image_data.integer_image_data, src_img->image_data.integer_image_data, src_img->width * src_img->height * sizeof(int));
+
+		break;
+
+	case IMG_UINT:
+		if (dst_img->image_data_type == IMG_UNSET || !dst_img->image_data.unsigned_integer_image_data)
+		{
+			dst_img->image_data.unsigned_integer_image_data = (unsigned int*)malloc(src_img->width * src_img->height * sizeof(unsigned int*));
+		}
+		else if ((dst_img->width != src_img->width) || (dst_img->height != src_img->height))
+		{
+			free(dst_img->image_data.unsigned_integer_image_data);
+			dst_img->image_data.unsigned_integer_image_data = (unsigned int*)malloc(src_img->width * src_img->height * sizeof(unsigned int*));
+		}
+
+		dst_img->width = src_img->width;
+		dst_img->height = src_img->height;
+		memcpy(dst_img->image_data.unsigned_integer_image_data, src_img->image_data.unsigned_integer_image_data, src_img->width * src_img->height * sizeof(unsigned int));
+
+		break;
+
+	case IMG_CHAR:
+		if (dst_img->image_data_type == IMG_UNSET || !dst_img->image_data.character_image_data)
+		{
+			dst_img->image_data.character_image_data = (char*)malloc(src_img->width * src_img->height * sizeof(char*));
+		}
+		else if ((dst_img->width != src_img->width) || (dst_img->height != src_img->height))
+		{
+			free(dst_img->image_data.character_image_data);
+			dst_img->image_data.character_image_data = (char*)malloc(src_img->width * src_img->height * sizeof(char*));
+		}
+
+		dst_img->width = src_img->width;
+		dst_img->height = src_img->height;
+		memcpy(dst_img->image_data.character_image_data, src_img->image_data.character_image_data, src_img->width * src_img->height * sizeof(char));
+
+		break;
+
+	case IMG_UCHAR:
+		if (dst_img->image_data_type == IMG_UNSET || !dst_img->image_data.unsigned_character_image_data)
+		{
+			dst_img->image_data.unsigned_character_image_data = (unsigned char*)malloc(src_img->width * src_img->height * sizeof(unsigned char*));
+		}
+		else if ((dst_img->width != src_img->width) || (dst_img->height != src_img->height))
+		{
+			free(dst_img->image_data.unsigned_character_image_data);
+			dst_img->image_data.unsigned_character_image_data = (unsigned char*)malloc(src_img->width * src_img->height * sizeof(unsigned char*));
+		}
+
+		dst_img->width = src_img->width;
+		dst_img->height = src_img->height;
+		memcpy(dst_img->image_data.unsigned_character_image_data, src_img->image_data.unsigned_character_image_data, src_img->width * src_img->height * sizeof(unsigned char));
+
+		break;
+
+	default:
+		fprintf(stderr, "<<Error: The source image data type is unknown>>\n");
+		return;
+		break;
 	}
+
 
 	if (dst_img->head_roi.next_roi)
 	{

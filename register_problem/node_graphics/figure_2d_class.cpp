@@ -14,8 +14,6 @@ FIGURE_2D::FIGURE_2D()
 	triangles_count = 0;
 
 	color_channels = 3;
-	width = 0;
-	height = 0;
 	texture_data = NULL;
 }
 
@@ -33,13 +31,11 @@ FIGURE_2D::FIGURE_2D(const float initial_position_x, const float initial_positio
 	figure_traslation[1].w = initial_position_y;
 	figure_traslation[2].w = initial_position_z;
 
-	figure_scale = glm::scale(glm::vec3(src_scale, src_scale, 1.0f));
+	figure_scale = glm::scale(glm::vec3(src_scale, src_scale, src_scale));
 
 	triangles_count = 0;
 
 	color_channels = 3;
-	width = 0;
-	height = 0;
 	texture_data = NULL;
 }
 
@@ -76,6 +72,11 @@ FIGURE_2D::~FIGURE_2D()
 	{
 		free(normal_vectors);
 	}
+
+	if (texture_data)
+	{
+		freeImageData(texture_data);
+	}
 }
 
 void FIGURE_2D::moveFigure(const float delta_x, const float delta_y, const float delta_z)
@@ -89,7 +90,7 @@ void FIGURE_2D::moveFigure(const float delta_x, const float delta_y, const float
 
 void FIGURE_2D::scaleFigure(const float src_scale)
 {
-	figure_scale = glm::scale(glm::vec3(src_scale, src_scale, 1.0f));
+	figure_scale = glm::scale(glm::vec3(src_scale, src_scale, src_scale));
 	figure_was_moved = true;
 }
 
@@ -123,17 +124,7 @@ unsigned int FIGURE_2D::getColorChannels()
 	return color_channels;
 }
 
-unsigned int FIGURE_2D::getTextureWidth()
-{
-	return width;
-}
-
-unsigned int FIGURE_2D::getTextureHeight()
-{
-	return height;
-}
-
-unsigned char * FIGURE_2D::getTextureData()
+IMG_DATA * FIGURE_2D::getTextureData()
 {
 	return texture_data;
 }
@@ -217,8 +208,7 @@ void FIGURE_2D::copyFigure2d(const FIGURE_2D& src_node_figure)
 	{
 		memcpy(this->vertices_positions, src_node_figure.vertices_positions, 3 * 3 * src_node_figure.triangles_count * sizeof(glm::vec3));
 	}
-
-
+	
 	/* Copy the color data */
 	if (this->color_values && !src_node_figure.color_values)
 	{
@@ -259,6 +249,20 @@ void FIGURE_2D::copyFigure2d(const FIGURE_2D& src_node_figure)
 	if (src_node_figure.uv_values)
 	{
 		memcpy(this->uv_values, src_node_figure.uv_values, 2 * 3 * src_node_figure.triangles_count * sizeof(GLfloat));
+	}
+
+	if (this->texture_data && src_node_figure.texture_data)
+	{
+		copyImageData(src_node_figure.texture_data, this->texture_data);
+	}
+	else if (this->texture_data && !src_node_figure.texture_data)
+	{
+		freeImageData(this->texture_data);
+		this->texture_data = NULL;
+	}
+	else if (!this->texture_data && src_node_figure.texture_data)
+	{
+		texture_data = createFromImageData(src_node_figure.texture_data);
 	}
 
 	/* Copy the normal data */
@@ -323,15 +327,16 @@ void FIGURE_2D::loadPGM_ascii(const char * src_filename)
 	}
 
 	// Read the width, height and maximum intensity of the image:
+	int width, height;
 	fscanf(fp_texture, "%i %i\n", &width, &height);
 
 	double max_intensity;
 	fscanf(fp_texture, "%lf\n", &max_intensity);
-		
-	texture_data = (unsigned char*)calloc(width * height, sizeof(unsigned char));
+	
+	texture_data = createVoidImage(width, height, IMG_UCHAR);
 
-	unsigned char * pix_intensity = texture_data;
-	for (unsigned int pix_position = 0; pix_position < width*height; pix_position++)
+	unsigned char * pix_intensity = texture_data->image_data.unsigned_character_image_data;
+	for (int pix_position = 0; pix_position < width*height; pix_position++)
 	{
 		fscanf(fp_texture, "%c\n", pix_intensity++);
 	}
@@ -382,14 +387,14 @@ void FIGURE_2D::loadPGM_raw(const char * src_filename)
 	{
 		fread(width_string + string_position, sizeof(char), 1, fp_texture);
 	} while (*(width_string + string_position++) != ' ');
-	width = atoi(width_string);
+	int width = atoi(width_string);
 
 	char height_string[] = "\0\0\0\0\0\0\0";
 	string_position = 0;
 	do {
 		fread(height_string + string_position, sizeof(char), 1, fp_texture);
 	} while (*(height_string + string_position++) != '\n');
-	height = atoi(height_string);
+	int height = atoi(height_string);
 
 		
 	char max_intensity_string[] = "\0\0\0\0\0\0\0";
@@ -399,8 +404,8 @@ void FIGURE_2D::loadPGM_raw(const char * src_filename)
 	} while (*(max_intensity_string + string_position++) != '\n');
 	double max_intensity = atof(max_intensity_string);
 		
-	texture_data = (unsigned char*)calloc(width * height, sizeof(unsigned char));
-	fread(texture_data, sizeof(unsigned char), width * height, fp_texture);
+	texture_data = createVoidImage(width, height, IMG_UINT);
+	fread(texture_data->image_data.unsigned_character_image_data, sizeof(unsigned char), width * height, fp_texture);
 	fclose(fp_texture);
 }
 
@@ -438,15 +443,16 @@ void FIGURE_2D::loadPPM_ascii(const char * src_filename)
 	}
 
 	// Read the width, height and maximum intensity of the image:
+	int width, height;
 	fscanf(fp_texture, "%i %i\n", &width, &height);
 
 	double max_intensity;
 	fscanf(fp_texture, "%lf\n", &max_intensity);
 
-	texture_data = (unsigned char*)calloc(3 * width * height, sizeof(unsigned char));
+	texture_data = createVoidImage(3 * width, height, IMG_UCHAR);
 
-	unsigned char * pix_intensity = texture_data;
-	for (unsigned int pix_position = 0; pix_position < width*height; pix_position++)
+	unsigned char * pix_intensity = texture_data->image_data.unsigned_character_image_data;
+	for (int pix_position = 0; pix_position < 3*width*height; pix_position++)
 	{
 		fscanf(fp_texture, "%c\n", pix_intensity++);
 	}
@@ -497,14 +503,14 @@ void FIGURE_2D::loadPPM_raw(const char * src_filename)
 	{
 		fread(width_string + string_position, sizeof(char), 1, fp_texture);
 	} while (*(width_string + string_position++) != ' ');
-	width = atoi(width_string);
+	int width = atoi(width_string);
 
 	char height_string[] = "\0\0\0\0\0\0\0";
 	string_position = 0;
 	do {
 		fread(height_string + string_position, sizeof(char), 1, fp_texture);
 	} while (*(height_string + string_position++) != '\n');
-	height = atoi(height_string);
+	int height = atoi(height_string);
 		
 	char max_intensity_string[] = "\0\0\0\0\0\0\0";
 	string_position = 0;
@@ -513,7 +519,7 @@ void FIGURE_2D::loadPPM_raw(const char * src_filename)
 	} while (*(max_intensity_string + string_position++) != '\n');
 	double max_intensity = atof(max_intensity_string);
 
-	texture_data = (unsigned char*)calloc(3 * width * height, sizeof(unsigned char));
-	fread(texture_data, sizeof(unsigned char), 3 * width * height, fp_texture);
+	texture_data = createVoidImage(3 * width, height, IMG_UINT);
+	fread(texture_data->image_data.unsigned_character_image_data, sizeof(unsigned char), 3 * width * height, fp_texture);
 	fclose(fp_texture);
 }

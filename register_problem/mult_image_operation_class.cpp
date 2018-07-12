@@ -108,10 +108,10 @@ void MULT_IMAGE_OPERATION::performOperation()
 				for (int x = roi_x_ini; x <= roi_x_end; x++)
 				{
 					const double d_intensity = 
-						numeric_nodes_list.getNodeValue(1)->getScalarValue() * *(src_img_B->image_data + (y - ULb_y)* width_B + x - ULb_x) *
-						numeric_nodes_list.getNodeValue(0)->getScalarValue() * *(src_img_A->image_data + (y - ULa_y)* width_A + x - ULa_x);
+						numeric_nodes_list.getNodeValue(1)->getScalarValue() * *(src_img_B->image_data.double_image_data + (y - ULb_y)* width_B + x - ULb_x) *
+						numeric_nodes_list.getNodeValue(0)->getScalarValue() * *(src_img_A->image_data.double_image_data + (y - ULa_y)* width_A + x - ULa_x);
 
-					*(dst_img->image_data + (y - ULi_y) * computable_width + x - ULi_x) = d_intensity;
+					*(dst_img->image_data.double_image_data + (y - ULi_y) * computable_width + x - ULi_x) = d_intensity;
 				}
 			}
 			break;

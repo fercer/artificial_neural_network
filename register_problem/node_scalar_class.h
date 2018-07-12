@@ -17,7 +17,6 @@ public:
 		strcpy(node_scalar_name, "unnamed");
 	}
 
-
 	NODE_SCALAR(const class_value_type src_value)
 	{
 		scalar_pointer_manager = &scalar_pointer;
@@ -36,6 +35,7 @@ public:
 		this->copyFromNodeScalar(src_node_scalar);
 	}
 
+
 	NODE_SCALAR operator=(const NODE_SCALAR& src_node_scalar)
 	{
 		if (this != &src_node_scalar)
@@ -48,9 +48,9 @@ public:
 		return *this;
 	}
 
-	virtual ~NODE_SCALAR()
+	virtual ~NODE_SCALAR() 
 	{
-		// Nothing to deallocate
+
 	}
 
 	void assignScalarPointerManager(class_value_type ** src_scalar_pointer_manager = NULL, const unsigned int src_array_position = 0)
@@ -72,10 +72,12 @@ public:
 		return *(*scalar_pointer_manager + array_position);
 	}
 
+
 	virtual void setScalarValue(const class_value_type src_scalar_value)
 	{
 		*(*scalar_pointer_manager + array_position) = src_scalar_value;
 	}
+
 
 	void setNodeScalarName(const char * src_name)
 	{
@@ -85,7 +87,6 @@ public:
 protected:
 	class_value_type ** scalar_pointer_manager;
 	unsigned int array_position;
-
 	void copyFromNodeScalar(const NODE_SCALAR<class_value_type>& src_node_scalar)
 	{
 		if (src_node_scalar.scalar_pointer_manager != &src_node_scalar.scalar_pointer)
@@ -123,6 +124,7 @@ public:
 		strcpy(node_scalar_name, "unnamed");
 	}
 
+
 	NODE_SCALAR(const char * src_string)
 	{
 		scalar_pointer_manager = &scalar_pointer;
@@ -141,7 +143,6 @@ public:
 		}
 
 		array_position = 0;
-
 	}
 
 	NODE_SCALAR(const NODE_SCALAR& src_node_scalar)
@@ -167,7 +168,6 @@ public:
 
 		return *this;
 	}
-
 
 	virtual ~NODE_SCALAR()
 	{
@@ -206,11 +206,11 @@ public:
 			return;
 		}
 
-		const unsigned int string_length = strlen(src_scalar_value) + 1;
+		const unsigned int string_length = (unsigned int)strlen(src_scalar_value) + 1;
 
 		if (string_length == 1)
 		{
-			**(*scalar_pointer_manager + array_position) = '/0';
+			**(*scalar_pointer_manager + array_position) = (char)'/0';
 			return;
 		}
 
@@ -227,11 +227,11 @@ public:
 		strcpy(*(*scalar_pointer_manager + array_position), src_scalar_value);
 	}
 
-
 	void setNodeScalarName(const char * src_name)
 	{
 		strcpy(node_scalar_name, src_name);
 	}
+
 
 protected:
 	void copyFromNodeScalar(const NODE_SCALAR<char*>& src_node_scalar)
