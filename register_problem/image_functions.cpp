@@ -341,6 +341,7 @@ IMG_DATA * createFromImageData(const IMG_DATA * src_img)
 
 	dst_img->width = width;
 	dst_img->height = height;
+	dst_img->image_data_type = src_img->image_data_type;
 	switch (src_img->image_data_type)
 	{
 	case IMG_DOUBLE:

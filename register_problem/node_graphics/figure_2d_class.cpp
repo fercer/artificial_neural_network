@@ -173,6 +173,188 @@ void FIGURE_2D::loadTexture(const char * src_filename)
 	}
 }
 
+void FIGURE_2D::assignTexture(IMG_DATA * src_texture, const unsigned int src_color_channels)
+{
+	const unsigned int max_copiable_width = (src_texture->width < (src_color_channels * 512)) ? src_texture->width : src_color_channels * 512;
+	const unsigned int max_copiable_height = (src_texture->height < 1024) ? src_texture->height : 1024;
+	
+	texture_data = createVoidImage(1536, 1024, IMG_UCHAR);
+
+	unsigned char * texture_pix_data = texture_data->image_data.unsigned_character_image_data;
+
+	if (src_color_channels == 3)
+	{
+		switch (src_texture->image_data_type)
+		{
+		case IMG_DOUBLE:
+			for (unsigned int i = 0; i < max_copiable_height; i++)
+			{
+				for (unsigned int j = 0; j < max_copiable_width; j++)
+				{
+					const unsigned char pix_intensity =
+						(unsigned char)floor(255.0 * *(src_texture->image_data.double_image_data + i * src_texture->width + j));
+					*(texture_pix_data++) = pix_intensity;
+					*(texture_pix_data++) = pix_intensity;
+					*(texture_pix_data++) = pix_intensity;
+				}
+			}
+			break;
+		case IMG_FLOAT:
+			for (unsigned int i = 0; i < max_copiable_height; i++)
+			{
+				for (unsigned int j = 0; j < max_copiable_width; j++)
+				{
+					const unsigned char pix_intensity =
+						(unsigned char)floorf(255.0f * *(src_texture->image_data.float_image_data + i * src_texture->width + j));
+					*(texture_pix_data++) = pix_intensity;
+					*(texture_pix_data++) = pix_intensity;
+					*(texture_pix_data++) = pix_intensity;
+				}
+			}
+			break;
+
+		case IMG_INT:
+			for (unsigned int i = 0; i < max_copiable_height; i++)
+			{
+				for (unsigned int j = 0; j < max_copiable_width; j++)
+				{
+					const unsigned char pix_intensity =
+						(unsigned char)*(src_texture->image_data.integer_image_data + i * src_texture->width + j);
+					*(texture_pix_data++) = pix_intensity;
+					*(texture_pix_data++) = pix_intensity;
+					*(texture_pix_data++) = pix_intensity;
+				}
+			}
+			break;
+
+		case IMG_UINT:
+			for (unsigned int i = 0; i < max_copiable_height; i++)
+			{
+				for (unsigned int j = 0; j < max_copiable_width; j++)
+				{
+					const unsigned char pix_intensity =
+						(unsigned char)*(src_texture->image_data.unsigned_integer_image_data + i * src_texture->width + j);
+					*(texture_pix_data++) = pix_intensity;
+					*(texture_pix_data++) = pix_intensity;
+					*(texture_pix_data++) = pix_intensity;
+				}
+			}
+			break;
+
+		case IMG_CHAR:
+			for (unsigned int i = 0; i < max_copiable_height; i++)
+			{
+				for (unsigned int j = 0; j < max_copiable_width; j++)
+				{
+					const unsigned char pix_intensity =
+						(unsigned char)*(src_texture->image_data.character_image_data + i * src_texture->width + j);
+					*(texture_pix_data++) = pix_intensity;
+					*(texture_pix_data++) = pix_intensity;
+					*(texture_pix_data++) = pix_intensity;
+				}
+			}
+			break;
+
+		case IMG_UCHAR:
+			for (unsigned int i = 0; i < max_copiable_height; i++)
+			{
+				for (unsigned int j = 0; j < max_copiable_width; j++)
+				{
+					const unsigned char pix_intensity =
+						*(src_texture->image_data.unsigned_character_image_data + i * src_texture->width + j);
+					*(texture_pix_data++) = pix_intensity;
+					*(texture_pix_data++) = pix_intensity;
+					*(texture_pix_data++) = pix_intensity;
+				}
+			}
+			break;
+
+		default:
+			break;
+		}
+		
+	}
+	else
+	{
+		switch (src_texture->image_data_type)
+		{
+		case IMG_DOUBLE:
+			for (unsigned int i = 0; i < max_copiable_height; i++)
+			{
+				for (unsigned int j = 0; j < max_copiable_width; j++)
+				{
+					const unsigned char pix_intensity =
+						(unsigned char)floor(255.0 * *(src_texture->image_data.double_image_data + i * src_texture->width + j));
+					*(texture_pix_data++) = pix_intensity;
+				}
+			}
+			break;
+		case IMG_FLOAT:
+			for (unsigned int i = 0; i < max_copiable_height; i++)
+			{
+				for (unsigned int j = 0; j < max_copiable_width; j++)
+				{
+					const unsigned char pix_intensity =
+						(unsigned char)floorf(255.0f * *(src_texture->image_data.float_image_data + i * src_texture->width + j));
+					*(texture_pix_data++) = pix_intensity;
+				}
+			}
+			break;
+
+		case IMG_INT:
+			for (unsigned int i = 0; i < max_copiable_height; i++)
+			{
+				for (unsigned int j = 0; j < max_copiable_width; j++)
+				{
+					const unsigned char pix_intensity =
+						(unsigned char)*(src_texture->image_data.integer_image_data + i * src_texture->width + j);
+					*(texture_pix_data++) = pix_intensity;
+				}
+			}
+			break;
+
+		case IMG_UINT:
+			for (unsigned int i = 0; i < max_copiable_height; i++)
+			{
+				for (unsigned int j = 0; j < max_copiable_width; j++)
+				{
+					const unsigned char pix_intensity =
+						(unsigned char)*(src_texture->image_data.unsigned_integer_image_data + i * src_texture->width + j);
+					*(texture_pix_data++) = pix_intensity;
+				}
+			}
+			break;
+
+		case IMG_CHAR:
+			for (unsigned int i = 0; i < max_copiable_height; i++)
+			{
+				for (unsigned int j = 0; j < max_copiable_width; j++)
+				{
+					const unsigned char pix_intensity =
+						(unsigned char)*(src_texture->image_data.character_image_data + i * src_texture->width + j);
+					*(texture_pix_data++) = pix_intensity;
+				}
+			}
+			break;
+
+		case IMG_UCHAR:
+			for (unsigned int i = 0; i < max_copiable_height; i++)
+			{
+				for (unsigned int j = 0; j < max_copiable_width; j++)
+				{
+					const unsigned char pix_intensity =
+						*(src_texture->image_data.unsigned_character_image_data + i * src_texture->width + j);
+					*(texture_pix_data++) = pix_intensity;
+				}
+			}
+			break;
+
+		default:
+			break;
+		}
+	}
+}
+
 
 glm::mat4 FIGURE_2D::getPosition()
 {
@@ -404,7 +586,7 @@ void FIGURE_2D::loadPGM_raw(const char * src_filename)
 	} while (*(max_intensity_string + string_position++) != '\n');
 	double max_intensity = atof(max_intensity_string);
 		
-	texture_data = createVoidImage(width, height, IMG_UINT);
+	texture_data = createVoidImage(width, height, IMG_UCHAR);
 	fread(texture_data->image_data.unsigned_character_image_data, sizeof(unsigned char), width * height, fp_texture);
 	fclose(fp_texture);
 }
@@ -519,7 +701,7 @@ void FIGURE_2D::loadPPM_raw(const char * src_filename)
 	} while (*(max_intensity_string + string_position++) != '\n');
 	double max_intensity = atof(max_intensity_string);
 
-	texture_data = createVoidImage(3 * width, height, IMG_UINT);
+	texture_data = createVoidImage(3 * width, height, IMG_UCHAR);
 	fread(texture_data->image_data.unsigned_character_image_data, sizeof(unsigned char), 3 * width * height, fp_texture);
 	fclose(fp_texture);
 }

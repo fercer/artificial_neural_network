@@ -25,6 +25,17 @@ PROCESS_VISUALIZER::~PROCESS_VISUALIZER()
 {
 }
 
+
+void PROCESS_VISUALIZER::addNodeOperation(NODE_SCALAR<double> * src_numeric_node) 
+{
+	std::vector<FIGURE_2D*>::iterator graphic_node_ptr = src_numeric_node->getGraphicNode();
+	for (unsigned int node_index = 0; node_index < src_numeric_node->getGraphicNodeCount(); node_index++)
+	{
+		global_renderer.addFigure(*(graphic_node_ptr++));
+	}
+}
+
+
 void PROCESS_VISUALIZER::showProcess()
 {
 	initializeGraphicEnvironment();
@@ -144,7 +155,7 @@ GLuint PROCESS_VISUALIZER::loadTextures(IMG_DATA * src_textures, const unsigned 
 	glGenTextures(1, &textureID);
 
 	glBindTexture(GL_TEXTURE_2D, textureID);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, src_textures->width / src_color_channels, src_textures->height, 0, GL_BGR, GL_UNSIGNED_BYTE, src_textures->image_data.unsigned_character_image_data);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, src_textures->width / src_color_channels, src_textures->height, 0, GL_RGB, GL_UNSIGNED_BYTE, src_textures->image_data.unsigned_character_image_data);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -159,30 +170,48 @@ GLuint PROCESS_VISUALIZER::loadTextures(IMG_DATA * src_textures, const unsigned 
 
 void PROCESS_VISUALIZER::initializeGraphicEnvironment()
 {
-
+	/*
 	FIGURE_RENDERER my_renderer;
+
+	NODE_IMAGE_BG node_image_bg_1;
+	node_image_bg_1.moveFigure(-2.0, -1.5);
+	node_image_bg_1.loadTexture("D:/Apps/artificial_neural_network/register_problem/node_graphics/link_nodes_iop.ppm");
+
+	NODE_IMAGE_FG node_image_fg_1;
+	node_image_fg_1.moveFigure(-2.0, -2.0);
+	node_image_fg_1.loadTexture("asuka.ppm");
+
+	my_renderer.addFigure(&node_image_bg_1);
+	my_renderer.addFigure(&node_image_fg_1);
+
 	TYPOGRAPHY_CLASS text_box_1;
 	text_box_1.setBoundingBox(5.0, 1.0);
 	text_box_1.loadTexture("D:/Apps/artificial_neural_network/register_problem/typography/texture_typography_map.ppm");
 	text_box_1.setBackgroundColor(255, 255, 255);
-	text_box_1.setFontColor(255, 127, 27);
+	text_box_1.setFontColor(255, 0, 0);
 	text_box_1.setCharactersMapFilename("D:/Apps/artificial_neural_network/register_problem/typography/letter_positions.dat");
 	text_box_1.setText("Testing textboxes and other process features");
 
 	NODE_FIGURE node_1;
 	node_1.scaleFigure(0.5);
 	node_1.moveFigure(1.5, 2.0);
-	node_1.loadTexture("D:/Apps/artificial_neural_network/register_problem/node_graphics/link_nodes_raw.ppm");
-	//my_renderer.addFigure(&node_1);
-
+	node_1.loadTexture("D:/Apps/artificial_neural_network/register_problem/node_graphics/link_nodes_nn.ppm");
+	
+	my_renderer.addFigure(&node_1);
 	my_renderer.addFigure(&text_box_1);
-	/*
+
+	
 	NODE_FIGURE node_2;
 	node_2.moveFigure(2.0, 1.5);
-	node_2.loadTexture("D:/Apps/artificial_neural_network/register_problem/node_graphics/link_nodes_raw.ppm");
+	node_2.loadTexture("D:/Apps/artificial_neural_network/register_problem/node_graphics/link_nodes_sn.ppm");
 	my_renderer.addFigure(&node_2);
+		
+	LINK_NODE link_test_1;
+	link_test_1.loadTexture("D:/Apps/artificial_neural_network/register_problem/node_graphics/link_nodes_nn.ppm");
+	link_test_1.moveFigure(-2.0, 1.5);
+	link_test_1.scaleFigure(5.0f);
+	my_renderer.addFigure(&link_test_1);
 	*/
-	
 
 	if (!glfwInit())
 	{
@@ -219,7 +248,13 @@ void PROCESS_VISUALIZER::initializeGraphicEnvironment()
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 
 	glClearColor(0.0f, 0.2f, 0.15f, 1.0f);
-	
+
+	// Enable depth test
+	glEnable(GL_DEPTH_TEST);
+	// Accept fragment if it closer to the camera than the former one
+	glDepthFunc(GL_LESS);
+
+
 	GLuint vertex_array_id;
 	glGenVertexArrays(1, &vertex_array_id);
 	glBindVertexArray(vertex_array_id);
@@ -241,24 +276,24 @@ void PROCESS_VISUALIZER::initializeGraphicEnvironment()
 
 	glm::mat4 VP_matrix = Projection * View;
 	
-	GLuint texture_data = loadTextures(my_renderer.getTextureData(), my_renderer.getTextureColorChannels());
+	GLuint texture_data = loadTextures(global_renderer.getTextureData(), global_renderer.getTextureColorChannels());
 	GLuint TextureID = glGetUniformLocation(shaderProgram, "myTextureSampler");
 
 
 	GLuint nodes_positions_buffer;
 	glGenBuffers(1, &nodes_positions_buffer);
 	glBindBuffer(GL_ARRAY_BUFFER, nodes_positions_buffer);
-	glBufferData(GL_ARRAY_BUFFER, my_renderer.getTriangesCount() * 3 * 3 * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, global_renderer.getTriangesCount() * 3 * 3 * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
 
 	GLuint nodes_colors_buffer;
 	glGenBuffers(1, &nodes_colors_buffer);
 	glBindBuffer(GL_ARRAY_BUFFER, nodes_colors_buffer);
-	glBufferData(GL_ARRAY_BUFFER, my_renderer.getTriangesCount() * 3 * 3 * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, global_renderer.getTriangesCount() * 3 * 3 * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
 
 	GLuint nodes_uv_buffer;
 	glGenBuffers(1, &nodes_uv_buffer);
 	glBindBuffer(GL_ARRAY_BUFFER, nodes_uv_buffer);
-	glBufferData(GL_ARRAY_BUFFER, my_renderer.getTriangesCount() * 2 * 3 * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, global_renderer.getTriangesCount() * 2 * 3 * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
 
 	double last_time = glfwGetTime();
 	while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&  !glfwWindowShouldClose(window))
@@ -266,8 +301,6 @@ void PROCESS_VISUALIZER::initializeGraphicEnvironment()
 		double delta_time = last_time - glfwGetTime();
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
-		node_1.moveFigure(cosf(5.0f*delta_time), sinf(5.0f*delta_time));
-
 		/* Use the shader program: */
 		glUseProgram(shaderProgram);
 
@@ -282,22 +315,22 @@ void PROCESS_VISUALIZER::initializeGraphicEnvironment()
 		/* Update the vertex positions: */
 		glEnableVertexAttribArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, nodes_positions_buffer);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, my_renderer.getTriangesCount() * 3 * 3 * sizeof(GLfloat), my_renderer.getVerticesPositions());
+		glBufferSubData(GL_ARRAY_BUFFER, 0, global_renderer.getTriangesCount() * 3 * 3 * sizeof(GLfloat), global_renderer.getVerticesPositions());
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
 		/* Color values */
 		glEnableVertexAttribArray(1);
 		glBindBuffer(GL_ARRAY_BUFFER, nodes_colors_buffer);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, my_renderer.getTriangesCount() * 3 * 3 * sizeof(GLfloat), my_renderer.getColorValues());
+		glBufferSubData(GL_ARRAY_BUFFER, 0, global_renderer.getTriangesCount() * 3 * 3 * sizeof(GLfloat), global_renderer.getColorValues());
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
 		/* Color values */
 		glEnableVertexAttribArray(2);
 		glBindBuffer(GL_ARRAY_BUFFER, nodes_uv_buffer);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, my_renderer.getTriangesCount() * 2 * 3 * sizeof(GLfloat), my_renderer.getUVValues());
+		glBufferSubData(GL_ARRAY_BUFFER, 0, global_renderer.getTriangesCount() * 2 * 3 * sizeof(GLfloat), global_renderer.getUVValues());
 		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
-		glDrawArrays(GL_TRIANGLES, 0, 3 * my_renderer.getTriangesCount());
+		glDrawArrays(GL_TRIANGLES, 0, 3 * global_renderer.getTriangesCount());
 		
 		glDisableVertexAttribArray(0);
 		glDisableVertexAttribArray(1);

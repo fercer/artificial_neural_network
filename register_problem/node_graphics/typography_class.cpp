@@ -238,6 +238,9 @@ void TYPOGRAPHY_CLASS::setText(const char * src_text)
 	GLfloat offset_x = 0.0f;
 	GLfloat offset_y = 0.0f;
 
+	GLfloat max_textbox_width = 0.0f;
+	GLfloat max_textbox_height = -character_mapped_max_height;
+
 	for (unsigned int char_position = 0; char_position < filename_length; char_position++)
 	{
 		const unsigned int char_id = (unsigned int)(unsigned char)*(text_box + char_position) - 32;
@@ -253,8 +256,18 @@ void TYPOGRAPHY_CLASS::setText(const char * src_text)
 
 		if ((offset_x + current_character_mapped_width) > max_text_width)
 		{
+			if (max_textbox_width < offset_x)
+			{
+				max_textbox_width = offset_x;
+			}
+
 			offset_x = 0.0f;
 			offset_y -= max_text_height;
+
+			if (max_textbox_height > offset_y)
+			{
+				max_textbox_height = offset_y;
+			}
 		}
 
 		*(vertices_positions_ptr++) = glm::vec3(offset_x, offset_y - current_character_mapped_height - current_character_offset_y, 0.0f);
@@ -330,6 +343,38 @@ void TYPOGRAPHY_CLASS::setText(const char * src_text)
 		*(uv_values_ptr++) = *(uv_character_values + 12 * char_id + 11);
 
 		offset_x += current_character_mapped_width;
+	}
+
+	if (max_textbox_width < offset_x)
+	{
+		max_textbox_width = offset_x;
+	}
+
+	glm::mat4 centering_matrix = glm::mat4(1.0f);
+	centering_matrix[0].w = -max_textbox_width / 2.0f;
+	centering_matrix[1].w = -max_textbox_height / 2.0f;
+	 
+	// Center the text box accroding to the width and height of the bounding box:
+	vertices_positions_ptr = vertices_positions;
+	for (unsigned int char_position = 0; char_position < filename_length; char_position++)
+	{
+		*(vertices_positions_ptr) = glm::vec4(*(vertices_positions_ptr), 1.0f) * centering_matrix;
+		vertices_positions_ptr++;
+
+		*(vertices_positions_ptr) = glm::vec4(*(vertices_positions_ptr), 1.0f) * centering_matrix;
+		vertices_positions_ptr++;
+
+		*(vertices_positions_ptr) = glm::vec4(*(vertices_positions_ptr), 1.0f) * centering_matrix;
+		vertices_positions_ptr++;
+
+		*(vertices_positions_ptr) = glm::vec4(*(vertices_positions_ptr), 1.0f) * centering_matrix;
+		vertices_positions_ptr++;
+
+		*(vertices_positions_ptr) = glm::vec4(*(vertices_positions_ptr), 1.0f) * centering_matrix;
+		vertices_positions_ptr++;
+
+		*(vertices_positions_ptr) = glm::vec4(*(vertices_positions_ptr), 1.0f) * centering_matrix;
+		vertices_positions_ptr++;
 	}
 }
 

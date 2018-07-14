@@ -11,7 +11,12 @@
 
 int main(int argc, char * argv[])
 {
+	NODE_SCALAR<double> test_node;
+	test_node.setNodeScalarName("Node 1");
+	test_node.setScalarValue(10.23);
+
 	PROCESS_VISUALIZER visualizer;
+	visualizer.addNodeOperation(&test_node);
 	visualizer.showProcess();
 
 	return 0;

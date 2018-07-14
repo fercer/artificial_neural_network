@@ -142,7 +142,6 @@ char_width = rightmost_element / 15.0
 offset_y = bottommost_element / 30.0 + topmost_element
 char_height = bottommost_element / 15.0
 
-character_nearest_point = []
 character_id = 32
 
 topmost_element_per_line = []
@@ -178,9 +177,8 @@ for i in range(15):
                 nearest_center_x = character_center_x
                 nearest_center_y = character_center_y
         
-        character_nearest_point.append([nearest_char, nearest_center_x, nearest_center_y, nearest_char_L, nearest_char_T, nearest_char_R, nearest_char_B])
-        
         if (nearest_char >= 0): 
+            nearest_was_found = 1
             if (topmost_element_this_line > nearest_char_T):
                 topmost_element_this_line = nearest_char_T
             
@@ -192,6 +190,7 @@ for i in range(15):
             U_coord_6, V_coord_6 = nearest_char_R / 512.0, nearest_char_T/1024.0
             
         elif (i == 0 and j == 0):
+            nearest_was_found = 1
             nearest_char_L = 0
             nearest_char_R = max_width - 1
             nearest_char_T = 0
@@ -202,7 +201,9 @@ for i in range(15):
             U_coord_4, V_coord_4 = 0.0, max_height/1024.0
             U_coord_5, V_coord_5 = max_width / 512.0, max_height/1024.0
             U_coord_6, V_coord_6 = max_width / 512.0, 0.0
+            
         else:
+            nearest_was_found = 0
             nearest_char_L = 0
             nearest_char_R = max_width - 1
             nearest_char_T = 0
@@ -214,28 +215,32 @@ for i in range(15):
             U_coord_5, V_coord_5 = unknown_char_R / 512.0, unknown_char_B/1024.0
             U_coord_6, V_coord_6 = unknown_char_R / 512.0, unknown_char_T/1024.0
         
-        characters_boundaries.append([character_id, nearest_char_L, nearest_char_T, nearest_char_R, nearest_char_B, 0, U_coord_1, V_coord_1,U_coord_2, V_coord_2,U_coord_3, V_coord_3,U_coord_4, V_coord_4,U_coord_5, V_coord_5,U_coord_6, V_coord_6])
+        characters_boundaries.append([character_id, nearest_char_L, nearest_char_T, nearest_char_R, nearest_char_B, 0, U_coord_1, V_coord_1,U_coord_2, V_coord_2,U_coord_3, V_coord_3,U_coord_4, V_coord_4,U_coord_5, V_coord_5,U_coord_6, V_coord_6, nearest_was_found])
         character_id = character_id + 1
     
     topmost_element_per_line.append(topmost_element_this_line)
 
-plt.imshow(text_map_img)
-plt.show()
 
 # Add the offset in y-axis to each character:
 characters_boundaries[0][5] = 0
 char_id = 1
 i = 0
 while(char_id < 224):
-    if (((char_id + 1) % 15) == 0):
+    if ((char_id % 15) == 0):
         i = i + 1
     
-    characters_boundaries[char_id][5] = characters_boundaries[char_id][2] - topmost_element_per_line[i]
+    print('{}, top {}, top in line {}, offset {}'.format(char_id, characters_boundaries[char_id][2], topmost_element_per_line[i], characters_boundaries[char_id][2] - topmost_element_per_line[i]))
+    if (characters_boundaries[char_id][18] > 0):
+        characters_boundaries[char_id][5] = characters_boundaries[char_id][2] - topmost_element_per_line[i]
+        
     char_id = char_id + 1
+
+plt.imshow(text_map_img)
+plt.show()
 
 positions = open('letter_positions.dat', 'w')
 positions.write('CODE\tLeftmost\tTopmost\tRightmost\tBottommost\tOffset_Y\tU_COORD_1\tV_COORD_1\tU_COORD_2\tV_COORD_2\tU_COORD_3\tV_COORD_3\tU_COORD_4\tV_COORD_4\tU_COORD_5\tV_COORD_5\tU_COORD_6\tV_COORD_6\n')
-for character_id, nearest_char_L, nearest_char_T, nearest_char_R, nearest_char_B, offset_character_Y, U_coord_1, V_coord_1,U_coord_2, V_coord_2,U_coord_3, V_coord_3,U_coord_4, V_coord_4,U_coord_5, V_coord_5,U_coord_6, V_coord_6 in characters_boundaries:
+for character_id, nearest_char_L, nearest_char_T, nearest_char_R, nearest_char_B, offset_character_Y, U_coord_1, V_coord_1,U_coord_2, V_coord_2,U_coord_3, V_coord_3,U_coord_4, V_coord_4,U_coord_5, V_coord_5,U_coord_6, V_coord_6, nearest_was_found in characters_boundaries:
     positions.write('{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(character_id, nearest_char_L, nearest_char_T, nearest_char_R, nearest_char_B, offset_character_Y, U_coord_1, V_coord_1,U_coord_2, V_coord_2,U_coord_3, V_coord_3,U_coord_4, V_coord_4,U_coord_5, V_coord_5,U_coord_6, V_coord_6))
 
 positions.close()

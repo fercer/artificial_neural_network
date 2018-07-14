@@ -39,6 +39,7 @@ public:
 	IMG_DATA * getTextureData();
 
 	void loadTexture(const char * src_filename);
+	void assignTexture(IMG_DATA * src_texture, const unsigned int src_color_channels = 1);
 
 	glm::mat4 getPosition();
 	glm::mat4 getScale();

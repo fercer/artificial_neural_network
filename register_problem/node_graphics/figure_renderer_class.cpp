@@ -188,14 +188,14 @@ void FIGURE_RENDERER::addFigure(FIGURE_2D * src_figure)
 
 		texture_data->image_data.unsigned_character_image_data = (unsigned char*)malloc(texture_data->width * (texture_data->height + current_texture->height) * sizeof(unsigned char));
 
-		memcpy(texture_data->image_data.unsigned_character_image_data, swap_texture_data, texture_data->width * texture_data->height * sizeof(unsigned char));
+		memmove(texture_data->image_data.unsigned_character_image_data, swap_texture_data, texture_data->width * texture_data->height * sizeof(unsigned char));
 
 		free(swap_texture_data);
 		
 		memcpy(texture_data->image_data.unsigned_character_image_data + texture_data->width * texture_data->height,
 			current_texture->image_data.unsigned_character_image_data,
 			current_texture->height * current_texture->width * sizeof(unsigned char));
-
+		
 		texture_data->height = texture_data->height + current_texture->height;
 	}
 	else
@@ -273,19 +273,19 @@ void FIGURE_RENDERER::addFigure(FIGURE_2D * src_figure)
 
 	for (unsigned int current_triangle = 0; current_triangle < current_triangles_count; current_triangle++)
 	{
-		glm::vec4 vertex_1 = figure_position * figure_scale * glm::vec4(*(current_vertices_positions + 3 * current_triangle), 1.0);
+		glm::vec4 vertex_1 = glm::vec4(*(current_vertices_positions + 3 * current_triangle), 1.0) * figure_scale * figure_position ;
 
 		*(vertices_global_positions + current_triangle * 3 * 3 + triangles_count * 3 * 3) = vertex_1.x;
 		*(vertices_global_positions + current_triangle * 3 * 3 + triangles_count * 3 * 3 + 1) = vertex_1.y;
 		*(vertices_global_positions + current_triangle * 3 * 3 + triangles_count * 3 * 3 + 2) = vertex_1.z;
 
-		glm::vec4 vertex_2 = figure_position *  figure_scale * glm::vec4(*(current_vertices_positions + 3 * current_triangle + 1), 1.0);
+		glm::vec4 vertex_2 = glm::vec4(*(current_vertices_positions + 3 * current_triangle + 1), 1.0) * figure_scale *  figure_position;
 
 		*(vertices_global_positions + current_triangle * 3 * 3 + triangles_count * 3 * 3 + 3) = vertex_2.x;
 		*(vertices_global_positions + current_triangle * 3 * 3 + triangles_count * 3 * 3 + 4) = vertex_2.y;
 		*(vertices_global_positions + current_triangle * 3 * 3 + triangles_count * 3 * 3 + 5) = vertex_2.z;
 
-		glm::vec4 vertex_3 = figure_position * figure_scale * glm::vec4(*(current_vertices_positions + 3 * current_triangle + 2), 1.0);
+		glm::vec4 vertex_3 = glm::vec4(*(current_vertices_positions + 3 * current_triangle + 2), 1.0) * figure_scale *  figure_position;
 
 		*(vertices_global_positions + current_triangle * 3 * 3 + triangles_count * 3 * 3 + 6) = vertex_3.x;
 		*(vertices_global_positions + current_triangle * 3 * 3 + triangles_count * 3 * 3 + 7) = vertex_3.y;
@@ -341,19 +341,19 @@ GLfloat * FIGURE_RENDERER::getVerticesPositions()
 
 		for (unsigned int current_triangle = 0; current_triangle < (*current_figure)->getTrianglesCount(); current_triangle++)
 		{
-			glm::vec4 vertex_1 = glm::vec4(*(current_figure_vertices + current_triangle * 3), 1.0) * figure_position * figure_scale;
+			glm::vec4 vertex_1 = glm::vec4(*(current_figure_vertices + current_triangle * 3), 1.0) * figure_scale * figure_position;
 
 			*(vertices_global_positions_ptr++) = vertex_1.x;
 			*(vertices_global_positions_ptr++) = vertex_1.y;
 			*(vertices_global_positions_ptr++) = vertex_1.z;
 
-			glm::vec4 vertex_2 = glm::vec4(*(current_figure_vertices + current_triangle * 3 + 1), 1.0) * figure_position * figure_scale;
+			glm::vec4 vertex_2 = glm::vec4(*(current_figure_vertices + current_triangle * 3 + 1), 1.0) * figure_scale * figure_position;
 
 			*(vertices_global_positions_ptr++) = vertex_2.x;
 			*(vertices_global_positions_ptr++) = vertex_2.y;
 			*(vertices_global_positions_ptr++) = vertex_2.z;
 
-			glm::vec4 vertex_3 = glm::vec4(*(current_figure_vertices + current_triangle * 3 + 2), 1.0) * figure_position * figure_scale;
+			glm::vec4 vertex_3 = glm::vec4(*(current_figure_vertices + current_triangle * 3 + 2), 1.0) * figure_scale * figure_position;
 
 			*(vertices_global_positions_ptr++) = vertex_3.x;
 			*(vertices_global_positions_ptr++) = vertex_3.y;
@@ -394,23 +394,19 @@ GLfloat * FIGURE_RENDERER::getUVValues()
 	GLfloat * uv_values_ptr = uv_values;
 	for (unsigned int figure_index = 0; figure_index < figures_count; figure_index++, current_figure++)
 	{
-		glm::mat4 figure_position = (*current_figure)->getPosition();
-		glm::mat4 figure_scale = (*current_figure)->getScale();
-		glm::vec3 * current_figure_vertices = (*current_figure)->getVerticesPositions();
 
+		GLfloat * current_figure_uv_values = (*current_figure)->getUVValues();
+		GLfloat * current_figure_uv_values_ptr = current_figure_uv_values;
 		for (unsigned int current_triangle = 0; current_triangle < (*current_figure)->getTrianglesCount(); current_triangle++)
 		{
-			uv_values_ptr++;
-			*uv_values_ptr = (*uv_values_ptr + (GLfloat)figure_index) / (GLfloat)figures_count;
-			uv_values_ptr++;
+			*uv_values_ptr++ = *current_figure_uv_values_ptr++;
+			*uv_values_ptr++ = (*current_figure_uv_values_ptr++ + (GLfloat)figure_index) / (GLfloat)figures_count;
 
-			uv_values_ptr++;
-			*uv_values_ptr = (*uv_values_ptr + (GLfloat)figure_index) / (GLfloat)figures_count;
-			uv_values_ptr++;
-			
-			uv_values_ptr++;
-			*uv_values_ptr = (*uv_values_ptr + (GLfloat)figure_index) / (GLfloat)figures_count;
-			uv_values_ptr++;
+			*uv_values_ptr++ = *current_figure_uv_values_ptr++;
+			*uv_values_ptr++ = (*current_figure_uv_values_ptr++ + (GLfloat)figure_index) / (GLfloat)figures_count;
+
+			*uv_values_ptr++ = *current_figure_uv_values_ptr++;
+			*uv_values_ptr++ = (*current_figure_uv_values_ptr++ + (GLfloat)figure_index) / (GLfloat)figures_count;
 		}
 	}
 
