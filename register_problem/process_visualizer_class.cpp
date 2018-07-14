@@ -31,6 +31,17 @@ void PROCESS_VISUALIZER::addNodeOperation(NODE_SCALAR<double> * src_numeric_node
 	std::vector<FIGURE_2D*>::iterator graphic_node_ptr = src_numeric_node->getGraphicNode();
 	for (unsigned int node_index = 0; node_index < src_numeric_node->getGraphicNodeCount(); node_index++)
 	{
+		(*graphic_node_ptr)->translateFigure(5.0f, 0.0f);
+		global_renderer.addFigure(*(graphic_node_ptr++));
+	}
+}
+
+
+void PROCESS_VISUALIZER::addNodeOperation(NODE_SCALAR<char*> * src_string_node)
+{
+	std::vector<FIGURE_2D*>::iterator graphic_node_ptr = src_string_node->getGraphicNode();
+	for (unsigned int node_index = 0; node_index < src_string_node->getGraphicNodeCount(); node_index++)
+	{
 		global_renderer.addFigure(*(graphic_node_ptr++));
 	}
 }
@@ -170,49 +181,6 @@ GLuint PROCESS_VISUALIZER::loadTextures(IMG_DATA * src_textures, const unsigned 
 
 void PROCESS_VISUALIZER::initializeGraphicEnvironment()
 {
-	/*
-	FIGURE_RENDERER my_renderer;
-
-	NODE_IMAGE_BG node_image_bg_1;
-	node_image_bg_1.moveFigure(-2.0, -1.5);
-	node_image_bg_1.loadTexture("D:/Apps/artificial_neural_network/register_problem/node_graphics/link_nodes_iop.ppm");
-
-	NODE_IMAGE_FG node_image_fg_1;
-	node_image_fg_1.moveFigure(-2.0, -2.0);
-	node_image_fg_1.loadTexture("asuka.ppm");
-
-	my_renderer.addFigure(&node_image_bg_1);
-	my_renderer.addFigure(&node_image_fg_1);
-
-	TYPOGRAPHY_CLASS text_box_1;
-	text_box_1.setBoundingBox(5.0, 1.0);
-	text_box_1.loadTexture("D:/Apps/artificial_neural_network/register_problem/typography/texture_typography_map.ppm");
-	text_box_1.setBackgroundColor(255, 255, 255);
-	text_box_1.setFontColor(255, 0, 0);
-	text_box_1.setCharactersMapFilename("D:/Apps/artificial_neural_network/register_problem/typography/letter_positions.dat");
-	text_box_1.setText("Testing textboxes and other process features");
-
-	NODE_FIGURE node_1;
-	node_1.scaleFigure(0.5);
-	node_1.moveFigure(1.5, 2.0);
-	node_1.loadTexture("D:/Apps/artificial_neural_network/register_problem/node_graphics/link_nodes_nn.ppm");
-	
-	my_renderer.addFigure(&node_1);
-	my_renderer.addFigure(&text_box_1);
-
-	
-	NODE_FIGURE node_2;
-	node_2.moveFigure(2.0, 1.5);
-	node_2.loadTexture("D:/Apps/artificial_neural_network/register_problem/node_graphics/link_nodes_sn.ppm");
-	my_renderer.addFigure(&node_2);
-		
-	LINK_NODE link_test_1;
-	link_test_1.loadTexture("D:/Apps/artificial_neural_network/register_problem/node_graphics/link_nodes_nn.ppm");
-	link_test_1.moveFigure(-2.0, 1.5);
-	link_test_1.scaleFigure(5.0f);
-	my_renderer.addFigure(&link_test_1);
-	*/
-
 	if (!glfwInit())
 	{
 		fprintf(stderr, "<<Error: The OpenGL environment (GLFW) could not be initialized>>\n");

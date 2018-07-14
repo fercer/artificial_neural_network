@@ -34,6 +34,7 @@ public:
 	~PROCESS_VISUALIZER();
 
 	void addNodeOperation(NODE_SCALAR<double> * src_numeric_node);
+	void addNodeOperation(NODE_SCALAR<char*> * src_string_node);
 
 	void showProcess();
 

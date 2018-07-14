@@ -17,6 +17,7 @@
 #include "sqroot_image_operation_class.h"
 #include "ones_image_operation_class.h"
 #include "text_image_operation_class.h"
+#include "pool_image_operation_class.h"
 
 #include "sum_image_scalar_operation_class.h"
 #include "max_image_scalar_operation_class.h"
@@ -56,8 +57,6 @@ public:
 
 	void runImageScalarOperation(const unsigned int src_node_index);
 	
-
-
 	void setInputNodeValue(const unsigned int src_node_index, const double src_numeric_value);
 	void setInputNodeValue(const unsigned int src_node_index, const unsigned int src_operation_index, const double src_numeric_value);
 	void setInputNodeValue(const unsigned int src_node_index, const unsigned int src_operation_index, NODE_SCALAR<double> * src_new_link);
@@ -110,6 +109,7 @@ private:
 		IO_SQRT = 577,
 		IO_ONES = 556,
 		IO_TEXTBOX = 805,
+		IO_POOLING = 783,
 
 		/* Image Scalar Operation */
 		ISO_SUM = 575,

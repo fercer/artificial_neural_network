@@ -79,6 +79,15 @@ FIGURE_2D::~FIGURE_2D()
 	}
 }
 
+void FIGURE_2D::translateFigure(const float delta_x, const float delta_y, const float delta_z)
+{
+	figure_traslation[0].w = figure_traslation[0].w + delta_x;
+	figure_traslation[1].w = figure_traslation[1].w + delta_y;
+	figure_traslation[2].w = figure_traslation[2].w + delta_z;
+
+	figure_was_moved = true;
+}
+
 void FIGURE_2D::moveFigure(const float delta_x, const float delta_y, const float delta_z)
 {
 	figure_traslation[0].w = delta_x;

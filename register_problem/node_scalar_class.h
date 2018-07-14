@@ -190,7 +190,7 @@ private:
 		node_value_textbox = new TYPOGRAPHY_CLASS;
 		node_value_textbox->setCharactersMapFilename("letter_positions.dat");
 		node_value_textbox->loadTexture("texture_typography_map.ppm");
-		node_value_textbox->setBoundingBox(4.0, 1.0);
+		node_value_textbox->setBoundingBox(4.5, 1.0);
 		node_value_textbox->setBackgroundColor(255, 255, 255);
 		node_value_textbox->setFontColor(0, 0, 0);
 		node_value_textbox->moveFigure(0.0, -1.0, 0.2);
@@ -433,9 +433,9 @@ private:
 		node_value_textbox = new TYPOGRAPHY_CLASS;
 		node_value_textbox->setCharactersMapFilename("letter_positions.dat");
 		node_value_textbox->loadTexture("texture_typography_map.ppm");
-		node_value_textbox->setBoundingBox(4.0, 1.0);
+		node_value_textbox->setBoundingBox(4.5, 0.5);
 		node_value_textbox->setBackgroundColor(255, 255, 255);
-		node_value_textbox->setFontColor(255, 255, 209);
+		node_value_textbox->setFontColor(0, 0, 0);
 		node_value_textbox->moveFigure(0.0, -1.0, 0.2);
 		node_value_textbox->setText(*(*scalar_pointer_manager + array_position));
 

@@ -26,6 +26,7 @@ public:
 	virtual ~FIGURE_2D();
 
 	void moveFigure(const float delta_x, const float delta_y, const float delta_z = 0.0f);
+	void translateFigure(const float delta_x, const float delta_y, const float delta_z = 0.0f);
 	void scaleFigure(const float src_scale);
 
 	unsigned int getTrianglesCount();

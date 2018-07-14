@@ -22,7 +22,7 @@ TRANSLATE_IMAGE_OPERATION::TRANSLATE_IMAGE_OPERATION()
 	numeric_nodes_list.assignNodeValue(1, local_numeric_nodes_list.getNodeValue(1));
 	numeric_node_is_local_list.assignNodeValue(1, true);
 
-		NODE_SCALAR<double> * local_previous_node_A = new NODE_SCALAR<double>(0.0);
+	NODE_SCALAR<double> * local_previous_node_A = new NODE_SCALAR<double>(0.0);
 	local_previous_numeric_nodes_values_list.assignNodeValue(0, local_previous_node_A);
 
 	NODE_SCALAR<double> * local_previous_node_B = new NODE_SCALAR<double>(0.0);

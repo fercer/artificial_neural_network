@@ -206,6 +206,10 @@ void IMAGE_PROCESS_HANDLER::loadProcess()
 			new_image_operation = new TEXT_IMAGE_OPERATION;
 			break;
 
+		case IO_POOLING:
+			new_image_operation = new POOL_IMAGE_OPERATION;
+			break;
+
 		case ISO_SUM:
 			new_image_scalar_operation = new SUM_IMAGE_SCALAR_OPERATION;
 			break;
