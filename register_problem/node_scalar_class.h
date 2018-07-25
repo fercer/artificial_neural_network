@@ -145,6 +145,7 @@ public:
 
 protected:
 	std::vector<FIGURE_2D*> graphic_nodes;
+	TYPOGRAPHY_CLASS * node_value_textbox;
 
 	class_value_type ** scalar_pointer_manager;
 	unsigned int array_position;
@@ -170,7 +171,6 @@ private:
 	char node_scalar_name[64];
 
 	TYPOGRAPHY_CLASS * node_name_textbox;
-	TYPOGRAPHY_CLASS * node_value_textbox;
 	NODE_FIGURE * node_bg;
 	LINK_NODE * link_node_output;
 
@@ -206,7 +206,8 @@ private:
 
 		link_node_output = new LINK_NODE;
 		link_node_output->loadTexture("link_nodes_nn.ppm");
-		link_node_output->moveFigure(2.5, 0.0, 0.0);
+		link_node_output->moveFigure(2.5, -1.0, 0.0);
+		link_node_output->scaleFigure(0.5);
 
 		graphic_nodes.push_back(link_node_output);
 	}
@@ -388,6 +389,7 @@ public:
 
 protected:
 	std::vector<FIGURE_2D*> graphic_nodes;
+	TYPOGRAPHY_CLASS * node_value_textbox;
 
 	void copyFromNodeScalar(const NODE_SCALAR<char*>& src_node_scalar)
 	{
@@ -413,7 +415,6 @@ private:
 	char node_scalar_name[64];
 
 	TYPOGRAPHY_CLASS * node_name_textbox;
-	TYPOGRAPHY_CLASS * node_value_textbox;
 	NODE_FIGURE * node_bg;
 	LINK_NODE * link_node_output;
 
@@ -448,7 +449,8 @@ private:
 
 		link_node_output = new LINK_NODE;
 		link_node_output->loadTexture("link_nodes_nn.ppm");
-		link_node_output->moveFigure(2.5, 0.0, 0.0);
+		link_node_output->moveFigure(2.5, -1.0, 0.0);
+		link_node_output->scaleFigure(0.5);
 
 		graphic_nodes.push_back(link_node_output);
 	}

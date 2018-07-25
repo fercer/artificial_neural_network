@@ -18,6 +18,8 @@ SCALAR_ATAN_NODES_OPERATION::SCALAR_ATAN_NODES_OPERATION()
 	local_numeric_nodes_list.assignNodeValue(1, local_node_B);
 	numeric_nodes_list.assignNodeValue(1, local_numeric_nodes_list.getNodeValue(1));
 	numeric_node_is_local_list.assignNodeValue(1, true);
+
+	defineGraphicNodeScalarOperation();
 }
 
 
@@ -42,6 +44,8 @@ SCALAR_ATAN_NODES_OPERATION::SCALAR_ATAN_NODES_OPERATION(const SCALAR_ATAN_NODES
 	numeric_node_is_local_list.assignNodeValue(1, true);
 
 	copyFromNodesScalarOperation(src_scalar_atan_nodes_operation);
+
+	this->defineGraphicNodeScalarOperation();
 }
 
 

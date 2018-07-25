@@ -24,6 +24,8 @@ SCALAR_MULT_NODES_OPERATION::SCALAR_MULT_NODES_OPERATION()
 
 	NODE_SCALAR<double> * local_previous_node_B = new NODE_SCALAR<double>(0.0);
 	local_previous_numeric_nodes_values_list.assignNodeValue(1, local_previous_node_B);
+
+	defineGraphicNodeScalarOperation();
 }
 
 
@@ -54,6 +56,8 @@ SCALAR_MULT_NODES_OPERATION::SCALAR_MULT_NODES_OPERATION(const SCALAR_MULT_NODES
 	local_previous_numeric_nodes_values_list.assignNodeValue(1, local_previous_node_B);
 
 	copyFromNodesScalarOperation(src_scalar_mult_nodes_operation);
+
+	this->defineGraphicNodeScalarOperation();
 }
 
 

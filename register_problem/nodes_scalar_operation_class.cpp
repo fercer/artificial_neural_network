@@ -4,6 +4,7 @@ NODES_SCALAR_OPERATION::NODES_SCALAR_OPERATION()
 {		
 	input_numeric_nodes_required = 0;
 	input_string_nodes_required = 0;
+	graphic_nodes_defined = false;
 }
 
 
@@ -16,6 +17,9 @@ NODES_SCALAR_OPERATION::~NODES_SCALAR_OPERATION()
 double NODES_SCALAR_OPERATION::getScalarValue()
 {
 	performNodeScalarOperation();
+	char n_to_str_buffer[16];
+	snprintf(n_to_str_buffer, 16, "%f", *(*scalar_pointer_manager + array_position));
+	node_value_textbox->setText(n_to_str_buffer);
 	return *(*scalar_pointer_manager + array_position);
 }
 
@@ -129,6 +133,21 @@ void NODES_SCALAR_OPERATION::emptyNodeScalarOperation()
 		delete local_string_nodes_list.getNodeValue(node_index);
 		delete local_previous_string_nodes_values_list.getNodeValue(node_index);
 	}
+
+	if (graphic_nodes_defined)
+	{
+		for (unsigned int numeric_input_index = 0; numeric_input_index < input_numeric_nodes_required; numeric_input_index++)
+		{
+			delete *(link_numeric_nodes_inputs + numeric_input_index);
+		}
+		delete[] link_numeric_nodes_inputs;
+
+		for (unsigned int string_input_index = 0; string_input_index < input_string_nodes_required; string_input_index++)
+		{
+			delete *(link_string_nodes_inputs + string_input_index);
+		}
+		delete[] link_string_nodes_inputs;
+	}
 }
 
 
@@ -136,7 +155,7 @@ void NODES_SCALAR_OPERATION::emptyNodeScalarOperation()
 void NODES_SCALAR_OPERATION::copyFromNodesScalarOperation(const NODES_SCALAR_OPERATION& src_nodes_scalar_operation)
 {
 	copyFromNodeScalar(src_nodes_scalar_operation);
-		
+	
 	this->input_numeric_nodes_required = src_nodes_scalar_operation.input_numeric_nodes_required;
 	this->input_string_nodes_required = src_nodes_scalar_operation.input_string_nodes_required;
 
@@ -177,7 +196,6 @@ void NODES_SCALAR_OPERATION::copyFromNodesScalarOperation(const NODES_SCALAR_OPE
 
 void NODES_SCALAR_OPERATION::performNodeScalarOperation()
 {
-
 	bool parameters_have_changed = false;
 	for (unsigned int node_index = 0; node_index < input_numeric_nodes_required; node_index++)
 	{
@@ -203,4 +221,41 @@ void NODES_SCALAR_OPERATION::performNodeScalarOperation()
 	{
 		*(*scalar_pointer_manager + array_position) = performScalarOperation();
 	}
+}
+
+
+
+void NODES_SCALAR_OPERATION::defineGraphicNodeScalarOperation()
+{
+	if (graphic_nodes_defined)
+	{
+		return;
+	}
+
+	const GLfloat delta_y = 2.5 / (GLfloat)(input_numeric_nodes_required + input_string_nodes_required);
+	GLfloat offset_y = 1.0 - delta_y;
+
+	link_numeric_nodes_inputs = new LINK_NODE*[input_numeric_nodes_required];
+	for (unsigned int numeric_input_index = 0; numeric_input_index < input_numeric_nodes_required; numeric_input_index++)
+	{
+		*(link_numeric_nodes_inputs + numeric_input_index) = new LINK_NODE;
+		(*(link_numeric_nodes_inputs + numeric_input_index))->loadTexture("link_nodes_nn.ppm");
+		(*(link_numeric_nodes_inputs + numeric_input_index))->moveFigure(-2.5, offset_y);
+		(*(link_numeric_nodes_inputs + numeric_input_index))->scaleFigure(0.5);
+		graphic_nodes.push_back(*(link_numeric_nodes_inputs + numeric_input_index));
+		offset_y -= delta_y;
+	}
+
+	link_string_nodes_inputs = new LINK_NODE*[input_string_nodes_required];
+	for (unsigned int string_input_index = 0; string_input_index < input_string_nodes_required; string_input_index++)
+	{
+		*(link_string_nodes_inputs + string_input_index) = new LINK_NODE;
+		(*(link_string_nodes_inputs + string_input_index))->loadTexture("link_nodes_nn.ppm");
+		(*(link_string_nodes_inputs + string_input_index))->moveFigure(-2.5, offset_y);
+		(*(link_string_nodes_inputs + string_input_index))->scaleFigure(0.5);
+		graphic_nodes.push_back(*(link_string_nodes_inputs + string_input_index));
+		offset_y -= delta_y;
+	}
+
+	graphic_nodes_defined = true;
 }

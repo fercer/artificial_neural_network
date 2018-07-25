@@ -59,10 +59,15 @@ protected:
 
 	// Each derived class must define this function:
 	virtual double performScalarOperation() = 0;
+	
+	void defineGraphicNodeScalarOperation();
 
 private:
-	void performNodeScalarOperation();
+	bool graphic_nodes_defined;
+	LINK_NODE ** link_numeric_nodes_inputs;
+	LINK_NODE ** link_string_nodes_inputs;
 
+	void performNodeScalarOperation();
 };
 
 #endif // NODES_SCALAR_OPERATION_CLASS_H_INCLUDED

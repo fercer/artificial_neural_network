@@ -40,7 +40,7 @@ public:
 
 private:
 	bool opengl_initialized;
-
+	unsigned int operations_count;
 	FIGURE_RENDERER global_renderer;
 
 	GLuint loadShaderProgram(const char * src_vertex_shader_filename, const char * src_fragment_shader_filename);

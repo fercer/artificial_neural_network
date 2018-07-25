@@ -4,12 +4,14 @@
 
 PROCESS_VISUALIZER::PROCESS_VISUALIZER()
 {
+	operations_count = 0;
 }
 
 
 
 PROCESS_VISUALIZER::PROCESS_VISUALIZER(const PROCESS_VISUALIZER & src_xml_handler)
 {
+	operations_count = 0;
 }
 
 
@@ -31,9 +33,10 @@ void PROCESS_VISUALIZER::addNodeOperation(NODE_SCALAR<double> * src_numeric_node
 	std::vector<FIGURE_2D*>::iterator graphic_node_ptr = src_numeric_node->getGraphicNode();
 	for (unsigned int node_index = 0; node_index < src_numeric_node->getGraphicNodeCount(); node_index++)
 	{
-		(*graphic_node_ptr)->translateFigure(5.0f, 0.0f);
+		(*graphic_node_ptr)->translateFigure((GLfloat)operations_count * 0.25f, 10.0f - (GLfloat)operations_count * 4.25f);
 		global_renderer.addFigure(*(graphic_node_ptr++));
 	}
+	operations_count++;
 }
 
 
@@ -42,8 +45,10 @@ void PROCESS_VISUALIZER::addNodeOperation(NODE_SCALAR<char*> * src_string_node)
 	std::vector<FIGURE_2D*>::iterator graphic_node_ptr = src_string_node->getGraphicNode();
 	for (unsigned int node_index = 0; node_index < src_string_node->getGraphicNodeCount(); node_index++)
 	{
+		(*graphic_node_ptr)->translateFigure((GLfloat)operations_count * 0.25f, 10.0f - (GLfloat)operations_count * 4.25f);
 		global_renderer.addFigure(*(graphic_node_ptr++));
 	}
+	operations_count++;
 }
 
 
