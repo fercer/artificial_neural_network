@@ -18,6 +18,7 @@
 #include "node_graphics/node_image_bg_class.h"
 #include "node_graphics/node_image_fg_class.h"
 #include "node_graphics/link_node_class.h"
+#include "node_graphics/geometries_manager_class.h"
 #include "image_functions.h"
 
 #include "node_scalar_class.h"

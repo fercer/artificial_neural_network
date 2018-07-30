@@ -52,11 +52,14 @@ typedef union IMG_DATA_TYPE
 
 typedef struct IMG_DATA {
 	unsigned int width, height;
+	unsigned int n_channels;
 	ROI_BBOX head_roi;
 	ROI_BBOX * tail_roi;
 	IMG_TYPE image_data_type;
 	IMG_DATA_TYPE image_data;
 } IMG_DATA;
+
+
 
 typedef struct POSITION_NODE
 {
@@ -67,10 +70,14 @@ typedef struct POSITION_NODE
 	POSITION_NODE * right_leaf;
 } POSITION_NODE;
 
+
+
 void saveImagePGM(const char * filename, IMG_DATA * src_img);
-IMG_DATA * createVoidImage(const int src_width, const int src_height, const IMG_TYPE src_img_type = IMG_DOUBLE);
+IMG_DATA * createVoidImage(const int src_width, const int src_height, const IMG_TYPE src_img_type = IMG_DOUBLE, const unsigned int src_n_channels = 1);
+
 
 void freeImageData(IMG_DATA * src_img_data_ptr);
+
 
 void addImageROI(IMG_DATA * src_image_data_ptr,
 	const ROI_BBOX_TYPE new_roi_type,

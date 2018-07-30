@@ -11,40 +11,30 @@
 
 int main(int argc, char * argv[])
 {
-	NODE_SCALAR<double> test_node_1;
-	test_node_1.setNodeScalarName("Node 1");
-	test_node_1.setScalarValue(10.23);
 
-	NODE_SCALAR<double> test_node_2;
-	test_node_2.setNodeScalarName("Node 2");
-	test_node_2.setScalarValue(9.77);
+	GEOMETRIES_MANAGER geom_manager;
 
-	SCALAR_SUM_NODES_OPERATION test_node_sum;
-	test_node_sum.setNodeScalarName("Sum");
-	test_node_sum.assignNodeValue(0, &test_node_1);
-	test_node_sum.assignNodeValue(1, &test_node_2);
-	test_node_sum.getScalarValue();
+	geom_manager.loadObj("node_model.obj");
 
-	SCALAR_MULT_NODES_OPERATION test_node_mult;
-	test_node_mult.setNodeScalarName("Mult");
-	test_node_mult.assignNodeValue(0, &test_node_1);
-	test_node_mult.assignNodeValue(1, &test_node_sum);
-	test_node_mult.getScalarValue();
+	GEOMETRIES_MANAGER::node_geometry my_node_geometry(geom_manager.getGeometry(GEOMETRIES_MANAGER::OBJGEOM_IMAGE_LINK_ICON));
 
-	SCALAR_SUM_NODES_OPERATION test_node_mult_2;
-	test_node_mult_2.setNodeScalarName("Mult");
-	test_node_mult_2.assignNodeValue(0, &test_node_mult);
-	test_node_mult_2.assignNodeValue(1, &test_node_sum);
-	test_node_mult_2.getScalarValue();
+	printf("%s, triangles count: %i\n", my_node_geometry.material_identifier, my_node_geometry.triangles_count);
+	printf("Positions count: %i, uv coordinates count: %i, normals count: %i\n", (int)my_node_geometry.vertices_positions.size(), (int)my_node_geometry.uv_coordinates.size(), (int)my_node_geometry.normal_vectors.size());
 
-	PROCESS_VISUALIZER visualizer;
-	visualizer.addNodeOperation(&test_node_1);
-	visualizer.addNodeOperation(&test_node_2);
-	visualizer.addNodeOperation(&test_node_sum);
-	visualizer.addNodeOperation(&test_node_mult);
-	visualizer.addNodeOperation(&test_node_mult_2);
-
-	visualizer.showProcess();
+	for (unsigned int triangle_index = 0; triangle_index < my_node_geometry.triangles_count; triangle_index++)
+	{
+			printf("[%i] positions: (%.3f, %.3f, %.3f), (%.3f, %.3f, %.3f), (%.3f, %.3f, %.3f);\nuv coordinates: (%.3f, %.3f), (%.3f, %.3f), (%.3f, %.3f);\n normal vectors: (%.3f, %.3f, %.3f), (%.3f, %.3f, %.3f), (%.3f, %.3f, %.3f)\n", triangle_index, 
+				my_node_geometry.vertices_positions.at(triangle_index * 3).x, my_node_geometry.vertices_positions.at(triangle_index * 3).y, my_node_geometry.vertices_positions.at(triangle_index * 3).z,
+				my_node_geometry.vertices_positions.at(triangle_index * 3 + 1).x, my_node_geometry.vertices_positions.at(triangle_index * 3 + 1).y, my_node_geometry.vertices_positions.at(triangle_index * 3 + 1).z,
+				my_node_geometry.vertices_positions.at(triangle_index * 3 + 2).x, my_node_geometry.vertices_positions.at(triangle_index * 3 + 2).y, my_node_geometry.vertices_positions.at(triangle_index * 3 + 2).z,
+				my_node_geometry.uv_coordinates.at(triangle_index * 3).x, my_node_geometry.uv_coordinates.at(triangle_index * 3).y,
+				my_node_geometry.uv_coordinates.at(triangle_index * 3 + 1).x, my_node_geometry.uv_coordinates.at(triangle_index * 3 + 1).y,
+				my_node_geometry.uv_coordinates.at(triangle_index * 3 + 2).x, my_node_geometry.uv_coordinates.at(triangle_index * 3 + 2).y,
+				my_node_geometry.normal_vectors.at(triangle_index * 3).x, my_node_geometry.normal_vectors.at(triangle_index * 3).y, my_node_geometry.normal_vectors.at(triangle_index * 3).z,
+				my_node_geometry.normal_vectors.at(triangle_index * 3 + 1).x, my_node_geometry.normal_vectors.at(triangle_index * 3 + 1).y, my_node_geometry.normal_vectors.at(triangle_index * 3 + 1).z,
+				my_node_geometry.normal_vectors.at(triangle_index * 3 + 2).x, my_node_geometry.normal_vectors.at(triangle_index * 3 + 2).y, my_node_geometry.normal_vectors.at(triangle_index * 3 + 2).z
+				);
+	}
 
 	return 0;
 }

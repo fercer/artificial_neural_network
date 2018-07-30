@@ -4,6 +4,7 @@ void saveImagePGM(const char * filename, IMG_DATA * src_img)
 {
 	const int width = src_img->width;
 	const int height = src_img->height;
+	const unsigned int n_channels = src_img->n_channels;
 
 	FILE * fp_img = fopen(filename, "w");
 
@@ -21,42 +22,42 @@ void saveImagePGM(const char * filename, IMG_DATA * src_img)
 	switch (src_img->image_data_type)
 	{
 	case IMG_DOUBLE:
-		for (unsigned int pix_position = 0; pix_position < (unsigned int)(width*height); pix_position++)
+		for (unsigned int pix_position = 0; pix_position < (unsigned int)(width*height*n_channels); pix_position++)
 		{
 			fprintf(fp_img, "%u\n", (unsigned int)floor(255.0 * *(src_img->image_data.double_image_data + pix_position)));
 		}
 		break;
 
 	case IMG_FLOAT:
-		for (unsigned int pix_position = 0; pix_position < (unsigned int)(width*height); pix_position++)
+		for (unsigned int pix_position = 0; pix_position < (unsigned int)(width*height*n_channels); pix_position++)
 		{
 			fprintf(fp_img, "%u\n", (unsigned int)floorf(255.0f * *(src_img->image_data.float_image_data + pix_position)));
 		}
 		break;
 
 	case IMG_INT:
-		for (unsigned int pix_position = 0; pix_position < (unsigned int)(width*height); pix_position++)
+		for (unsigned int pix_position = 0; pix_position < (unsigned int)(width*height*n_channels); pix_position++)
 		{
 			fprintf(fp_img, "%u\n", (unsigned int)*(src_img->image_data.integer_image_data + pix_position));
 		}
 		break;
 
 	case IMG_UINT:
-		for (unsigned int pix_position = 0; pix_position < (unsigned int)(width*height); pix_position++)
+		for (unsigned int pix_position = 0; pix_position < (unsigned int)(width*height*n_channels); pix_position++)
 		{
 			fprintf(fp_img, "%u\n", *(src_img->image_data.unsigned_integer_image_data + pix_position));
 		}
 		break;
 
 	case IMG_CHAR:
-		for (unsigned int pix_position = 0; pix_position < (unsigned int)(width*height); pix_position++)
+		for (unsigned int pix_position = 0; pix_position < (unsigned int)(width*height*n_channels); pix_position++)
 		{
 			fprintf(fp_img, "%u\n", (unsigned int)*(src_img->image_data.character_image_data + pix_position));
 		}
 		break;
 
 	case IMG_UCHAR:
-		for (unsigned int pix_position = 0; pix_position < (unsigned int)(width*height); pix_position++)
+		for (unsigned int pix_position = 0; pix_position < (unsigned int)(width*height*n_channels); pix_position++)
 		{
 			fprintf(fp_img, "%u\n", (unsigned int)*(src_img->image_data.unsigned_character_image_data + pix_position));
 		}
@@ -75,7 +76,7 @@ void saveImagePGM(const char * filename, IMG_DATA * src_img)
 
 
 
-IMG_DATA * createVoidImage(const int src_width, const int src_height, const IMG_TYPE src_img_type)
+IMG_DATA * createVoidImage(const int src_width, const int src_height, const IMG_TYPE src_img_type, const unsigned int src_n_channels)
 {
 	IMG_DATA * new_img = (IMG_DATA*)malloc(sizeof(IMG_DATA));
 
@@ -84,6 +85,7 @@ IMG_DATA * createVoidImage(const int src_width, const int src_height, const IMG_
 
 	new_img->width = src_width;
 	new_img->height = src_height;
+	new_img->n_channels = src_n_channels;
 
 	new_img->head_roi.next_roi = NULL;
 	new_img->tail_roi = &new_img->head_roi;
@@ -103,27 +105,27 @@ IMG_DATA * createVoidImage(const int src_width, const int src_height, const IMG_
 	switch (src_img_type)
 	{
 	case IMG_DOUBLE:
-		new_img->image_data.double_image_data = (double*)malloc(src_width * src_height * sizeof(double*));
+		new_img->image_data.double_image_data = (double*)malloc(src_width * src_height * src_n_channels * sizeof(double*));
 		break;
 
 	case IMG_FLOAT:
-		new_img->image_data.float_image_data = (float*)malloc(src_width * src_height * sizeof(float*));
+		new_img->image_data.float_image_data = (float*)malloc(src_width * src_height * src_n_channels * sizeof(float*));
 		break;
 
 	case IMG_INT:
-		new_img->image_data.integer_image_data = (int*)malloc(src_width * src_height * sizeof(int*));
+		new_img->image_data.integer_image_data = (int*)malloc(src_width * src_height * src_n_channels * sizeof(int*));
 		break;
 
 	case IMG_UINT:
-		new_img->image_data.unsigned_integer_image_data = (unsigned int*)malloc(src_width * src_height * sizeof(unsigned int*));
+		new_img->image_data.unsigned_integer_image_data = (unsigned int*)malloc(src_width * src_height * src_n_channels * sizeof(unsigned int*));
 		break;
 
 	case IMG_CHAR:
-		new_img->image_data.character_image_data = (char*)malloc(src_width * src_height * sizeof(char*));
+		new_img->image_data.character_image_data = (char*)malloc(src_width * src_height * src_n_channels * sizeof(char*));
 		break;
 
 	case IMG_UCHAR:
-		new_img->image_data.unsigned_character_image_data = (unsigned char*)malloc(src_width * src_height * sizeof(unsigned char*));
+		new_img->image_data.unsigned_character_image_data = (unsigned char*)malloc(src_width * src_height * src_n_channels * sizeof(unsigned char*));
 		break;
 
 	case IMG_UNSET:
@@ -336,42 +338,44 @@ IMG_DATA * createFromImageData(const IMG_DATA * src_img)
 
 	const unsigned int width = src_img->width;
 	const unsigned int height = src_img->height;
+	const unsigned int n_channels = src_img->n_channels;
 
 	IMG_DATA * dst_img = (IMG_DATA*)malloc(sizeof(IMG_DATA));
 
 	dst_img->width = width;
 	dst_img->height = height;
+	dst_img->n_channels = n_channels;
 	dst_img->image_data_type = src_img->image_data_type;
 	switch (src_img->image_data_type)
 	{
 	case IMG_DOUBLE:
-		dst_img->image_data.double_image_data = (double*)malloc(width * height * sizeof(double*));
-		memcpy(dst_img->image_data.double_image_data, src_img->image_data.double_image_data, width * height * sizeof(double));
+		dst_img->image_data.double_image_data = (double*)malloc(width * height * n_channels * sizeof(double*));
+		memcpy(dst_img->image_data.double_image_data, src_img->image_data.double_image_data, width * height * n_channels * sizeof(double));
 		break;
 	
 	case IMG_FLOAT:
-		dst_img->image_data.float_image_data = (float*)malloc(width * height * sizeof(float*));
-		memcpy(dst_img->image_data.float_image_data, src_img->image_data.float_image_data, width * height * sizeof(float));
+		dst_img->image_data.float_image_data = (float*)malloc(width * height * n_channels * sizeof(float*));
+		memcpy(dst_img->image_data.float_image_data, src_img->image_data.float_image_data, width * height * n_channels * sizeof(float));
 		break;
 	
 	case IMG_INT:
-		dst_img->image_data.integer_image_data = (int*)malloc(width * height * sizeof(int*));
-		memcpy(dst_img->image_data.integer_image_data, src_img->image_data.integer_image_data, width * height * sizeof(int));
+		dst_img->image_data.integer_image_data = (int*)malloc(width * height * n_channels * sizeof(int*));
+		memcpy(dst_img->image_data.integer_image_data, src_img->image_data.integer_image_data, width * height * n_channels * sizeof(int));
 		break;
 	
 	case IMG_UINT:
-		dst_img->image_data.unsigned_integer_image_data = (unsigned int*)malloc(width * height * sizeof(unsigned int*));
-		memcpy(dst_img->image_data.unsigned_integer_image_data, src_img->image_data.unsigned_integer_image_data, width * height * sizeof(unsigned int));
+		dst_img->image_data.unsigned_integer_image_data = (unsigned int*)malloc(width * height * n_channels * sizeof(unsigned int*));
+		memcpy(dst_img->image_data.unsigned_integer_image_data, src_img->image_data.unsigned_integer_image_data, width * height * n_channels * sizeof(unsigned int));
 		break;
 	
 	case IMG_CHAR:
-		dst_img->image_data.character_image_data = (char*)malloc(width * height * sizeof(char*));
-		memcpy(dst_img->image_data.character_image_data, src_img->image_data.character_image_data, width * height * sizeof(char));
+		dst_img->image_data.character_image_data = (char*)malloc(width * height * n_channels * sizeof(char*));
+		memcpy(dst_img->image_data.character_image_data, src_img->image_data.character_image_data, width * height * n_channels * sizeof(char));
 		break;
 	
 	case IMG_UCHAR:
-		dst_img->image_data.unsigned_character_image_data = (unsigned char*)malloc(width * height * sizeof(unsigned char*));
-		memcpy(dst_img->image_data.unsigned_character_image_data, src_img->image_data.unsigned_character_image_data, width * height * sizeof(unsigned char));
+		dst_img->image_data.unsigned_character_image_data = (unsigned char*)malloc(width * height * n_channels * sizeof(unsigned char*));
+		memcpy(dst_img->image_data.unsigned_character_image_data, src_img->image_data.unsigned_character_image_data, width * height * n_channels * sizeof(unsigned char));
 		break;
 	
 	default:
@@ -454,102 +458,102 @@ void copyImageData(const IMG_DATA * src_img, IMG_DATA * dst_img)
 	case IMG_DOUBLE:
 		if (dst_img->image_data_type == IMG_UNSET || !dst_img->image_data.double_image_data)
 		{
-			dst_img->image_data.double_image_data = (double*)malloc(src_img->width * src_img->height * sizeof(double*));
+			dst_img->image_data.double_image_data = (double*)malloc(src_img->width * src_img->height * src_img->n_channels * sizeof(double*));
 		}
-		else if ((dst_img->width != src_img->width) || (dst_img->height != src_img->height))
+		else if ((dst_img->width != src_img->width) || (dst_img->height != src_img->height) || (dst_img->n_channels != src_img->n_channels))
 		{
 			free(dst_img->image_data.double_image_data);
-			dst_img->image_data.double_image_data = (double*)malloc(src_img->width * src_img->height * sizeof(double*));
+			dst_img->image_data.double_image_data = (double*)malloc(src_img->width * src_img->height * src_img->n_channels * sizeof(double*));
 		}
 
 		dst_img->width = src_img->width;
 		dst_img->height = src_img->height;
-		memcpy(dst_img->image_data.double_image_data, src_img->image_data.double_image_data, src_img->width * src_img->height * sizeof(double));
-		
+		memcpy(dst_img->image_data.double_image_data, src_img->image_data.double_image_data, src_img->width * src_img->height * src_img->n_channels * sizeof(double));
+
 		break;
 
 	case IMG_FLOAT:
 		if (dst_img->image_data_type == IMG_UNSET || !dst_img->image_data.float_image_data)
 		{
-			dst_img->image_data.float_image_data = (float*)malloc(src_img->width * src_img->height * sizeof(float*));
+			dst_img->image_data.float_image_data = (float*)malloc(src_img->width * src_img->height * src_img->n_channels * sizeof(float*));
 		}
-		else if ((dst_img->width != src_img->width) || (dst_img->height != src_img->height))
+		else if ((dst_img->width != src_img->width) || (dst_img->height != src_img->height) || (dst_img->n_channels != src_img->n_channels))
 		{
 			free(dst_img->image_data.float_image_data);
-			dst_img->image_data.float_image_data = (float*)malloc(src_img->width * src_img->height * sizeof(float*));
+			dst_img->image_data.float_image_data = (float*)malloc(src_img->width * src_img->height * src_img->n_channels * sizeof(float*));
 		}
 
 		dst_img->width = src_img->width;
 		dst_img->height = src_img->height;
-		memcpy(dst_img->image_data.float_image_data, src_img->image_data.float_image_data, src_img->width * src_img->height * sizeof(float));
+		memcpy(dst_img->image_data.float_image_data, src_img->image_data.float_image_data, src_img->width * src_img->height * src_img->n_channels * sizeof(float));
 
 		break;
 
 	case IMG_INT:
 		if (dst_img->image_data_type == IMG_UNSET || !dst_img->image_data.integer_image_data)
 		{
-			dst_img->image_data.integer_image_data = (int*)malloc(src_img->width * src_img->height * sizeof(int*));
+			dst_img->image_data.integer_image_data = (int*)malloc(src_img->width * src_img->height  * src_img->n_channels * sizeof(int*));
 		}
-		else if ((dst_img->width != src_img->width) || (dst_img->height != src_img->height))
+		else if ((dst_img->width != src_img->width) || (dst_img->height != src_img->height) || (dst_img->n_channels != src_img->n_channels))
 		{
 			free(dst_img->image_data.integer_image_data);
-			dst_img->image_data.integer_image_data = (int*)malloc(src_img->width * src_img->height * sizeof(int*));
+			dst_img->image_data.integer_image_data = (int*)malloc(src_img->width * src_img->height  * src_img->n_channels * sizeof(int*));
 		}
 
 		dst_img->width = src_img->width;
 		dst_img->height = src_img->height;
-		memcpy(dst_img->image_data.integer_image_data, src_img->image_data.integer_image_data, src_img->width * src_img->height * sizeof(int));
+		memcpy(dst_img->image_data.integer_image_data, src_img->image_data.integer_image_data, src_img->width * src_img->height * src_img->n_channels * sizeof(int));
 
 		break;
 
 	case IMG_UINT:
 		if (dst_img->image_data_type == IMG_UNSET || !dst_img->image_data.unsigned_integer_image_data)
 		{
-			dst_img->image_data.unsigned_integer_image_data = (unsigned int*)malloc(src_img->width * src_img->height * sizeof(unsigned int*));
+			dst_img->image_data.unsigned_integer_image_data = (unsigned int*)malloc(src_img->width * src_img->height  * src_img->n_channels * sizeof(unsigned int*));
 		}
-		else if ((dst_img->width != src_img->width) || (dst_img->height != src_img->height))
+		else if ((dst_img->width != src_img->width) || (dst_img->height != src_img->height) || (dst_img->n_channels != src_img->n_channels))
 		{
 			free(dst_img->image_data.unsigned_integer_image_data);
-			dst_img->image_data.unsigned_integer_image_data = (unsigned int*)malloc(src_img->width * src_img->height * sizeof(unsigned int*));
+			dst_img->image_data.unsigned_integer_image_data = (unsigned int*)malloc(src_img->width * src_img->height  * src_img->n_channels * sizeof(unsigned int*));
 		}
 
 		dst_img->width = src_img->width;
 		dst_img->height = src_img->height;
-		memcpy(dst_img->image_data.unsigned_integer_image_data, src_img->image_data.unsigned_integer_image_data, src_img->width * src_img->height * sizeof(unsigned int));
+		memcpy(dst_img->image_data.unsigned_integer_image_data, src_img->image_data.unsigned_integer_image_data, src_img->width * src_img->height  * src_img->n_channels * sizeof(unsigned int));
 
 		break;
 
 	case IMG_CHAR:
 		if (dst_img->image_data_type == IMG_UNSET || !dst_img->image_data.character_image_data)
 		{
-			dst_img->image_data.character_image_data = (char*)malloc(src_img->width * src_img->height * sizeof(char*));
+			dst_img->image_data.character_image_data = (char*)malloc(src_img->width * src_img->height * src_img->n_channels * sizeof(char*));
 		}
-		else if ((dst_img->width != src_img->width) || (dst_img->height != src_img->height))
+		else if ((dst_img->width != src_img->width) || (dst_img->height != src_img->height) || (dst_img->n_channels != src_img->n_channels))
 		{
 			free(dst_img->image_data.character_image_data);
-			dst_img->image_data.character_image_data = (char*)malloc(src_img->width * src_img->height * sizeof(char*));
+			dst_img->image_data.character_image_data = (char*)malloc(src_img->width * src_img->height  * src_img->n_channels * sizeof(char*));
 		}
 
 		dst_img->width = src_img->width;
 		dst_img->height = src_img->height;
-		memcpy(dst_img->image_data.character_image_data, src_img->image_data.character_image_data, src_img->width * src_img->height * sizeof(char));
+		memcpy(dst_img->image_data.character_image_data, src_img->image_data.character_image_data, src_img->width * src_img->height  * src_img->n_channels * sizeof(char));
 
 		break;
 
 	case IMG_UCHAR:
 		if (dst_img->image_data_type == IMG_UNSET || !dst_img->image_data.unsigned_character_image_data)
 		{
-			dst_img->image_data.unsigned_character_image_data = (unsigned char*)malloc(src_img->width * src_img->height * sizeof(unsigned char*));
+			dst_img->image_data.unsigned_character_image_data = (unsigned char*)malloc(src_img->width * src_img->height  * src_img->n_channels * sizeof(unsigned char*));
 		}
-		else if ((dst_img->width != src_img->width) || (dst_img->height != src_img->height))
+		else if ((dst_img->width != src_img->width) || (dst_img->height != src_img->height) || (dst_img->n_channels != src_img->n_channels))
 		{
 			free(dst_img->image_data.unsigned_character_image_data);
-			dst_img->image_data.unsigned_character_image_data = (unsigned char*)malloc(src_img->width * src_img->height * sizeof(unsigned char*));
+			dst_img->image_data.unsigned_character_image_data = (unsigned char*)malloc(src_img->width * src_img->height * src_img->n_channels * sizeof(unsigned char*));
 		}
 
 		dst_img->width = src_img->width;
 		dst_img->height = src_img->height;
-		memcpy(dst_img->image_data.unsigned_character_image_data, src_img->image_data.unsigned_character_image_data, src_img->width * src_img->height * sizeof(unsigned char));
+		memcpy(dst_img->image_data.unsigned_character_image_data, src_img->image_data.unsigned_character_image_data, src_img->width * src_img->height * src_img->n_channels * sizeof(unsigned char));
 
 		break;
 
@@ -558,6 +562,8 @@ void copyImageData(const IMG_DATA * src_img, IMG_DATA * dst_img)
 		return;
 		break;
 	}
+
+	dst_img->n_channels = src_img->n_channels;
 
 
 	if (dst_img->head_roi.next_roi)
