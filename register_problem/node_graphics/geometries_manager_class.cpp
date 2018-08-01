@@ -6,16 +6,33 @@ GEOMETRIES_MANAGER::GEOMETRIES_MANAGER()
 	mtl_read_status = 0;
 	texture_read_status = 0;
 	texture_map = NULL;
+
+	node_geometry * active_object_compound = NULL;
+	for (unsigned int node_index = 0; node_index < 7; node_index++)
+	{
+		active_object_compound = new node_geometry;
+		objects_compounds.push_back(active_object_compound);
+	}
 }
 
 
 
 GEOMETRIES_MANAGER::GEOMETRIES_MANAGER(const GEOMETRIES_MANAGER & src_node_figure)
 {
-	obj_read_status = 0;
-	mtl_read_status = 0;
-	texture_read_status = 0;
-	texture_map = NULL;
+	this->obj_read_status = src_node_figure.obj_read_status;
+	this->mtl_read_status = src_node_figure.mtl_read_status;
+	this->texture_read_status = src_node_figure.texture_read_status;
+	if (this->texture_read_status)
+	{
+		this->texture_map = createFromImageData(src_node_figure.texture_map);
+	}
+	
+	node_geometry * active_object_compound = NULL;
+	for (unsigned int node_index = 0; node_index < 7; node_index++)
+	{
+		active_object_compound = new node_geometry(src_node_figure.objects_compounds.at(node_index));
+		this->objects_compounds.push_back(active_object_compound);
+	}
 }
 
 
@@ -31,7 +48,7 @@ GEOMETRIES_MANAGER::~GEOMETRIES_MANAGER()
 		delete *objects_compounds_it;
 	}
 
-	if (texture_map)
+	if (texture_read_status)
 	{
 		freeImageData(texture_map);
 	}
@@ -45,26 +62,24 @@ void GEOMETRIES_MANAGER::loadObj(const char * src_obj_filename)
 }
 
 
-GEOMETRIES_MANAGER::node_geometry * GEOMETRIES_MANAGER::getGeometry(const object_geometry_type src_object_type)
+
+node_geometry * GEOMETRIES_MANAGER::getGeometry(const object_geometry_type src_object_type)
 {
 	std::vector<node_geometry*>::iterator objects_compounds_ini = objects_compounds.begin();
 	std::vector<node_geometry*>::iterator objects_compounds_end = objects_compounds.end();
 	std::vector<node_geometry*>::iterator objects_compounds_it = objects_compounds_ini;
+	std::vector<node_geometry*>::iterator objects_compounds_found = objects_compounds_ini;
 
 	do
 	{
 		if ((*objects_compounds_it)->node_geometry_type == src_object_type)
 		{
+			objects_compounds_found = objects_compounds_it;
 			break;
 		}
 	} while (++objects_compounds_it != objects_compounds_end);
-	
-	if (objects_compounds_it == objects_compounds_end)
-	{
-		objects_compounds_it = objects_compounds_ini;
-	}
 
-	return *objects_compounds_it;
+	return *objects_compounds_found;
 }
 
 
@@ -86,13 +101,13 @@ int GEOMETRIES_MANAGER::readObjFile(const char * src_obj_filename)
 	std::vector<glm::vec2> unique_uv_coordinates;
 	std::vector<glm::vec3> unique_normal_vectors;
 
-	object_geometry_type active_object = OBJGEOM_UNASSIGNED;
 	node_geometry * active_object_compound = NULL;
 
 	char * extract_string_ini;
 	char * extract_string_end;
 	char * new_line_position;
 	unsigned int characters_count;
+	char * material_identifier_string;
 
 	char object_name[9];
 	int object_index;
@@ -123,7 +138,7 @@ int GEOMETRIES_MANAGER::readObjFile(const char * src_obj_filename)
 			// Ignore the commentaries ...
 			break;
 
-			/*------------------------------ Material filename------------------------------ */
+			/*------------------------------ Material filename ------------------------------ */
 		case (int)'m':
 			extract_string_ini = strchr(read_line, ' ');
 			characters_count = new_line_position - extract_string_ini;
@@ -155,16 +170,17 @@ int GEOMETRIES_MANAGER::readObjFile(const char * src_obj_filename)
 				switch (object_index)
 				{
 				case 1:
-					active_object = OBJGEOM_LINK_ICON;
+					active_object_compound = objects_compounds.at(0);
+					active_object_compound->node_geometry_type = OBJGEOM_LINK_ICON;
 					break;
 
 				case 2:
-					active_object = OBJGEOM_IMAGE_LINK_ICON;
+					active_object_compound = objects_compounds.at(1);
+					active_object_compound->node_geometry_type = OBJGEOM_IMAGE_LINK_ICON;
 					break;
 
 				default:
 					fprintf(stderr, "<<Error: Icon \"%i\" not identified in object \"%s\", while reading \"%s\">>\n", object_index, object_name, src_obj_filename);
-					continue;
 					break;
 				}
 			}
@@ -173,28 +189,32 @@ int GEOMETRIES_MANAGER::readObjFile(const char * src_obj_filename)
 				switch (object_index)
 				{
 				case 1:
-					active_object = OBJGEOM_NUMERIC_NODE;
+					active_object_compound = objects_compounds.at(2);
+					active_object_compound->node_geometry_type = OBJGEOM_NUMERIC_NODE;
 					break;
 
 				case 2:
-					active_object = OBJGEOM_STRING_NODE;
+					active_object_compound = objects_compounds.at(3);
+					active_object_compound->node_geometry_type = OBJGEOM_STRING_NODE;
 					break;
 
 				case 3:
-					active_object = OBJGEOM_NODE_OPERATION;
+					active_object_compound = objects_compounds.at(4);
+					active_object_compound->node_geometry_type = OBJGEOM_NODE_OPERATION;
 					break;
 
 				case 4:
-					active_object = OBJGEOM_IMAGE_SCALAR_OPERATION;
+					active_object_compound = objects_compounds.at(5);
+					active_object_compound->node_geometry_type = OBJGEOM_IMAGE_SCALAR_OPERATION;
 					break;
 
 				case 5:
-					active_object = OBJGEOM_IMAGE_OPERATION;
+					active_object_compound = objects_compounds.at(6);
+					active_object_compound->node_geometry_type = OBJGEOM_IMAGE_OPERATION;
 					break;
 
 				default:
 					fprintf(stderr, "<<Error: Node object \"%i\" not identified in object \"%s\", while reading \"%s\">>\n", object_index, object_name, src_obj_filename);
-					continue;
 					break;
 				}
 			}
@@ -204,12 +224,9 @@ int GEOMETRIES_MANAGER::readObjFile(const char * src_obj_filename)
 				continue;
 			}
 
-			active_object_compound = new node_geometry;
-			active_object_compound->node_geometry_type = active_object;
-			objects_compounds.push_back(active_object_compound);
 			break;
 
-			/* ------------------------------ Vertex identifier (vertex position, texture and normals) ------------------------------ */
+			/* -------- Vertex identifier (vertex position, texture and normals) ----------- */
 		case (int)'v':
 			switch ((int)*(read_line + 1))
 			{
@@ -282,7 +299,6 @@ int GEOMETRIES_MANAGER::readObjFile(const char * src_obj_filename)
 
 			default:
 				fprintf(stderr, "<<Error: Unknown vertex identifier \"%s\" found while reading \"%s\">>\n", read_line, src_obj_filename);
-				continue;
 				break;
 			}
 
@@ -291,7 +307,10 @@ int GEOMETRIES_MANAGER::readObjFile(const char * src_obj_filename)
 			/* ------------------------------ Use material (Material used for this object) ------------------------------ */
 		case (int)'u':
 			extract_string_ini = strchr(read_line, ' ') + 1;
-			strcpy(active_object_compound->material_identifier, extract_string_ini);
+			characters_count = (unsigned int)strlen(extract_string_ini);
+			material_identifier_string = new char[characters_count + 1];
+			strcpy(material_identifier_string, extract_string_ini);
+			active_object_compound->material_identifiers.push_back(material_identifier_string);
 			break;
 
 			/* ------------------------------ Smoothing (Off in general) ------------------------------ */
@@ -398,7 +417,6 @@ int GEOMETRIES_MANAGER::readObjFile(const char * src_obj_filename)
 
 		default:
 			fprintf(stderr, "<<Error: Unknown identifier \"%s\" found while reading \"%s\">>\n", read_line, src_obj_filename);
-			continue;
 			break;
 		}
 	}
@@ -488,6 +506,10 @@ int GEOMETRIES_MANAGER::readMtlFile(const char * src_mtl_filename)
 	fclose(fp_material);
 	
 	return 1;
+}
+
+void GEOMETRIES_MANAGER::centerObjectCompound(node_geometry * src_node_geometry)
+{
 }
 
 
