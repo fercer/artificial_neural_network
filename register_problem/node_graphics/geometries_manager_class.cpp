@@ -243,15 +243,15 @@ int GEOMETRIES_MANAGER::readObjFile(const char * src_obj_filename)
 				characters_count = extract_string_end  - extract_string_ini;
 				strncpy(numeric_value, extract_string_ini, characters_count);
 				*(numeric_value + characters_count) = '\0';
-				p_3 = (float)atof(numeric_value);
+				p_2 = (float)atof(numeric_value);
 
 				extract_string_ini = extract_string_end + 1;
 				characters_count = new_line_position - extract_string_ini;
 				strncpy(numeric_value, extract_string_ini, characters_count);
 				*(numeric_value + characters_count) = '\0';
-				p_2 = (float)atof(numeric_value);
+				p_3 = (float)atof(numeric_value);
 
-				unique_position_vertices.push_back(glm::vec4(p_1, p_2, p_3, 1.0));
+				unique_position_vertices.push_back(glm::vec4(p_1, p_3, p_2, 1.0));
 
 				break;
 
@@ -286,15 +286,15 @@ int GEOMETRIES_MANAGER::readObjFile(const char * src_obj_filename)
 				characters_count = extract_string_end - extract_string_ini;
 				strncpy(numeric_value, extract_string_ini, characters_count);
 				*(numeric_value + characters_count) = '\0';
-				p_3 = (float)atof(numeric_value);
+				p_2 = (float)atof(numeric_value);
 
 				extract_string_ini = extract_string_end + 1;
 				characters_count = new_line_position - extract_string_ini;
 				strncpy(numeric_value, extract_string_ini, characters_count);
 				*(numeric_value + characters_count) = '\0';
-				p_2 = (float)atof(numeric_value);
+				p_3 = (float)atof(numeric_value);
 
-				unique_normal_vectors.push_back(glm::vec3(p_1, p_2, p_3));
+				unique_normal_vectors.push_back(glm::vec3(p_1, p_3, p_2));
 				break;
 
 			default:
@@ -307,7 +307,7 @@ int GEOMETRIES_MANAGER::readObjFile(const char * src_obj_filename)
 			/* ------------------------------ Use material (Material used for this object) ------------------------------ */
 		case (int)'u':
 			extract_string_ini = strchr(read_line, ' ') + 1;
-			characters_count = (unsigned int)strlen(extract_string_ini);
+			characters_count = new_line_position - extract_string_ini;
 			material_identifier_string = new char[characters_count + 1];
 			strcpy(material_identifier_string, extract_string_ini);
 			active_object_compound->material_identifiers.push_back(material_identifier_string);
@@ -429,6 +429,9 @@ int GEOMETRIES_MANAGER::readObjFile(const char * src_obj_filename)
 		mtl_read_status = readMtlFile(material_filename);
 	}
 
+	// Center all the objects compounds:
+	centerObjectCompound();
+
 	return 1;
 }
 
@@ -508,8 +511,38 @@ int GEOMETRIES_MANAGER::readMtlFile(const char * src_mtl_filename)
 	return 1;
 }
 
-void GEOMETRIES_MANAGER::centerObjectCompound(node_geometry * src_node_geometry)
+void GEOMETRIES_MANAGER::centerObjectCompound()
 {
+	std::vector<node_geometry*>::iterator objects_compounds_ini = objects_compounds.begin();
+	std::vector<node_geometry*>::iterator objects_compounds_end = objects_compounds.end();
+	std::vector<node_geometry*>::iterator objects_compounds_it;
+
+	std::vector<glm::vec4>::iterator vertices_positions_ini;
+	std::vector<glm::vec4>::iterator vertices_positions_end;
+	std::vector<glm::vec4>::iterator vertices_positions_it;
+
+	glm::vec4 center_xy;
+
+	for (objects_compounds_it = objects_compounds_ini; objects_compounds_it != objects_compounds_end; objects_compounds_it++)
+	{
+		vertices_positions_ini = (*objects_compounds_it)->vertices_positions.begin();
+		vertices_positions_end = (*objects_compounds_it)->vertices_positions.end();
+		center_xy = glm::vec4(0.0f);
+
+		for (vertices_positions_it = vertices_positions_ini; vertices_positions_it != vertices_positions_end; vertices_positions_it++)
+		{
+			center_xy = center_xy + *vertices_positions_it;
+		}
+
+		center_xy = center_xy / (float)(*objects_compounds_it)->vertices_positions.size();
+		center_xy.z = 0.0f;
+		center_xy.w = 0.0f;
+
+		for (vertices_positions_it = vertices_positions_ini; vertices_positions_it != vertices_positions_end; vertices_positions_it++)
+		{
+			*vertices_positions_it = *vertices_positions_it - center_xy;
+		}
+	}
 }
 
 

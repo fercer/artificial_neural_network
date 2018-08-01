@@ -19,7 +19,7 @@
 typedef struct node_geometry_location
 {
 	object_geometry_type node_geometry_type;
-	node_geometry geometry;
+	node_geometry * geometry;
 	glm::vec4 position;
 
 	node_geometry_location()
@@ -76,7 +76,6 @@ private:
 
 	bool a_node_was_added;
 	bool a_node_was_moved;
-	bool all_nodes_were_moved;
 
 	std::vector<unsigned int> node_was_moved;
 	std::vector<unsigned int> node_was_added;

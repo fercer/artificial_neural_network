@@ -12,7 +12,6 @@ OBJECTS_MANAGER::OBJECTS_MANAGER()
 
 	a_node_was_moved = false;
 	a_node_was_added = false;
-	all_nodes_were_moved = false;
 
 	vertices_accumulated_count.push_back(0);
 }
@@ -31,7 +30,6 @@ OBJECTS_MANAGER::OBJECTS_MANAGER(GEOMETRIES_MANAGER * src_geometries_manager)
 
 	a_node_was_moved = false;
 	a_node_was_added = false;
-	all_nodes_were_moved = false;
 
 	vertices_accumulated_count.push_back(0);
 }
@@ -50,7 +48,6 @@ OBJECTS_MANAGER::OBJECTS_MANAGER(const OBJECTS_MANAGER & src_node_figure)
 
 	this->a_node_was_moved = src_node_figure.a_node_was_moved;
 	this->a_node_was_added = src_node_figure.a_node_was_added;
-	this->all_nodes_were_moved = src_node_figure.all_nodes_were_moved;
 	this->node_was_moved = src_node_figure.node_was_moved;
 
 	this->vertices_accumulated_count = src_node_figure.vertices_accumulated_count;
@@ -95,7 +92,7 @@ void OBJECTS_MANAGER::addNode(const object_geometry_type src_new_node_type, cons
 
 	objects_geometries_locations.push_back(new_node_object);
 
-	vertices_accumulated_count.push_back(new_node_object->geometry.triangles_count * 3 + vertices_accumulated_count.at(nodes_count));
+	vertices_accumulated_count.push_back(new_node_object->geometry->triangles_count * 3 + vertices_accumulated_count.at(nodes_count));
 	node_was_added.push_back(nodes_count);
 	a_node_was_added = true;
 
@@ -117,7 +114,13 @@ void OBJECTS_MANAGER::moveNode(const unsigned int src_node_index, const float de
 void OBJECTS_MANAGER::moveAllNodes(const float delta_x, const float delta_y, const float delta_z)
 {
 	nodes_position = nodes_position + glm::vec4(delta_x, delta_y, delta_z, 0.0f);
-	all_nodes_were_moved = true;
+
+	for (unsigned int node_index = 0; node_index < nodes_count; node_index++)
+	{
+		node_was_moved.push_back(node_index);
+	}
+
+	a_node_was_moved = true;
 }
 
 
@@ -128,7 +131,12 @@ void OBJECTS_MANAGER::scaleAllNodes(const float scale_axis_x, const float scale_
 	nodes_scale[1].y = scale_axis_y;
 	nodes_scale[2].z = scale_axis_z;
 
-	all_nodes_were_moved = true;
+	for (unsigned int node_index = 0; node_index < nodes_count; node_index++)
+	{
+		node_was_moved.push_back(node_index);
+	}
+
+	a_node_was_moved = true;
 }
 
 
@@ -156,7 +164,12 @@ void OBJECTS_MANAGER::rotateAllNodes(const float angle_axis_x, const float angle
 
 	nodes_rotation = rotation_x * rotation_y * rotation_z;
 
-	all_nodes_were_moved = true;
+	for (unsigned int node_index = 0; node_index < nodes_count; node_index++)
+	{
+		node_was_moved.push_back(node_index);
+	}
+
+	a_node_was_moved = true;
 }
 
 
@@ -210,10 +223,10 @@ void OBJECTS_MANAGER::dumpNodesGeometriesMovedOnly(GLfloat * dst_vertices_positi
 		dst_vertices_positions_it = dst_vertices_positions + 3 * vertices_accumulated_count.at(*node_was_moved_it);
 
 		// Perform the transformation of each node previous to the dumping:
-		vertices_positions_it = (*objects_geometries_locations_it)->geometry.vertices_positions.begin();
-		vertices_positions_end = (*objects_geometries_locations_it)->geometry.vertices_positions.end();
+		vertices_positions_it = (*objects_geometries_locations_it)->geometry->vertices_positions.begin();
+		vertices_positions_end = (*objects_geometries_locations_it)->geometry->vertices_positions.end();
 
-		for (; vertices_positions_it < vertices_positions_end; vertices_positions_it++)
+		for (; vertices_positions_it != vertices_positions_end; vertices_positions_it++)
 		{
 			temp_position = nodes_rotation * nodes_scale * *vertices_positions_it + (*objects_geometries_locations_it)->position + nodes_position;
 
@@ -237,6 +250,8 @@ void OBJECTS_MANAGER::dumpNodesGeometriesNewOnly(GLfloat * dst_vertices_position
 	GLfloat * dst_uv_coordinates_it;
 	GLfloat * dst_normal_vectors_it;
 
+	unsigned int pointer_offset;
+
 	std::vector<node_geometry_location*>::iterator objects_geometries_locations_ini = objects_geometries_locations.begin();
 	std::vector<node_geometry_location*>::iterator objects_geometries_locations_it;
 
@@ -253,21 +268,23 @@ void OBJECTS_MANAGER::dumpNodesGeometriesNewOnly(GLfloat * dst_vertices_position
 	for (node_was_added_it = node_was_added_ini; node_was_added_it != node_was_added_end; node_was_added_it++)
 	{
 		objects_geometries_locations_it = objects_geometries_locations_ini + *node_was_added_it;
-		dst_vertices_positions_it = dst_vertices_positions + 3 * vertices_accumulated_count.at(*node_was_added_it);
-		dst_uv_coordinates_it = dst_uv_coordinates + 2 * vertices_accumulated_count.at(*node_was_added_it);
-		dst_normal_vectors_it = dst_normal_vectors + 3 * vertices_accumulated_count.at(*node_was_added_it);
+		pointer_offset = vertices_accumulated_count.at(*node_was_added_it);
+
+		dst_vertices_positions_it = dst_vertices_positions + 3 * pointer_offset;
+		dst_uv_coordinates_it = dst_uv_coordinates + 2 * pointer_offset;
+		dst_normal_vectors_it = dst_normal_vectors + 3 * pointer_offset;
 
 		// Perform the transformation of each node previous to the dumping:
-		vertices_positions_it = (*objects_geometries_locations_it)->geometry.vertices_positions.begin();
-		vertices_positions_end = (*objects_geometries_locations_it)->geometry.vertices_positions.end();
+		vertices_positions_it = (*objects_geometries_locations_it)->geometry->vertices_positions.begin();
+		vertices_positions_end = (*objects_geometries_locations_it)->geometry->vertices_positions.end();
 		
-		uv_coordinates_it = (*objects_geometries_locations_it)->geometry.uv_coordinates.begin();
-		uv_coordinates_end = (*objects_geometries_locations_it)->geometry.uv_coordinates.end();
+		uv_coordinates_it = (*objects_geometries_locations_it)->geometry->uv_coordinates.begin();
+		uv_coordinates_end = (*objects_geometries_locations_it)->geometry->uv_coordinates.end();
 
-		normal_vectors_it = (*objects_geometries_locations_it)->geometry.normal_vectors.begin();
-		normal_vectors_end = (*objects_geometries_locations_it)->geometry.normal_vectors.end();
+		normal_vectors_it = (*objects_geometries_locations_it)->geometry->normal_vectors.begin();
+		normal_vectors_end = (*objects_geometries_locations_it)->geometry->normal_vectors.end();
 
-		for (; vertices_positions_it < vertices_positions_end; vertices_positions_it++, uv_coordinates_it++, normal_vectors_it++)
+		for (; vertices_positions_it != vertices_positions_end; vertices_positions_it++, uv_coordinates_it++, normal_vectors_it++)
 		{
 			temp_position = nodes_rotation * nodes_scale * *vertices_positions_it + (*objects_geometries_locations_it)->position + nodes_position;
 

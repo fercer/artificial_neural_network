@@ -32,8 +32,11 @@ typedef enum object_geometry_type
 typedef struct node_geometry
 {
 	object_geometry_type node_geometry_type;
+
 	unsigned int triangles_count;
+
 	std::vector<char *> material_identifiers;
+
 	std::vector<glm::vec4> vertices_positions;
 	std::vector<glm::vec2> uv_coordinates;
 	std::vector<glm::vec3> normal_vectors;
@@ -48,9 +51,10 @@ typedef struct node_geometry
 	{
 		node_geometry_type = src_node_geometry.node_geometry_type;
 		triangles_count = src_node_geometry.triangles_count;
-
-		char * material_identifier_string;
+		
 		unsigned int material_identifier_length;
+		char * material_identifier_string;
+
 		for (unsigned int material_index = 0; material_index < (unsigned int)src_node_geometry.material_identifiers.size(); material_index++)
 		{
 			material_identifier_length = (unsigned int)strlen(src_node_geometry.material_identifiers.at(material_index));
@@ -58,8 +62,7 @@ typedef struct node_geometry
 			strcpy(material_identifier_string, src_node_geometry.material_identifiers.at(material_index));
 			material_identifiers.push_back(material_identifier_string);
 		}
-
-
+		
 		vertices_positions = src_node_geometry.vertices_positions;
 		uv_coordinates = src_node_geometry.uv_coordinates;
 		normal_vectors = src_node_geometry.normal_vectors;
@@ -70,8 +73,9 @@ typedef struct node_geometry
 		node_geometry_type = src_node_geometry->node_geometry_type;
 		triangles_count = src_node_geometry->triangles_count;
 
-		char * material_identifier_string;
 		unsigned int material_identifier_length;
+		char * material_identifier_string;
+
 		for (unsigned int material_index = 0; material_index < (unsigned int)src_node_geometry->material_identifiers.size(); material_index++)
 		{
 			material_identifier_length = (unsigned int)strlen(src_node_geometry->material_identifiers.at(material_index));
@@ -79,10 +83,36 @@ typedef struct node_geometry
 			strcpy(material_identifier_string, src_node_geometry->material_identifiers.at(material_index));
 			material_identifiers.push_back(material_identifier_string);
 		}
-		
+
 		vertices_positions = src_node_geometry->vertices_positions;
 		uv_coordinates = src_node_geometry->uv_coordinates;
 		normal_vectors = src_node_geometry->normal_vectors;
+	}
+	
+	node_geometry & operator=(const node_geometry & src_node_geometry)
+	{
+		if (this != &src_node_geometry)
+		{
+			this->node_geometry_type = src_node_geometry.node_geometry_type;
+			this->triangles_count = src_node_geometry.triangles_count;
+
+			unsigned int material_identifier_length;
+			char * material_identifier_string;
+
+			for (unsigned int material_index = 0; material_index < (unsigned int)src_node_geometry.material_identifiers.size(); material_index++)
+			{
+				material_identifier_length = (unsigned int)strlen(src_node_geometry.material_identifiers.at(material_index));
+				material_identifier_string = new char[material_identifier_length + 1];
+				strcpy(material_identifier_string, src_node_geometry.material_identifiers.at(material_index));
+				this->material_identifiers.push_back(material_identifier_string);
+			}
+
+			this->vertices_positions = src_node_geometry.vertices_positions;
+			this->uv_coordinates = src_node_geometry.uv_coordinates;
+			this->normal_vectors = src_node_geometry.normal_vectors;
+		}
+
+		return *this;
 	}
 
 	~node_geometry()
@@ -93,9 +123,10 @@ typedef struct node_geometry
 
 		for (material_identifiers_it = material_identifiers_ini; material_identifiers_it != material_identifiers_end; material_identifiers_it++)
 		{
-			delete[] * material_identifiers_it;
+			delete [] *material_identifiers_it;
 		}
 	}
+
 } node_geometry;
 
 
@@ -124,7 +155,7 @@ private:
 	int readObjFile(const char * src_obj_filename);
 	int readMtlFile(const char * src_mtl_filename);
 
-	void centerObjectCompound(node_geometry * src_node_geometry);
+	void centerObjectCompound();
 
 	IMG_DATA * readTextureFile(const char * src_texture_filename);
 
