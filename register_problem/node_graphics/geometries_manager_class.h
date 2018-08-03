@@ -15,6 +15,7 @@
 
 #include <string.h>
 #include "../image_functions.h"
+#include "textures_manager_class.h"
 
 typedef enum object_geometry_type
 {
@@ -29,83 +30,71 @@ typedef enum object_geometry_type
 } object_geometry_type;
 
 
-typedef struct node_geometry
+
+typedef struct compound_geometry
 {
-	object_geometry_type node_geometry_type;
-
-	unsigned int triangles_count;
-
-	std::vector<char *> material_identifiers;
+	unsigned int triangles_in_compound;
+	char * material_identifier;
 
 	std::vector<glm::vec4> vertices_positions;
 	std::vector<glm::vec2> uv_coordinates;
 	std::vector<glm::vec3> normal_vectors;
 
-	node_geometry()
+	compound_geometry()
 	{
-		node_geometry_type = OBJGEOM_UNASSIGNED;
-		triangles_count = 0;
+		material_identifier = NULL;
+		triangles_in_compound = 0;
 	}
 
-	node_geometry(const node_geometry & src_node_geometry)
+	compound_geometry(const char * src_material_identifier)
 	{
-		node_geometry_type = src_node_geometry.node_geometry_type;
-		triangles_count = src_node_geometry.triangles_count;
-		
-		unsigned int material_identifier_length;
-		char * material_identifier_string;
+		unsigned int material_identifier_length = (unsigned int)strlen(src_material_identifier) + 1;
+		material_identifier = new char[material_identifier_length];
+		strcpy(material_identifier, src_material_identifier);
 
-		for (unsigned int material_index = 0; material_index < (unsigned int)src_node_geometry.material_identifiers.size(); material_index++)
-		{
-			material_identifier_length = (unsigned int)strlen(src_node_geometry.material_identifiers.at(material_index));
-			material_identifier_string = new char[material_identifier_length + 1];
-			strcpy(material_identifier_string, src_node_geometry.material_identifiers.at(material_index));
-			material_identifiers.push_back(material_identifier_string);
-		}
-		
-		vertices_positions = src_node_geometry.vertices_positions;
-		uv_coordinates = src_node_geometry.uv_coordinates;
-		normal_vectors = src_node_geometry.normal_vectors;
-	}
-
-	node_geometry(const node_geometry * src_node_geometry)
-	{
-		node_geometry_type = src_node_geometry->node_geometry_type;
-		triangles_count = src_node_geometry->triangles_count;
-
-		unsigned int material_identifier_length;
-		char * material_identifier_string;
-
-		for (unsigned int material_index = 0; material_index < (unsigned int)src_node_geometry->material_identifiers.size(); material_index++)
-		{
-			material_identifier_length = (unsigned int)strlen(src_node_geometry->material_identifiers.at(material_index));
-			material_identifier_string = new char[material_identifier_length + 1];
-			strcpy(material_identifier_string, src_node_geometry->material_identifiers.at(material_index));
-			material_identifiers.push_back(material_identifier_string);
-		}
-
-		vertices_positions = src_node_geometry->vertices_positions;
-		uv_coordinates = src_node_geometry->uv_coordinates;
-		normal_vectors = src_node_geometry->normal_vectors;
+		triangles_in_compound = 0;
 	}
 	
-	node_geometry & operator=(const node_geometry & src_node_geometry)
+	compound_geometry(const compound_geometry & src_node_geometry)
+	{
+		unsigned int material_identifier_length = (unsigned int)strlen(src_node_geometry.material_identifier) + 1;
+		this->material_identifier = new char[material_identifier_length];
+		strcpy(this->material_identifier, src_node_geometry.material_identifier);
+
+		this->triangles_in_compound = src_node_geometry.triangles_in_compound;
+				
+		this->vertices_positions = src_node_geometry.vertices_positions;
+		this->uv_coordinates = src_node_geometry.uv_coordinates;
+		this->normal_vectors = src_node_geometry.normal_vectors;
+	}
+
+	compound_geometry(const compound_geometry * src_node_geometry)
+	{
+		unsigned int material_identifier_length = (unsigned int)strlen(src_node_geometry->material_identifier) + 1;
+		this->material_identifier = new char[material_identifier_length];
+		strcpy(this->material_identifier, src_node_geometry->material_identifier);
+
+		this->triangles_in_compound = src_node_geometry->triangles_in_compound;
+
+		this->vertices_positions = src_node_geometry->vertices_positions;
+		this->uv_coordinates = src_node_geometry->uv_coordinates;
+		this->normal_vectors = src_node_geometry->normal_vectors;
+	}
+	
+	compound_geometry & operator=(const compound_geometry & src_node_geometry)
 	{
 		if (this != &src_node_geometry)
 		{
-			this->node_geometry_type = src_node_geometry.node_geometry_type;
-			this->triangles_count = src_node_geometry.triangles_count;
-
-			unsigned int material_identifier_length;
-			char * material_identifier_string;
-
-			for (unsigned int material_index = 0; material_index < (unsigned int)src_node_geometry.material_identifiers.size(); material_index++)
+			if (this->material_identifier)
 			{
-				material_identifier_length = (unsigned int)strlen(src_node_geometry.material_identifiers.at(material_index));
-				material_identifier_string = new char[material_identifier_length + 1];
-				strcpy(material_identifier_string, src_node_geometry.material_identifiers.at(material_index));
-				this->material_identifiers.push_back(material_identifier_string);
+				delete[] this->material_identifier;
 			}
+
+			unsigned int material_identifier_length = (unsigned int)strlen(src_node_geometry.material_identifier) + 1;
+			this->material_identifier = new char[material_identifier_length];
+			strcpy(this->material_identifier, src_node_geometry.material_identifier);
+
+			this->triangles_in_compound = src_node_geometry.triangles_in_compound;
 
 			this->vertices_positions = src_node_geometry.vertices_positions;
 			this->uv_coordinates = src_node_geometry.uv_coordinates;
@@ -115,16 +104,71 @@ typedef struct node_geometry
 		return *this;
 	}
 
-	~node_geometry()
+	~compound_geometry()
 	{
-		std::vector<char*>::iterator material_identifiers_ini = material_identifiers.begin();
-		std::vector<char*>::iterator material_identifiers_end = material_identifiers.end();
-		std::vector<char*>::iterator material_identifiers_it;
-
-		for (material_identifiers_it = material_identifiers_ini; material_identifiers_it != material_identifiers_end; material_identifiers_it++)
+		if (this->material_identifier)
 		{
-			delete [] *material_identifiers_it;
+			delete[] this->material_identifier;
 		}
+	}
+	
+} compound_geometry;
+
+
+
+typedef struct node_geometry
+{
+	object_geometry_type compound_geometry_type;
+	std::vector<compound_geometry> compounds_in_object;
+	bool self_allocated_compounds;
+	unsigned int triangles_in_object;
+
+	node_geometry()
+	{
+		compound_geometry_type = OBJGEOM_UNASSIGNED;
+		triangles_in_object = 0;
+		self_allocated_compounds = true;
+	}
+
+	node_geometry(const object_geometry_type src_object_geometry_type)
+	{
+		compound_geometry_type = src_object_geometry_type;
+		triangles_in_object = 0;
+		self_allocated_compounds = true;
+	}
+
+	node_geometry(const node_geometry & src_node_geometry)
+	{
+		this->compound_geometry_type = src_node_geometry.compound_geometry_type;
+		this->compounds_in_object = src_node_geometry.compounds_in_object;
+		this->triangles_in_object = src_node_geometry.triangles_in_object;
+		this->self_allocated_compounds = false;
+	}
+
+	node_geometry(node_geometry * src_node_geometry)
+	{
+		this->compound_geometry_type = src_node_geometry->compound_geometry_type;
+		this->compounds_in_object = src_node_geometry->compounds_in_object;
+		this->triangles_in_object = src_node_geometry->triangles_in_object;
+		this->self_allocated_compounds = false;
+	}
+	
+	node_geometry & operator=(const node_geometry & src_node_geometry)
+	{
+		if (this != &src_node_geometry)
+		{
+			this->compound_geometry_type = src_node_geometry.compound_geometry_type;
+			this->compounds_in_object = src_node_geometry.compounds_in_object;
+			this->triangles_in_object = src_node_geometry.triangles_in_object;
+			this->self_allocated_compounds = false;
+		}
+
+		return *this;
+	}
+
+	inline bool operator==(const node_geometry & right_node_geometry)
+	{
+		return this->compound_geometry_type == right_node_geometry.compound_geometry_type;
 	}
 
 } node_geometry;
@@ -139,30 +183,21 @@ public:
 
 	void loadObj(const char * src_obj_filename);
 
-	node_geometry * getGeometry(const object_geometry_type src_object_type);
+	node_geometry getGeometry(const object_geometry_type src_object_type);
+
+	TEXTURES_MANAGER * getTexturesManager();
 
 private:
 	unsigned int nodes_count;
-	int texture_read_status;
-	IMG_DATA * texture_map;
 
-	std::vector<node_geometry*> objects_compounds;
-	std::vector<node_geometry*> display_objects_compounds;
-
-	int mtl_read_status;
-	int obj_read_status;
-			
+	std::vector<node_geometry> objects_compounds_geometry;
+	TEXTURES_MANAGER compounds_textures_manager;
+	
 	int readObjFile(const char * src_obj_filename);
 	int readMtlFile(const char * src_mtl_filename);
 
 	void centerObjectCompound();
-
-	IMG_DATA * readTextureFile(const char * src_texture_filename);
-
-	IMG_DATA * loadPGM_ascii(const char * src_filename);
-	IMG_DATA * loadPGM_raw(const char * src_filename);
-	IMG_DATA * loadPPM_ascii(const char * src_filename);
-	IMG_DATA * loadPPM_raw(const char * src_filename);
 };
+
 
 #endif // GEOMETRIES_MANAGER_CLASS_H_INCLUDED

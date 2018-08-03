@@ -12,8 +12,6 @@ OBJECTS_MANAGER::OBJECTS_MANAGER()
 
 	a_node_was_moved = false;
 	a_node_was_added = false;
-
-	vertices_accumulated_count.push_back(0);
 }
 
 
@@ -30,8 +28,6 @@ OBJECTS_MANAGER::OBJECTS_MANAGER(GEOMETRIES_MANAGER * src_geometries_manager)
 
 	a_node_was_moved = false;
 	a_node_was_added = false;
-
-	vertices_accumulated_count.push_back(0);
 }
 
 
@@ -48,10 +44,8 @@ OBJECTS_MANAGER::OBJECTS_MANAGER(const OBJECTS_MANAGER & src_node_figure)
 
 	this->a_node_was_moved = src_node_figure.a_node_was_moved;
 	this->a_node_was_added = src_node_figure.a_node_was_added;
-	this->node_was_moved = src_node_figure.node_was_moved;
-
-	this->vertices_accumulated_count = src_node_figure.vertices_accumulated_count;
-
+	this->moved_nodes_indices = src_node_figure.moved_nodes_indices;
+	
 	// Copy the nodes objects
 	for (unsigned int node_index = 0; node_index < (unsigned int)src_node_figure.objects_geometries_locations.size(); node_index++)
 	{
@@ -64,15 +58,9 @@ OBJECTS_MANAGER::OBJECTS_MANAGER(const OBJECTS_MANAGER & src_node_figure)
 
 OBJECTS_MANAGER::~OBJECTS_MANAGER()
 {
-	std::vector<node_geometry_location*>::iterator objects_geometries_locations_ini = objects_geometries_locations.begin();
-	std::vector<node_geometry_location*>::iterator objects_geometries_locations_end = objects_geometries_locations.end();
-	std::vector<node_geometry_location*>::iterator objects_geometries_locations_it;
-
-	for (objects_geometries_locations_it = objects_geometries_locations_ini; objects_geometries_locations_it != objects_geometries_locations_end; objects_geometries_locations_it++)
-	{
-		delete *objects_geometries_locations_it;
-	}
 }
+
+
 
 void OBJECTS_MANAGER::assignGeometriesManager(GEOMETRIES_MANAGER * src_geometries_manager)
 {
@@ -81,19 +69,40 @@ void OBJECTS_MANAGER::assignGeometriesManager(GEOMETRIES_MANAGER * src_geometrie
 
 
 
-void OBJECTS_MANAGER::addNode(const object_geometry_type src_new_node_type, const GLfloat src_position_x, const GLfloat src_position_y, const GLfloat src_position_z, const GLfloat src_scale)
+void OBJECTS_MANAGER::addNode(const object_geometry_type src_new_node_type, const GLfloat src_position_x, const GLfloat src_position_y, const GLfloat src_position_z)
 {
-	node_geometry_location * new_node_object = new node_geometry_location;
+	objects_geometries_locations.push_back(node_geometry_location(src_position_x, src_position_y, src_position_z));
+	objects_geometries_locations.at(nodes_count).node_object_geometry = my_geometries_manager->getGeometry(src_new_node_type);
 
-	new_node_object->position = glm::vec4(src_position_x, src_position_y, src_position_z, 1.0);
-	new_node_object->node_geometry_type = src_new_node_type;
+	std::vector<compound_geometry>::iterator compounds_in_object_ini = objects_geometries_locations.at(nodes_count).node_object_geometry.compounds_in_object.begin();
 
-	new_node_object->geometry = my_geometries_manager->getGeometry(src_new_node_type);
+	std::vector<compound_geometry>::iterator compounds_in_object_end = objects_geometries_locations.at(nodes_count).node_object_geometry.compounds_in_object.end();
 
-	objects_geometries_locations.push_back(new_node_object);
+	std::vector<compound_geometry>::iterator compounds_in_object_it;
 
-	vertices_accumulated_count.push_back(new_node_object->geometry->triangles_count * 3 + vertices_accumulated_count.at(nodes_count));
-	node_was_added.push_back(nodes_count);
+	std::vector<objects_by_material>::iterator my_objects_by_material_ini, my_objects_by_material_end, my_objects_by_material_it;
+
+	for (compounds_in_object_it = compounds_in_object_ini; compounds_in_object_it != compounds_in_object_end; compounds_in_object_it++)
+	{
+		objects_by_material search_new_node_material(compounds_in_object_it->material_identifier);
+
+		my_objects_by_material_ini = objects_geometries_locations_by_material.begin();
+		my_objects_by_material_end = objects_geometries_locations_by_material.end();
+		my_objects_by_material_it = std::find(my_objects_by_material_ini, my_objects_by_material_end, search_new_node_material);
+
+		if (my_objects_by_material_it == my_objects_by_material_end)
+		{
+			my_objects_by_material_it = my_objects_by_material_ini + objects_geometries_locations_by_material.size();
+			objects_geometries_locations_by_material.push_back(search_new_node_material);
+		}
+
+		my_objects_by_material_it->vertices_acummulated_initial_positions.push_back(3 * compounds_in_object_it->triangles_in_compound);
+		my_objects_by_material_it->corresponding_node_indices.push_back(nodes_count);
+
+		/* RESIZE THE MATERIAL VERTICES ARRAY */
+	}
+
+	added_nodes_indices.push_back(nodes_count);
 	a_node_was_added = true;
 
 	nodes_count++;
@@ -103,9 +112,37 @@ void OBJECTS_MANAGER::addNode(const object_geometry_type src_new_node_type, cons
 
 void OBJECTS_MANAGER::moveNode(const unsigned int src_node_index, const float delta_x, const float delta_y, const float delta_z)
 {
-	objects_geometries_locations.at(src_node_index)->position = objects_geometries_locations.at(src_node_index)->position + glm::vec4(delta_x, delta_y, delta_z, 0.0f);
+	objects_geometries_locations.at(src_node_index).node_position = objects_geometries_locations.at(src_node_index).node_position + glm::vec4(delta_x, delta_y, delta_z, 0.0f);
 
-	node_was_moved.push_back(src_node_index);
+	moved_nodes_indices.push_back(src_node_index);
+	a_node_was_moved = true;
+}
+
+
+
+void OBJECTS_MANAGER::scaleNode(const unsigned int src_node_index, const float src_scale)
+{
+	objects_geometries_locations.at(src_node_index).node_scale[0].x = src_scale;
+	objects_geometries_locations.at(src_node_index).node_scale[1].y = src_scale;
+	objects_geometries_locations.at(src_node_index).node_scale[2].z = src_scale;
+
+	moved_nodes_indices.push_back(src_node_index);
+	a_node_was_moved = true;
+}
+
+
+
+void OBJECTS_MANAGER::rotateNode(const unsigned int src_node_index, const float src_rotation_angle)
+{
+	const float cos_rotation = cosf(src_rotation_angle);
+	const float sin_rotation = sinf(src_rotation_angle);
+	
+	objects_geometries_locations.at(src_node_index).node_rotation[0].x = cos_rotation;
+	objects_geometries_locations.at(src_node_index).node_rotation[0].y = -sin_rotation;
+	objects_geometries_locations.at(src_node_index).node_rotation[1].x = sin_rotation;
+	objects_geometries_locations.at(src_node_index).node_rotation[1].y = cos_rotation;
+
+	moved_nodes_indices.push_back(src_node_index);
 	a_node_was_moved = true;
 }
 
@@ -117,7 +154,7 @@ void OBJECTS_MANAGER::moveAllNodes(const float delta_x, const float delta_y, con
 
 	for (unsigned int node_index = 0; node_index < nodes_count; node_index++)
 	{
-		node_was_moved.push_back(node_index);
+		moved_nodes_indices.push_back(node_index);
 	}
 
 	a_node_was_moved = true;
@@ -133,7 +170,7 @@ void OBJECTS_MANAGER::scaleAllNodes(const float scale_axis_x, const float scale_
 
 	for (unsigned int node_index = 0; node_index < nodes_count; node_index++)
 	{
-		node_was_moved.push_back(node_index);
+		moved_nodes_indices.push_back(node_index);
 	}
 
 	a_node_was_moved = true;
@@ -166,7 +203,7 @@ void OBJECTS_MANAGER::rotateAllNodes(const float angle_axis_x, const float angle
 
 	for (unsigned int node_index = 0; node_index < nodes_count; node_index++)
 	{
-		node_was_moved.push_back(node_index);
+		moved_nodes_indices.push_back(node_index);
 	}
 
 	a_node_was_moved = true;
@@ -179,131 +216,93 @@ unsigned int OBJECTS_MANAGER::getNodesCount()
 	return nodes_count;
 }
 
-unsigned int OBJECTS_MANAGER::getVerticesCount()
-{
-	return vertices_accumulated_count.at(nodes_count);
-}
 
 
 
-void OBJECTS_MANAGER::dumpNodesGeometries(GLfloat * dst_vertices_positions, GLfloat * dst_uv_coordinates, GLfloat * dst_normal_vectors)
+void OBJECTS_MANAGER::dumpNodesGeometries()
 {
 	if (a_node_was_added)
 	{
-		dumpNodesGeometriesNewOnly(dst_vertices_positions, dst_uv_coordinates, dst_normal_vectors);
+		dumpNodesGeometriesNewOnly();
 	}
 
 	if (a_node_was_moved)
 	{
-		dumpNodesGeometriesMovedOnly(dst_vertices_positions, dst_uv_coordinates, dst_normal_vectors);
+		dumpNodesGeometriesMovedOnly();
 	}
 }
 
 
 
-void OBJECTS_MANAGER::dumpNodesGeometriesMovedOnly(GLfloat * dst_vertices_positions, GLfloat * dst_uv_coordinates, GLfloat * dst_normal_vectors)
+void OBJECTS_MANAGER::dumpNodesGeometriesMovedOnly()
 {
-	// Iterate for each node object in this manager:
-	GLfloat * dst_vertices_positions_it;
-
-	std::vector<node_geometry_location*>::iterator objects_geometries_locations_ini = objects_geometries_locations.begin();
-	std::vector<node_geometry_location*>::iterator objects_geometries_locations_it;
-
-	std::vector<glm::vec4>::iterator vertices_positions_end, vertices_positions_it;
-
-	glm::vec4 temp_position;
-
-	std::vector<unsigned int>::iterator node_was_moved_ini = node_was_moved.begin();
-	std::vector<unsigned int>::iterator node_was_moved_end = node_was_moved.end();
-	std::vector<unsigned int>::iterator node_was_moved_it;
-
-	for (node_was_moved_it = node_was_moved_ini; node_was_moved_it != node_was_moved_end; node_was_moved_it++)
-	{
-		objects_geometries_locations_it = objects_geometries_locations_ini + *node_was_moved_it;
-		dst_vertices_positions_it = dst_vertices_positions + 3 * vertices_accumulated_count.at(*node_was_moved_it);
-
-		// Perform the transformation of each node previous to the dumping:
-		vertices_positions_it = (*objects_geometries_locations_it)->geometry->vertices_positions.begin();
-		vertices_positions_end = (*objects_geometries_locations_it)->geometry->vertices_positions.end();
-
-		for (; vertices_positions_it != vertices_positions_end; vertices_positions_it++)
-		{
-			temp_position = nodes_rotation * nodes_scale * *vertices_positions_it + (*objects_geometries_locations_it)->position + nodes_position;
-
-			// Copy each position to the "dst_vertices_positions" array:
-			*(dst_vertices_positions_it++) = (GLfloat)temp_position.x;
-			*(dst_vertices_positions_it++) = (GLfloat)temp_position.y;
-			*(dst_vertices_positions_it++) = (GLfloat)temp_position.z;
-		}
-	}
-
-	node_was_moved.clear();
+	
+	moved_nodes_indices.clear();
 	a_node_was_moved = false;
 }
 
 
 
-void OBJECTS_MANAGER::dumpNodesGeometriesNewOnly(GLfloat * dst_vertices_positions, GLfloat * dst_uv_coordinates, GLfloat * dst_normal_vectors)
+void OBJECTS_MANAGER::dumpNodesGeometriesNewOnly()
 {
-	// Iterate for each node object in this manager:
-	GLfloat * dst_vertices_positions_it;
-	GLfloat * dst_uv_coordinates_it;
-	GLfloat * dst_normal_vectors_it;
+	std::vector<node_geometry_location>::iterator objects_geometries_locations_ini = objects_geometries_locations.begin();
+	std::vector<node_geometry_location>::iterator objects_geometries_locations_end = objects_geometries_locations.end();
+	std::vector<node_geometry_location>::iterator objects_geometries_locations_it;
+	
 
-	unsigned int pointer_offset;
+	std::vector<objects_by_material>::iterator objects_geometries_locations_by_material_ini = objects_geometries_locations_by_material.begin();
+	std::vector<objects_by_material>::iterator objects_geometries_locations_by_material_end = objects_geometries_locations_by_material.end();
+	std::vector<objects_by_material>::iterator objects_geometries_locations_by_material_it;
 
-	std::vector<node_geometry_location*>::iterator objects_geometries_locations_ini = objects_geometries_locations.begin();
-	std::vector<node_geometry_location*>::iterator objects_geometries_locations_it;
+	std::vector<compound_geometry>::iterator compounds_in_object_ini, compounds_in_object_end, compounds_in_object_it;
 
-	std::vector<glm::vec4>::iterator vertices_positions_end, vertices_positions_it;
-	std::vector<glm::vec2>::iterator uv_coordinates_end, uv_coordinates_it;
-	std::vector<glm::vec3>::iterator normal_vectors_end, normal_vectors_it;
+	std::vector<unsigned int>::iterator corresponding_node_indices_ini, corresponding_node_indices_end, corresponding_node_indices_it;
 
-	glm::vec4 temp_position;
+	GLfloat * vertices_positions_ptr;
+	GLfloat * uv_coordinates_ptr;
+	GLfloat * normal_vectors_ptr;
 
-	std::vector<unsigned int>::iterator node_was_added_ini = node_was_added.begin();
-	std::vector<unsigned int>::iterator node_was_added_end = node_was_added.end();
-	std::vector<unsigned int>::iterator node_was_added_it;
-
-	for (node_was_added_it = node_was_added_ini; node_was_added_it != node_was_added_end; node_was_added_it++)
+	unsigned int current_node_index;
+	unsigned int current_node_index_in_material;
+	unsigned int vertices_pointer_offset;
+	while (!added_nodes_indices.empty())
 	{
-		objects_geometries_locations_it = objects_geometries_locations_ini + *node_was_added_it;
-		pointer_offset = vertices_accumulated_count.at(*node_was_added_it);
+		current_node_index = added_nodes_indices.back();
+		added_nodes_indices.pop_back();
 
-		dst_vertices_positions_it = dst_vertices_positions + 3 * pointer_offset;
-		dst_uv_coordinates_it = dst_uv_coordinates + 2 * pointer_offset;
-		dst_normal_vectors_it = dst_normal_vectors + 3 * pointer_offset;
+		objects_geometries_locations_it = objects_geometries_locations_ini + current_node_index;
 
-		// Perform the transformation of each node previous to the dumping:
-		vertices_positions_it = (*objects_geometries_locations_it)->geometry->vertices_positions.begin();
-		vertices_positions_end = (*objects_geometries_locations_it)->geometry->vertices_positions.end();
-		
-		uv_coordinates_it = (*objects_geometries_locations_it)->geometry->uv_coordinates.begin();
-		uv_coordinates_end = (*objects_geometries_locations_it)->geometry->uv_coordinates.end();
+		compounds_in_object_ini = objects_geometries_locations_it->node_object_geometry.compounds_in_object.begin();
+		compounds_in_object_end = objects_geometries_locations_it->node_object_geometry.compounds_in_object.end();
 
-		normal_vectors_it = (*objects_geometries_locations_it)->geometry->normal_vectors.begin();
-		normal_vectors_end = (*objects_geometries_locations_it)->geometry->normal_vectors.end();
-
-		for (; vertices_positions_it != vertices_positions_end; vertices_positions_it++, uv_coordinates_it++, normal_vectors_it++)
+		for (compounds_in_object_it = compounds_in_object_ini; compounds_in_object_it != compounds_in_object_end; compounds_in_object_it++)
 		{
-			temp_position = nodes_rotation * nodes_scale * *vertices_positions_it + (*objects_geometries_locations_it)->position + nodes_position;
+			objects_by_material search_new_node_material(compounds_in_object_it->material_identifier);
 
-			// Copy each position to the "dst_vertices_positions" array:
-			*(dst_vertices_positions_it++) = (GLfloat)temp_position.x;
-			*(dst_vertices_positions_it++) = (GLfloat)temp_position.y;
-			*(dst_vertices_positions_it++) = (GLfloat)temp_position.z;
+			objects_geometries_locations_by_material_it = std::find(objects_geometries_locations_by_material_ini, objects_geometries_locations_by_material_end, search_new_node_material);
 
-			// Copy each uv coordinate to the "dst_uv_coordinates_it" array:
-			*(dst_uv_coordinates_it++) = (GLfloat)uv_coordinates_it->x;
-			*(dst_uv_coordinates_it++) = (GLfloat)uv_coordinates_it->y;
+			if (objects_geometries_locations_by_material_it != objects_geometries_locations_by_material_end)
+			{
+				// Look for the corresponding index:
+				corresponding_node_indices_ini = objects_geometries_locations_by_material_it->corresponding_node_indices.begin();
+				corresponding_node_indices_end = objects_geometries_locations_by_material_it->corresponding_node_indices.end();
 
-			// Copy each normal vector to the "dst_normal_vectors" array:
-			*(dst_normal_vectors_it++) = (GLfloat)normal_vectors_it->x;
-			*(dst_normal_vectors_it++) = (GLfloat)normal_vectors_it->y;
-			*(dst_normal_vectors_it++) = (GLfloat)normal_vectors_it->z;
+				corresponding_node_indices_it = std::find(corresponding_node_indices_ini, corresponding_node_indices_end, current_node_index);
+				current_node_index_in_material = (unsigned int)std::distance(corresponding_node_indices_ini, corresponding_node_indices_it);
+
+				vertices_pointer_offset = objects_geometries_locations_by_material_it->vertices_acummulated_initial_positions.at(current_node_index_in_material);
+
+				vertices_positions_ptr = objects_geometries_locations_by_material_it->vertices_positions + 3 * vertices_pointer_offset;
+				uv_coordinates_ptr = objects_geometries_locations_by_material_it->uv_coordinates + 2 * vertices_pointer_offset;
+				normal_vectors_ptr = objects_geometries_locations_by_material_it->normal_vectors + 3 * vertices_pointer_offset;
+
+				/* COPY THE VERTICES POSITIONS AFTER THE 
+				LOCAL_ROTATION * LOCAL_SCALE * MODEL + LOCAL_DISPLACEMENT 
+				*/
+			}
 		}
+
 	}
 
-	node_was_added.clear();
 	a_node_was_added = false;
 }

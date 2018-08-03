@@ -2,86 +2,65 @@
 
 GEOMETRIES_MANAGER::GEOMETRIES_MANAGER()
 {
-	obj_read_status = 0;
-	mtl_read_status = 0;
-	texture_read_status = 0;
-	texture_map = NULL;
-
-	node_geometry * active_object_compound = NULL;
-	for (unsigned int node_index = 0; node_index < 7; node_index++)
-	{
-		active_object_compound = new node_geometry;
-		objects_compounds.push_back(active_object_compound);
-	}
+	objects_compounds_geometry.push_back(node_geometry(OBJGEOM_LINK_ICON));
+	objects_compounds_geometry.push_back(node_geometry(OBJGEOM_IMAGE_LINK_ICON));
+	objects_compounds_geometry.push_back(node_geometry(OBJGEOM_NUMERIC_NODE));
+	objects_compounds_geometry.push_back(node_geometry(OBJGEOM_STRING_NODE));
+	objects_compounds_geometry.push_back(node_geometry(OBJGEOM_NODE_OPERATION));
+	objects_compounds_geometry.push_back(node_geometry(OBJGEOM_IMAGE_SCALAR_OPERATION));
+	objects_compounds_geometry.push_back(node_geometry(OBJGEOM_IMAGE_OPERATION));
 }
 
 
 
 GEOMETRIES_MANAGER::GEOMETRIES_MANAGER(const GEOMETRIES_MANAGER & src_node_figure)
 {
-	this->obj_read_status = src_node_figure.obj_read_status;
-	this->mtl_read_status = src_node_figure.mtl_read_status;
-	this->texture_read_status = src_node_figure.texture_read_status;
-	if (this->texture_read_status)
-	{
-		this->texture_map = createFromImageData(src_node_figure.texture_map);
-	}
-	
-	node_geometry * active_object_compound = NULL;
-	for (unsigned int node_index = 0; node_index < 7; node_index++)
-	{
-		active_object_compound = new node_geometry(src_node_figure.objects_compounds.at(node_index));
-		this->objects_compounds.push_back(active_object_compound);
-	}
+	objects_compounds_geometry.push_back(node_geometry(OBJGEOM_LINK_ICON));
+	objects_compounds_geometry.push_back(node_geometry(OBJGEOM_IMAGE_LINK_ICON));
+	objects_compounds_geometry.push_back(node_geometry(OBJGEOM_NUMERIC_NODE));
+	objects_compounds_geometry.push_back(node_geometry(OBJGEOM_STRING_NODE));
+	objects_compounds_geometry.push_back(node_geometry(OBJGEOM_NODE_OPERATION));
+	objects_compounds_geometry.push_back(node_geometry(OBJGEOM_IMAGE_SCALAR_OPERATION));
+	objects_compounds_geometry.push_back(node_geometry(OBJGEOM_IMAGE_OPERATION));
+
 }
 
 
 
 GEOMETRIES_MANAGER::~GEOMETRIES_MANAGER()
 {
-	std::vector<node_geometry*>::iterator objects_compounds_ini = objects_compounds.begin();
-	std::vector<node_geometry*>::iterator objects_compounds_end = objects_compounds.end();
-	std::vector<node_geometry*>::iterator objects_compounds_it;
 
-	for (objects_compounds_it = objects_compounds_ini; objects_compounds_it != objects_compounds_end; objects_compounds_it++)
-	{
-		delete *objects_compounds_it;
-	}
-
-	if (texture_read_status)
-	{
-		freeImageData(texture_map);
-	}
 }
 
 
 
 void GEOMETRIES_MANAGER::loadObj(const char * src_obj_filename)
 {
-	obj_read_status = readObjFile(src_obj_filename);
+	readObjFile(src_obj_filename);
 }
 
 
 
-node_geometry * GEOMETRIES_MANAGER::getGeometry(const object_geometry_type src_object_type)
+node_geometry GEOMETRIES_MANAGER::getGeometry(const object_geometry_type src_object_type)
 {
-	std::vector<node_geometry*>::iterator objects_compounds_ini = objects_compounds.begin();
-	std::vector<node_geometry*>::iterator objects_compounds_end = objects_compounds.end();
-	std::vector<node_geometry*>::iterator objects_compounds_it = objects_compounds_ini;
-	std::vector<node_geometry*>::iterator objects_compounds_found = objects_compounds_ini;
+	std::vector<node_geometry>::iterator objects_compounds_ini = objects_compounds_geometry.begin();
+	std::vector<node_geometry>::iterator objects_compounds_end = objects_compounds_geometry.end();
 
-	do
+	node_geometry searching_for_node(src_object_type);
+	std::vector<node_geometry>::iterator objects_compounds_it = std::find(objects_compounds_ini, objects_compounds_end, searching_for_node);
+
+	if (objects_compounds_it == objects_compounds_end)
 	{
-		if ((*objects_compounds_it)->node_geometry_type == src_object_type)
-		{
-			objects_compounds_found = objects_compounds_it;
-			break;
-		}
-	} while (++objects_compounds_it != objects_compounds_end);
+		return NULL;
+	}
 
-	return *objects_compounds_found;
+	return *objects_compounds_it;
 }
 
+TEXTURES_MANAGER * GEOMETRIES_MANAGER::getTexturesManager()
+{
+	return &compounds_textures_manager;
+}
 
 
 int GEOMETRIES_MANAGER::readObjFile(const char * src_obj_filename)
@@ -101,7 +80,7 @@ int GEOMETRIES_MANAGER::readObjFile(const char * src_obj_filename)
 	std::vector<glm::vec2> unique_uv_coordinates;
 	std::vector<glm::vec3> unique_normal_vectors;
 
-	node_geometry * active_object_compound = NULL;
+	compound_geometry * active_object_compound = NULL;
 
 	char * extract_string_ini;
 	char * extract_string_end;
@@ -144,8 +123,7 @@ int GEOMETRIES_MANAGER::readObjFile(const char * src_obj_filename)
 			characters_count = new_line_position - extract_string_ini;
 			strncpy(material_filename, extract_string_ini + 1, characters_count);
 			break;
-
-
+			
 			/* ------------------------------ Object identifier: ------------------------------
 			Ico_001: Link icon,
 			Ico_002: Image link icon,
@@ -165,18 +143,18 @@ int GEOMETRIES_MANAGER::readObjFile(const char * src_obj_filename)
 
 			object_index = atoi(object_name + 4);
 
+			active_object_compound = new compound_geometry;
+
 			if (object_code == 27451) /* Icon: */
 			{
 				switch (object_index)
 				{
 				case 1:
-					active_object_compound = objects_compounds.at(0);
-					active_object_compound->node_geometry_type = OBJGEOM_LINK_ICON;
+					objects_compounds_geometry.at(0).compounds_in_object.push_back(active_object_compound);
 					break;
 
 				case 2:
-					active_object_compound = objects_compounds.at(1);
-					active_object_compound->node_geometry_type = OBJGEOM_IMAGE_LINK_ICON;
+					objects_compounds_geometry.at(1).compounds_in_object.push_back(active_object_compound);
 					break;
 
 				default:
@@ -189,28 +167,23 @@ int GEOMETRIES_MANAGER::readObjFile(const char * src_obj_filename)
 				switch (object_index)
 				{
 				case 1:
-					active_object_compound = objects_compounds.at(2);
-					active_object_compound->node_geometry_type = OBJGEOM_NUMERIC_NODE;
+					objects_compounds_geometry.at(2).compounds_in_object.push_back(active_object_compound);
 					break;
 
 				case 2:
-					active_object_compound = objects_compounds.at(3);
-					active_object_compound->node_geometry_type = OBJGEOM_STRING_NODE;
+					objects_compounds_geometry.at(3).compounds_in_object.push_back(active_object_compound);
 					break;
 
 				case 3:
-					active_object_compound = objects_compounds.at(4);
-					active_object_compound->node_geometry_type = OBJGEOM_NODE_OPERATION;
+					objects_compounds_geometry.at(4).compounds_in_object.push_back(active_object_compound);
 					break;
 
 				case 4:
-					active_object_compound = objects_compounds.at(5);
-					active_object_compound->node_geometry_type = OBJGEOM_IMAGE_SCALAR_OPERATION;
+					objects_compounds_geometry.at(5).compounds_in_object.push_back(active_object_compound);
 					break;
 
 				case 5:
-					active_object_compound = objects_compounds.at(6);
-					active_object_compound->node_geometry_type = OBJGEOM_IMAGE_OPERATION;
+					objects_compounds_geometry.at(6).compounds_in_object.push_back(active_object_compound);
 					break;
 
 				default:
@@ -310,7 +283,12 @@ int GEOMETRIES_MANAGER::readObjFile(const char * src_obj_filename)
 			characters_count = new_line_position - extract_string_ini;
 			material_identifier_string = new char[characters_count + 1];
 			strcpy(material_identifier_string, extract_string_ini);
-			active_object_compound->material_identifiers.push_back(material_identifier_string);
+
+			compounds_textures_manager.newTexture(material_identifier_string, (IMG_DATA*)NULL);
+
+			active_object_compound->material_identifier = new char[characters_count + 1];
+			strcpy(active_object_compound->material_identifier, material_identifier_string);
+
 			break;
 
 			/* ------------------------------ Smoothing (Off in general) ------------------------------ */
@@ -426,7 +404,7 @@ int GEOMETRIES_MANAGER::readObjFile(const char * src_obj_filename)
 	/* Read the material file */
 	if (strlen(material_filename) > 0)
 	{
-		mtl_read_status = readMtlFile(material_filename);
+		readMtlFile(material_filename);
 	}
 
 	// Center all the objects compounds:
@@ -447,13 +425,14 @@ int GEOMETRIES_MANAGER::readMtlFile(const char * src_mtl_filename)
 	
 	char read_line[512];
 	char material_name[32];
+	IMG_DATA * new_texture_map;
 	char texture_filename[512];
 
 	char * extract_string_ini;
 	char * extract_string_end;
 	char * new_line_position;
 	unsigned int characters_count;
-
+	
 	while (1)
 	{
 		fgets(read_line, 512, fp_material);
@@ -487,17 +466,8 @@ int GEOMETRIES_MANAGER::readMtlFile(const char * src_mtl_filename)
 
 		case (int)'m':
 			// Copy the texture filename:
-			strcpy(texture_filename, read_line + 7);
-
-			// Open the texture image:
-			if (texture_map)
-			{
-				freeImageData(texture_map);
-			}
-			texture_map = readTextureFile(texture_filename);
-
-			texture_read_status = texture_map ? 1 : 0;
-
+			strcpy(texture_filename, read_line + 7);			
+			compounds_textures_manager.reassignTexture(material_name, texture_filename);
 			break;
 
 		default:
@@ -511,11 +481,13 @@ int GEOMETRIES_MANAGER::readMtlFile(const char * src_mtl_filename)
 	return 1;
 }
 
+
+
 void GEOMETRIES_MANAGER::centerObjectCompound()
 {
-	std::vector<node_geometry*>::iterator objects_compounds_ini = objects_compounds.begin();
-	std::vector<node_geometry*>::iterator objects_compounds_end = objects_compounds.end();
-	std::vector<node_geometry*>::iterator objects_compounds_it;
+	std::vector<compound_geometry*>::iterator objects_compounds_ini = objects_compounds.begin();
+	std::vector<compound_geometry*>::iterator objects_compounds_end = objects_compounds.end();
+	std::vector<compound_geometry*>::iterator objects_compounds_it;
 
 	std::vector<glm::vec4>::iterator vertices_positions_ini;
 	std::vector<glm::vec4>::iterator vertices_positions_end;
@@ -545,296 +517,3 @@ void GEOMETRIES_MANAGER::centerObjectCompound()
 	}
 }
 
-
-IMG_DATA * GEOMETRIES_MANAGER::readTextureFile(const char * src_texture_filename)
-{
-	FILE * fp_texture = fopen(src_texture_filename, "r");
-
-	if (!fp_texture)
-	{
-		fprintf(stderr, "<<Error: The texture map file \"%s\" could not be opened>>\n", src_texture_filename);
-		return NULL;
-	}
-	
-	char magic_number[3];
-	fgets(magic_number, 3, fp_texture);
-	fclose(fp_texture);
-
-	if (*magic_number != 'P')
-	{
-		fprintf(stderr, "<<Error: The texture file \'%s\' is not in PGM or PPM format>>\n", src_texture_filename);
-		return NULL;
-	}
-
-	IMG_DATA *new_texture_map = NULL;
-	
-	switch ((int)*(magic_number + 1))
-	{
-	case (int)'2':
-		new_texture_map = loadPGM_ascii(src_texture_filename);
-		break;
-
-	case (int)'5':
-		new_texture_map = loadPGM_raw(src_texture_filename);
-		break;
-
-	case (int)'3':
-		new_texture_map = loadPPM_ascii(src_texture_filename);
-		break;
-
-	case (int)'6':
-		new_texture_map = loadPPM_raw(src_texture_filename);
-		break;
-
-	default:
-		fprintf(stderr, "<<Error: The texture file \'%s\' is an unkoun PGM or PPM format>>\n", src_texture_filename);
-		break;
-	}
-
-	return new_texture_map;
-}
-
-
-
-
-
-IMG_DATA * GEOMETRIES_MANAGER::loadPGM_ascii(const char * src_filename)
-{
-	const unsigned int color_channels = 1;
-
-	FILE * fp_texture = fopen(src_filename, "r");
-
-	char magic_number[3];
-
-	// Read magic number:
-	fgets(magic_number, 3, fp_texture);
-
-	// Read the new line character after the magic number:
-	char temporal_characters = fgetc(fp_texture);
-
-	// Verify if the file contains a commentary:
-	fpos_t image_body_file_position;
-	fgetpos(fp_texture, &image_body_file_position);
-
-	temporal_characters = fgetc(fp_texture);
-	if (temporal_characters == '#')
-	{
-		// The file contains a commentary:
-		while (temporal_characters != '\n')
-		{
-			temporal_characters = fgetc(fp_texture);
-		}
-	}
-	else
-	{
-		fsetpos(fp_texture, &image_body_file_position);
-	}
-
-	// Read the width, height and maximum intensity of the image:
-	int width, height;
-	fscanf(fp_texture, "%i %i\n", &width, &height);
-
-	double max_intensity;
-	fscanf(fp_texture, "%lf\n", &max_intensity);
-
-	IMG_DATA * new_texture_data = createVoidImage(width, height, IMG_UCHAR, color_channels);
-
-	unsigned char * pix_intensity = new_texture_data->image_data.unsigned_character_image_data;
-	for (int pix_position = 0; pix_position < width*height*color_channels; pix_position++)
-	{
-		fscanf(fp_texture, "%c\n", pix_intensity++);
-	}
-
-	fclose(fp_texture);
-
-	return new_texture_data;
-}
-
-
-
-IMG_DATA * GEOMETRIES_MANAGER::loadPGM_raw(const char * src_filename)
-{
-
-	const unsigned int color_channels = 1;
-
-	FILE * fp_texture = fopen(src_filename, "rb");
-
-	char temporal_characters;
-	char magic_number;
-
-	// Read magic number:
-	fread(&temporal_characters, sizeof(char), 1, fp_texture);
-	fread(&magic_number, sizeof(char), 1, fp_texture);
-
-	// Read the new line character:
-	fread(&temporal_characters, sizeof(char), 1, fp_texture);
-
-	// Verify if the file contains a commentary:
-	fpos_t image_body_file_position;
-	fgetpos(fp_texture, &image_body_file_position);
-
-	fread(&temporal_characters, sizeof(char), 1, fp_texture);
-	if (temporal_characters == '#')
-	{
-		// The file contains a commentary:
-		while (temporal_characters != '\n')
-		{
-			fread(&temporal_characters, sizeof(char), 1, fp_texture);
-		}
-	}
-	else
-	{
-		fsetpos(fp_texture, &image_body_file_position);
-	}
-
-	// Read the width, height and maximum intensity of the image:
-	char width_string[] = "\0\0\0\0\0\0\0";
-	unsigned int string_position = 0;
-	do
-	{
-		fread(width_string + string_position, sizeof(char), 1, fp_texture);
-	} while (*(width_string + string_position++) != ' ');
-	int width = atoi(width_string);
-
-	char height_string[] = "\0\0\0\0\0\0\0";
-	string_position = 0;
-	do {
-		fread(height_string + string_position, sizeof(char), 1, fp_texture);
-	} while (*(height_string + string_position++) != '\n');
-	int height = atoi(height_string);
-
-
-	char max_intensity_string[] = "\0\0\0\0\0\0\0";
-	string_position = 0;
-	do {
-		fread(max_intensity_string + string_position, sizeof(char), 1, fp_texture);
-	} while (*(max_intensity_string + string_position++) != '\n');
-	double max_intensity = atof(max_intensity_string);
-
-	IMG_DATA * new_texture_data = createVoidImage(width, height, IMG_UCHAR, color_channels);
-	fread(new_texture_data->image_data.unsigned_character_image_data, sizeof(unsigned char), width * height * color_channels, fp_texture);
-	fclose(fp_texture);
-	
-	return new_texture_data;
-}
-
-
-IMG_DATA * GEOMETRIES_MANAGER::loadPPM_ascii(const char * src_filename)
-{
-
-	const unsigned int color_channels = 3;
-
-	FILE * fp_texture = fopen(src_filename, "r");
-
-	char magic_number[3];
-
-	// Read magic number:
-	fgets(magic_number, 3, fp_texture);
-
-	// Read the new line character after the magic number:
-	char temporal_characters = fgetc(fp_texture);
-
-	// Verify if the file contains a commentary:
-	fpos_t image_body_file_position;
-	fgetpos(fp_texture, &image_body_file_position);
-
-	temporal_characters = fgetc(fp_texture);
-	if (temporal_characters == '#')
-	{
-		// The file contains a commentary:
-		while (temporal_characters != '\n')
-		{
-			temporal_characters = fgetc(fp_texture);
-		}
-	}
-	else
-	{
-		fsetpos(fp_texture, &image_body_file_position);
-	}
-
-	// Read the width, height and maximum intensity of the image:
-	int width, height;
-	fscanf(fp_texture, "%i %i\n", &width, &height);
-
-	double max_intensity;
-	fscanf(fp_texture, "%lf\n", &max_intensity);
-
-	IMG_DATA * new_texture_data = createVoidImage(width, height, IMG_UCHAR, color_channels);
-
-	unsigned char * pix_intensity = new_texture_data->image_data.unsigned_character_image_data;
-	for (int pix_position = 0; pix_position < width*height*color_channels; pix_position++)
-	{
-		fscanf(fp_texture, "%c\n", pix_intensity++);
-	}
-
-	fclose(fp_texture);
-
-	return new_texture_data;
-}
-
-
-
-IMG_DATA * GEOMETRIES_MANAGER::loadPPM_raw(const char * src_filename)
-{
-
-	const unsigned int color_channels = 3;
-
-	FILE * fp_texture = fopen(src_filename, "rb");
-
-	char temporal_characters;
-	char magic_number;
-
-	// Read magic number:
-	fread(&temporal_characters, sizeof(char), 1, fp_texture);
-	fread(&magic_number, sizeof(char), 1, fp_texture);
-
-	// Read the new line character:
-	fread(&temporal_characters, sizeof(char), 1, fp_texture);
-
-	// Verify if the file contains a commentary:
-	fpos_t image_body_file_position;
-	fgetpos(fp_texture, &image_body_file_position);
-
-	fread(&temporal_characters, sizeof(char), 1, fp_texture);
-	if (temporal_characters == '#')
-	{
-		// The file contains a commentary:
-		while (temporal_characters != '\n')
-		{
-			fread(&temporal_characters, sizeof(char), 1, fp_texture);
-		}
-	}
-	else
-	{
-		fsetpos(fp_texture, &image_body_file_position);
-	}
-
-	// Read the width, height and maximum intensity of the image:
-	char width_string[] = "\0\0\0\0\0\0\0";
-	unsigned int string_position = 0;
-	do
-	{
-		fread(width_string + string_position, sizeof(char), 1, fp_texture);
-	} while (*(width_string + string_position++) != ' ');
-	int width = atoi(width_string);
-
-	char height_string[] = "\0\0\0\0\0\0\0";
-	string_position = 0;
-	do {
-		fread(height_string + string_position, sizeof(char), 1, fp_texture);
-	} while (*(height_string + string_position++) != '\n');
-	int height = atoi(height_string);
-
-	char max_intensity_string[] = "\0\0\0\0\0\0\0";
-	string_position = 0;
-	do {
-		fread(max_intensity_string + string_position, sizeof(char), 1, fp_texture);
-	} while (*(max_intensity_string + string_position++) != '\n');
-	double max_intensity = atof(max_intensity_string);
-
-	IMG_DATA * new_texture_data = createVoidImage(width, height, IMG_UCHAR, color_channels);
-	fread(new_texture_data->image_data.unsigned_character_image_data, sizeof(unsigned char), width * height, fp_texture);
-	fclose(fp_texture);
-
-	return new_texture_data;
-}
